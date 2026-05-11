@@ -3,7 +3,29 @@
 <main>
   <cm-hero></cm-hero>
   
-  <div style="height: 1000px; padding-top: 40px;">
-    <!-- Prochaine étape : Les rangées de films (MovieRows) -->
+  <div class="rows-container">
+    <cm-movie-row 
+      title="Populaires sur CineMatch" 
+      [movies]="popularMovies">
+    </cm-movie-row>
+
+    <cm-movie-row 
+      title="Action & Aventure" 
+      [movies]="actionMovies">
+    </cm-movie-row>
+
+    <cm-movie-row 
+      title="Tendances actuelles" 
+      [movies]="popularMovies">
+    </cm-movie-row>
   </div>
 </main>
+
+<style>
+  .rows-container {
+    margin-top: -150px; /* Overlap le hero pour l'effet Netflix */
+    position: relative;
+    z-index: 20;
+    padding-bottom: 50px;
+  }
+</style>
