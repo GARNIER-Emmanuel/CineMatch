@@ -1,0 +1,20 @@
+services:
+  backend:
+    build: ./backend # utilise le Dockerfile du dossier backend
+    ports:
+      - "3000:3000" # port local:port conteneur
+    env_file:
+      - .env # injecte ta clé TMDB
+    volumes:
+      - ./backend:/app # synchronise ton code local avec le conteneur
+      - /app/node_modules # garde les node_modules du conteneur intacts
+
+  frontend:
+    build: ./frontend
+    ports:
+      - "4200:4200"
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+    depends_on:
+      - backend # attend que le backend soit démarré

@@ -1,0 +1,139 @@
+# 🎬 CineMatch
+
+> Trouve ton prochain film en moins de 30 secondes.
+
+CineMatch est une application web qui recommande des films selon tes critères du soir (genre, durée, note minimale, plateforme de streaming). Le backend interroge l'API TMDB pour retourner des fiches films avec posters, synopsis et notes.
+
+***
+
+## Stack technique
+
+| Couche | Technologie |
+|---|---|
+| Frontend | Angular 17+ |
+| Backend | NestJS |
+| API externe | TMDB API v3 |
+| Containerisation | Docker + Docker Compose |
+
+***
+
+## Prérequis
+
+- [Docker Desktop](https://www.docker.com/products/docker-desktop/) installé et lancé
+- Une clé API TMDB gratuite → [themoviedb.org/settings/api](https://www.themoviedb.org/settings/api)
+
+***
+
+## Installation et lancement
+
+### 1. Cloner le projet
+
+```bash
+git clone https://github.com/TON_USERNAME/cinematch.git
+cd cinematch
+```
+
+### 2. Configurer les variables d'environnement
+
+Crée un fichier `.env` à la racine du projet :
+
+```env
+TMDB_API_KEY=ta_clé_tmdb_ici
+```
+
+### 3. Lancer avec Docker
+
+```bash
+docker-compose up --build
+```
+
+L'application est accessible sur :
+- **Frontend** → http://localhost:4200
+- **Backend** → http://localhost:3000
+
+***
+
+## Structure du projet
+
+```
+cinematch/
+├── backend/              # API NestJS
+│   ├── src/
+│   │   ├── tmdb/         # Module TMDB (service + controller + DTO)
+│   │   └── app.module.ts
+│   └── Dockerfile
+├── frontend/             # Application Angular
+│   ├── src/
+│   │   └── app/
+│   └── Dockerfile
+├── docker-compose.yml
+├── .env                  # Non versionné — à créer manuellement
+└── .gitignore
+```
+
+***
+
+## Endpoints API
+
+| Méthode | Route | Description |
+|---|---|---|
+| `GET` | `/movies/discover` | Retourne jusqu'à 6 films filtrés |
+
+### Paramètres disponibles
+
+| Paramètre | Type | Exemple | Description |
+|---|---|---|---|
+| `genres` | string | `28,12` | IDs de genres TMDB séparés par virgule |
+| `maxDuration` | number | `120` | Durée maximale en minutes |
+| `minRating` | number | `7` | Note minimale sur 10 |
+| `providers` | string | `8\|337` | IDs plateformes séparés par pipe |
+| `page` | number | `2` | Page de résultats (pagination) |
+
+### Exemple de requête
+
+```
+GET http://localhost:3000/movies/discover?genres=28&minRating=7&maxDuration=120
+```
+
+***
+
+## IDs utiles — Genres TMDB
+
+| Genre | ID |
+|---|---|
+| Action | 28 |
+| Comédie | 35 |
+| Drame | 18 |
+| Horreur | 27 |
+| Science-Fiction | 878 |
+| Thriller | 53 |
+| Animation | 16 |
+
+## IDs utiles — Plateformes (région FR)
+
+| Plateforme | ID |
+|---|---|
+| Netflix | 8 |
+| Disney+ | 337 |
+| Canal+ | 381 |
+| Apple TV+ | 350 |
+| Amazon Prime | 119 |
+
+***
+
+## Commandes utiles
+
+```bash
+# Lancer le projet
+docker-compose up --build
+
+# Arrêter les conteneurs
+docker-compose down
+
+# Voir les logs en temps réel
+docker-compose logs -f
+
+# Relancer uniquement le backend
+docker-compose restart backend
+```
+
