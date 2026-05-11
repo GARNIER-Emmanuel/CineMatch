@@ -5,25 +5,28 @@
   
   <div class="rows-container">
     <cm-movie-row 
+      *ngIf="popularMovies.length > 0"
       title="Populaires sur CineMatch" 
       [movies]="popularMovies">
     </cm-movie-row>
 
     <cm-movie-row 
+      *ngIf="actionMovies.length > 0"
       title="Action & Aventure" 
       [movies]="actionMovies">
     </cm-movie-row>
 
     <cm-movie-row 
+      *ngIf="trendingMovies.length > 0"
       title="Tendances actuelles" 
-      [movies]="popularMovies">
+      [movies]="trendingMovies">
     </cm-movie-row>
   </div>
 </main>
 
 <style>
   .rows-container {
-    margin-top: -150px; /* Overlap le hero pour l'effet Netflix */
+    margin-top: -150px;
     position: relative;
     z-index: 20;
     padding-bottom: 50px;

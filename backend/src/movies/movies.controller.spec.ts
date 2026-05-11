@@ -32,7 +32,7 @@ describe('MoviesController', () => {
     it('should call moviesService.discover with query parameters (US1-S1.1)', async () => {
       // Given
       const filters: DiscoverMoviesDto = { genres: '28' };
-      
+
       // When
       await controller.discover(filters);
 

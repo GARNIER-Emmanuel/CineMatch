@@ -46,7 +46,7 @@ src/
     ├── movies.service.spec.ts    ← tests unitaires du service
     └── dto/
         └── discover-movies.dto.ts ← forme des données entrantes
-```
+```d
 
 ---
 

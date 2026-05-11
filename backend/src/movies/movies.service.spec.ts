@@ -93,9 +93,9 @@ describe('MoviesService', () => {
       expect(mockedAxios.get).toHaveBeenCalledWith(
         expect.any(String),
         expect.objectContaining({
-          params: expect.objectContaining({ 
+          params: expect.objectContaining({
             sort_by: 'vote_average.desc',
-            with_genres: undefined 
+            with_genres: undefined
           }),
         }),
       );

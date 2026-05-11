@@ -1,31 +1,52 @@
-import { Component } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
+import { CommonModule } from '@angular/common';
 import { NavbarComponent } from './layout/navbar/navbar';
 import { HeroComponent } from './features/home/hero/hero';
 import { MovieRowComponent, MovieItem } from './features/home/movie-row/movie-row';
+import { MoviesService, Movie } from './core/services/movies';
 
 @Component({
   selector: 'app-root',
   standalone: true,
-  imports: [NavbarComponent, HeroComponent, MovieRowComponent],
+  imports: [CommonModule, NavbarComponent, HeroComponent, MovieRowComponent],
   templateUrl: './app.html',
   styleUrl: './app.css',
 })
-export class AppComponent {
+export class AppComponent implements OnInit {
   title = 'CineMatch';
 
-  // Données de test pour valider le design
-  popularMovies: MovieItem[] = [
-    { id: 1, title: 'Inception', poster: 'https://image.tmdb.org/t/p/w500/9gk7Fn9sVAsS9696G1oV00_8p3y.jpg', rating: '8.4' },
-    { id: 2, title: 'Interstellar', poster: 'https://image.tmdb.org/t/p/w500/gEU2QniE6EwuGvOTj9bq6Jv7vYd.jpg', rating: '8.6' },
-    { id: 3, title: 'The Dark Knight', poster: 'https://image.tmdb.org/t/p/w500/1hPl97URIQCp7Ah847G6T_G2H2B.jpg', rating: '9.0' },
-    { id: 4, title: 'Memento', poster: 'https://image.tmdb.org/t/p/w500/f9M79vYXf2u2T5a5p_QvYI_O2X1.jpg', rating: '8.4' },
-    { id: 5, title: 'Tenet', poster: 'https://image.tmdb.org/t/p/w500/k68nPLb_O7y_O6X8XW9_O6X8XW9.jpg', rating: '7.4' },
-    { id: 6, title: 'Dunkirk', poster: 'https://image.tmdb.org/t/p/w500/eb_O7y_O6X8XW9_O6X8XW9.jpg', rating: '7.8' },
-  ];
+  popularMovies: MovieItem[] = [];
+  actionMovies: MovieItem[] = [];
+  trendingMovies: MovieItem[] = [];
 
-  actionMovies: MovieItem[] = [
-    { id: 10, title: 'John Wick', poster: 'https://image.tmdb.org/t/p/w500/zi_O7y_O6X8XW9_O6X8XW9.jpg', rating: '7.4' },
-    { id: 11, title: 'Mad Max: Fury Road', poster: 'https://image.tmdb.org/t/p/w500/8t_O7y_O6X8XW9_O6X8XW9.jpg', rating: '8.1' },
-    { id: 12, title: 'The Matrix', poster: 'https://image.tmdb.org/t/p/w500/f8_O7y_O6X8XW9_O6X8XW9.jpg', rating: '8.7' },
-  ];
+  constructor(private moviesService: MoviesService) {}
+
+  ngOnInit(): void {
+    // Récupération des films populaires (sans filtre genre)
+    this.moviesService.getMovies().subscribe((movies: Movie[]) => {
+      this.popularMovies = this.mapToMovieItems(movies);
+    });
+
+    // Récupération des films d'action (ID genre 28 sur TMDB)
+    this.moviesService.getMovies('28').subscribe((movies: Movie[]) => {
+      this.actionMovies = this.mapToMovieItems(movies);
+    });
+
+    // On peut réutiliser les populaires pour les tendances ou un autre filtre
+    this.moviesService.getMovies('12').subscribe((movies: Movie[]) => {
+      this.trendingMovies = this.mapToMovieItems(movies);
+    });
+  }
+
+  /**
+   * Transforme le modèle Movie de l'API en modèle MovieItem pour le design
+   */
+  private mapToMovieItems(movies: Movie[]): MovieItem[] {
+    return movies.map(m => ({
+      id: m.id,
+      title: m.title,
+      poster: m.poster || 'assets/placeholder.jpg',
+      rating: m.rating
+    }));
+  }
 }
