@@ -78,5 +78,37 @@ describe('MoviesService', () => {
         }),
       );
     });
+
+    it('should return movies sorted by rating when no genre is provided (Scenario 1.2)', async () => {
+      // Given
+      const filters: DiscoverMoviesDto = {}; // No genres
+      const tmdbResponse: Partial<AxiosResponse> = {
+        data: {
+          results: Array(6).fill(null).map((_, i) => ({
+            id: i,
+            title: `Movie ${i}`,
+            overview: 'Overview',
+            release_date: '2024-01-01',
+            vote_average: 8.0 - i * 0.1,
+            poster_path: '/path.jpg',
+          })),
+        },
+      };
+      mockHttpService.get.mockReturnValue(of(tmdbResponse));
+
+      // When
+      await service.discover(filters);
+
+      // Then
+      expect(mockHttpService.get).toHaveBeenCalledWith(
+        expect.stringContaining('https://api.themoviedb.org/3/discover/movie'),
+        expect.objectContaining({
+          params: expect.objectContaining({
+            sort_by: 'vote_average.desc',
+            'vote_count.gte': 200, // Constraint from PROJECT_CONTEXT.md
+          }),
+        }),
+      );
+    });
   });
 });

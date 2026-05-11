@@ -18,8 +18,10 @@ export class MoviesService {
       this.httpService.get('https://api.themoviedb.org/3/discover/movie', {
         params: {
           api_key: apiKey,
-          with_genres: filters.genres,
           language: 'fr-FR',
+          sort_by: 'vote_average.desc',
+          'vote_count.gte': 200,
+          with_genres: filters.genres,
         },
       }),
     );
