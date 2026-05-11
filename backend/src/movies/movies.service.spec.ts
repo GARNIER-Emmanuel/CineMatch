@@ -135,5 +135,22 @@ describe('MoviesService', () => {
         }),
       );
     });
+
+    it('should not pass with_runtime.lte to TMDB when maxDuration is absent (US2-S2.2)', async () => {
+      // Given
+      const mockTmdbResponse = { data: { results: [] } };
+      mockedAxios.get.mockResolvedValue(mockTmdbResponse);
+
+      // When
+      await service.discover({});
+
+      // Then
+      expect(mockedAxios.get).toHaveBeenCalledWith(
+        expect.any(String),
+        expect.objectContaining({
+          params: expect.objectContaining({ 'with_runtime.lte': undefined }),
+        }),
+      );
+    });
   });
 });
