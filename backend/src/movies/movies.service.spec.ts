@@ -1,7 +1,7 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { MoviesService } from './movies.service';
 import { ConfigService } from '@nestjs/config';
-import axios from 'axios';
+import axios, { AxiosRequestConfig } from 'axios';
 
 jest.mock('axios');
 const mockedAxios = axios as jest.Mocked<typeof axios>;
@@ -64,7 +64,7 @@ describe('MoviesService', () => {
                     params: expect.objectContaining({
                         with_genres: '28',
                     }),
-                }),
+                }) as AxiosRequestConfig,
             );
         });
     });
@@ -89,8 +89,11 @@ describe('MoviesService', () => {
                 }),
             );
 
-            const callArgs = mockedAxios.get.mock.calls[0][1];
-            expect(callArgs?.params.with_genres).toBeUndefined();
+            const config = mockedAxios.get.mock.calls[0][1] as AxiosRequestConfig;
+            expect(config.params).toMatchObject({
+                sort_by: 'vote_average.desc',
+            });
+            expect(config.params?.with_genres).toBeUndefined();
         });
     });
 
@@ -112,7 +115,7 @@ describe('MoviesService', () => {
                     params: expect.objectContaining({
                         with_genres: '99999',
                     }),
-                }),
+                }) as AxiosRequestConfig,
             );
         });
     });
