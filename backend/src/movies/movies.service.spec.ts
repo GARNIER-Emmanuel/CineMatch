@@ -186,5 +186,22 @@ describe('MoviesService', () => {
         }),
       );
     });
+
+    it('should pass page parameter to TMDB when provided (US4-S4.1)', async () => {
+      // Given
+      const mockTmdbResponse = { data: { results: [] } };
+      mockedAxios.get.mockResolvedValue(mockTmdbResponse);
+
+      // When
+      await service.discover({ page: 2 });
+
+      // Then
+      expect(mockedAxios.get).toHaveBeenCalledWith(
+        expect.any(String),
+        expect.objectContaining({
+          params: expect.objectContaining({ page: 2 }),
+        }),
+      );
+    });
   });
 });
