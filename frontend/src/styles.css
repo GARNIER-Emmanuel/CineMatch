@@ -1,1 +1,65 @@
-/* You can add global styles to this file, and also import other style files */
+/* Import des polices modernes (Google Fonts) */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Montserrat:wght@600;700;800&display=swap');
+
+:root {
+  /* Palette de couleurs "CineMatch" (Netflix inspired) */
+  --bg-color: #000000;
+  --surface-color: #141414;
+  --surface-hover: #181818;
+  --primary-color: #e50914; /* Rouge Netflix */
+  --text-primary: #ffffff;
+  --text-secondary: #b3b3b3;
+  --glass-bg: rgba(0, 0, 0, 0.7);
+  --glass-border: rgba(255, 255, 255, 0.1);
+
+  /* Typographie */
+  --font-main: 'Inter', sans-serif;
+  --font-display: 'Montserrat', sans-serif;
+
+  /* Spacing */
+  --nav-height: 70px;
+  --container-padding: 4%;
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  background-color: var(--bg-color);
+  color: var(--text-primary);
+  font-family: var(--font-main);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  overflow-x: hidden;
+}
+
+h1, h2, h3, .logo {
+  font-family: var(--font-display);
+  font-weight: 800;
+}
+
+/* Utilitaires de Glassmorphism */
+.glass {
+  background: var(--glass-bg);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid var(--glass-border);
+}
+
+/* Scrollbar personnalisée style Netflix */
+::-webkit-scrollbar {
+  width: 8px;
+}
+::-webkit-scrollbar-track {
+  background: var(--bg-color);
+}
+::-webkit-scrollbar-thumb {
+  background: #333;
+  border-radius: 4px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #555;
+}
