@@ -68,5 +68,33 @@ describe('MoviesService', () => {
         }),
       );
     });
+
+    it('should return movies sorted by rating descending when no genre is provided (US1-S1.2)', async () => {
+      // Given
+      const mockTmdbResponse = {
+        data: {
+          results: [
+            { id: 1, title: 'Top Rated Movie', release_date: '2024-01-01', vote_average: 9.0, poster_path: '/top.jpg', overview: 'Best movie' },
+            { id: 2, title: 'Average Movie', release_date: '2024-01-01', vote_average: 5.0, poster_path: '/avg.jpg', overview: 'Mid movie' },
+          ],
+        },
+      };
+      mockedAxios.get.mockResolvedValue(mockTmdbResponse);
+
+      // When
+      const result = await service.discover({});
+
+      // Then
+      expect(result[0].rating).toBe('9');
+      expect(mockedAxios.get).toHaveBeenCalledWith(
+        expect.any(String),
+        expect.objectContaining({
+          params: expect.objectContaining({ 
+            sort_by: 'vote_average.desc',
+            with_genres: undefined 
+          }),
+        }),
+      );
+    });
   });
 });
