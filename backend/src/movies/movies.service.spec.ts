@@ -220,5 +220,18 @@ describe('MoviesService', () => {
         }),
       );
     });
+
+    it('should throw HttpException 502 when TMDB is unavailable (US5-S5.1)', async () => {
+      // Given
+      mockedAxios.get.mockRejectedValue({ response: { status: 500 } });
+
+      // When & Then
+      await expect(service.discover({})).rejects.toThrow(
+        expect.objectContaining({
+          status: 502,
+          message: 'TMDB API unavailable',
+        }),
+      );
+    });
   });
 });
