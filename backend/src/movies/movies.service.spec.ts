@@ -29,14 +29,16 @@ describe('MoviesService', () => {
     describe('discover (Scenario 1.1)', () => {
         it('should return up to 6 movies with required fields for a valid genre', async () => {
             // Given
-            const mockTmdbResults = Array(10).fill(null).map((_, i) => ({
-                id: i,
-                title: `Movie ${i}`,
-                overview: `Overview ${i}`,
-                release_date: '2024-05-11',
-                vote_average: 7.8,
-                poster_path: `/path${i}.jpg`,
-            }));
+            const mockTmdbResults = Array(10)
+                .fill(null)
+                .map((_, i) => ({
+                    id: i,
+                    title: `Movie ${i}`,
+                    overview: `Overview ${i}`,
+                    release_date: '2024-05-11',
+                    vote_average: 7.8,
+                    poster_path: `/path${i}.jpg`,
+                }));
 
             mockedAxios.get.mockResolvedValue({
                 data: { results: mockTmdbResults },
@@ -63,7 +65,7 @@ describe('MoviesService', () => {
                 expect.objectContaining({
                     params: expect.objectContaining({
                         with_genres: '28',
-                    }),
+                    }) as unknown as Record<string, unknown>,
                 }) as AxiosRequestConfig,
             );
         });
@@ -81,12 +83,12 @@ describe('MoviesService', () => {
 
             // Then
             expect(mockedAxios.get).toHaveBeenCalledWith(
-                expect.any(String),
+                expect.any(String) as unknown as string,
                 expect.objectContaining({
                     params: expect.objectContaining({
                         sort_by: 'vote_average.desc',
-                    }),
-                }),
+                    }) as unknown as Record<string, unknown>,
+                }) as AxiosRequestConfig,
             );
 
             const config = mockedAxios.get.mock.calls[0][1] as AxiosRequestConfig;
@@ -110,11 +112,33 @@ describe('MoviesService', () => {
             // Then
             expect(result).toEqual([]);
             expect(mockedAxios.get).toHaveBeenCalledWith(
-                expect.any(String),
+                expect.any(String) as unknown as string,
                 expect.objectContaining({
                     params: expect.objectContaining({
                         with_genres: '99999',
-                    }),
+                    }) as unknown as Record<string, unknown>,
+                }) as AxiosRequestConfig,
+            );
+        });
+    });
+
+    describe('discover (Scenario 2.1)', () => {
+        it('should apply maxDuration filter when provided', async () => {
+            // Given
+            mockedAxios.get.mockResolvedValue({
+                data: { results: [] },
+            });
+
+            // When
+            await service.discover({ maxDuration: 120 });
+
+            // Then
+            expect(mockedAxios.get).toHaveBeenCalledWith(
+                expect.any(String) as unknown as string,
+                expect.objectContaining({
+                    params: expect.objectContaining({
+                        'with_runtime.lte': 120,
+                    }) as unknown as Record<string, unknown>,
                 }) as AxiosRequestConfig,
             );
         });
