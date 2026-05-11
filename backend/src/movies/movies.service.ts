@@ -29,13 +29,17 @@ export class MoviesService {
         this.apiKey = this.config.get<string>('TMDB_API_KEY');
     }
 
-    async discover(filters: { genres?: string }): Promise<Movie[]> {
+    async discover(filters: {
+        genres?: string;
+        maxDuration?: number;
+    }): Promise<Movie[]> {
         const response = await axios.get<{ results: TmdbMovie[] }>(
             `${this.baseUrl}/discover/movie`,
             {
                 params: {
                     api_key: this.apiKey,
                     with_genres: filters.genres,
+                    'with_runtime.lte': filters.maxDuration,
                     language: 'fr-FR',
                     sort_by: 'vote_average.desc',
                 },
