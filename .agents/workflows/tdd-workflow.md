@@ -52,6 +52,7 @@ triggers:
 ### Étape 2 — Écrire le test (RED)
 - Créer ou compléter le `.spec.ts` du slice concerné
 - Mocker toutes les dépendances externes (Axios, TMDB)
+- Rédiger une explication simple du code en commentaires
 - Ne toucher à **aucun autre fichier**
 
 ### Étape 3 — Vérifier que le test échoue
