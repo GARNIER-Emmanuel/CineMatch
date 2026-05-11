@@ -233,5 +233,18 @@ describe('MoviesService', () => {
         }),
       );
     });
+
+    it('should throw HttpException 401 when TMDB API key is invalid (US5-S5.2)', async () => {
+      // Given
+      mockedAxios.get.mockRejectedValue({ response: { status: 401 } });
+
+      // When & Then
+      await expect(service.discover({})).rejects.toThrow(
+        expect.objectContaining({
+          status: 401,
+          message: 'Invalid TMDB API key',
+        }),
+      );
+    });
   });
 });
