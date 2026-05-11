@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, HttpException, HttpStatus } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import axios from 'axios';
 import { Movie } from './interfaces/movie.interface';
@@ -14,29 +14,36 @@ export class MoviesService {
   }
 
   async discover(filters: DiscoverMoviesDto): Promise<Movie[]> {
-    const response = await axios.get(`${this.baseUrl}/discover/movie`, {
-      params: {
-        api_key: this.apiKey,
-        with_genres: filters.genres,
-        'with_runtime.lte': filters.maxDuration,
-        'vote_average.gte': filters.minRating || 6,
-        page: filters.page || 1,
-        sort_by: 'vote_average.desc',
-        language: 'fr-FR',
-      },
-    });
+    try {
+      const response = await axios.get(`${this.baseUrl}/discover/movie`, {
+        params: {
+          api_key: this.apiKey,
+          with_genres: filters.genres,
+          'with_runtime.lte': filters.maxDuration,
+          'vote_average.gte': filters.minRating || 6,
+          page: filters.page || 1,
+          sort_by: 'vote_average.desc',
+          language: 'fr-FR',
+        },
+      });
 
-    const movies = response.data.results.slice(0, 6).map((movie: any) => ({
-      id: movie.id,
-      title: movie.title,
-      overview: movie.overview,
-      releaseYear: movie.release_date ? movie.release_date.split('-')[0] : '',
-      rating: movie.vote_average.toString(),
-      poster: movie.poster_path
-        ? `https://image.tmdb.org/t/p/w500${movie.poster_path}`
-        : null,
-    }));
+      const movies = response.data.results.slice(0, 6).map((movie: any) => ({
+        id: movie.id,
+        title: movie.title,
+        overview: movie.overview,
+        releaseYear: movie.release_date ? movie.release_date.split('-')[0] : '',
+        rating: movie.vote_average.toString(),
+        poster: movie.poster_path
+          ? `https://image.tmdb.org/t/p/w500${movie.poster_path}`
+          : null,
+      }));
 
-    return movies;
+      return movies;
+    } catch (error: any) {
+      if (error.response?.status === 401) {
+        throw new HttpException('Invalid TMDB API key', HttpStatus.UNAUTHORIZED);
+      }
+      throw new HttpException('TMDB API unavailable', HttpStatus.BAD_GATEWAY);
+    }
   }
 }
