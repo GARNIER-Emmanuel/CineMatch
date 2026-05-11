@@ -4,6 +4,8 @@ import { ConfigService } from '@nestjs/config';
 import { HttpService } from '@nestjs/axios';
 import { of } from 'rxjs';
 import { AxiosResponse } from 'axios';
+import { DiscoverMoviesDto } from './dto/discover-movies.dto';
+import { Movie } from './interfaces/movie.interface';
 
 describe('MoviesService', () => {
   let service: MoviesService;
