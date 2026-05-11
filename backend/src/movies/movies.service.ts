@@ -11,7 +11,8 @@ export class MoviesService {
 
   constructor(private configService: ConfigService) {
     // Récupère la clé API depuis la configuration globale du projet (.env)
-    this.apiKey = this.configService.get<string>('TMDB_API_KEY');
+    // On ajoute '|| \'\'' pour garantir que la valeur est une string, même si la clé est absente
+    this.apiKey = this.configService.get<string>('TMDB_API_KEY') || '';
   }
 
   /**
