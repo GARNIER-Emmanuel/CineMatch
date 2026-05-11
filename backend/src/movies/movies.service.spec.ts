@@ -93,4 +93,27 @@ describe('MoviesService', () => {
             expect(callArgs?.params.with_genres).toBeUndefined();
         });
     });
+
+    describe('discover (Scenario 1.3)', () => {
+        it('should return an empty array when TMDB returns no results (invalid genre)', async () => {
+            // Given
+            mockedAxios.get.mockResolvedValue({
+                data: { results: [] },
+            });
+
+            // When
+            const result = await service.discover({ genres: '99999' });
+
+            // Then
+            expect(result).toEqual([]);
+            expect(mockedAxios.get).toHaveBeenCalledWith(
+                expect.any(String),
+                expect.objectContaining({
+                    params: expect.objectContaining({
+                        with_genres: '99999',
+                    }),
+                }),
+            );
+        });
+    });
 });
