@@ -4,6 +4,6 @@ import { TmdbController } from './tmdb.controller';
 
 @Module({
   providers: [TmdbService],
-  controllers: [TmdbController]
+  controllers: [TmdbController],
 })
 export class TmdbModule {}

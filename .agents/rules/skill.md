@@ -191,22 +191,22 @@ mockedAxios.get.mockResolvedValue({
 
 ## Format des commits TDD
 
-```
+```bash
 test(movies): <description courte du scénario testé>
 feat(movies): <description courte de l'implémentation>
 ```
 
 Exemples réels du projet :
-```
-test(movies): should return up to 6 movies with valid genre filter
-feat(movies): implement discover with genre filter via TMDB API
 
-test(movies): should use default minRating of 6 when not provided
-feat(movies): apply default minRating=6 in discover params
+```bash
+test(movies): retourne 6 films maximum avec un filtre genre valide
+feat(movies): implémenter le discover avec filtre genre via TMDB API
 
-test(movies): should throw 502 when TMDB is unavailable
-feat(movies): handle TMDB network errors with HttpException 502
-```
+test(movies): applique une note minimale de 6 par défaut si absente
+feat(movies): ajouter la valeur par défaut minRating=6 dans les params TMDB
+
+test(movies): lève une erreur 502 si TMDB est indisponible
+feat(movies): gérer les erreurs réseau TMDB avec HttpException 502
 
 ---
 

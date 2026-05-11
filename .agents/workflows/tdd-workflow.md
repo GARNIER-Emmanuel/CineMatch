@@ -63,7 +63,7 @@ npm run test -- --testPathPattern=movies.service
 ### Étape 4 — Commit du test
 ```bash
 git add src/movies/movies.service.spec.ts
-git commit -m "test(movies): <description du scénario>"
+git commit -m "test(movies): <description du scénario en francais>"
 ```
 
 ### Étape 5 — Implémenter le code minimum (GREEN)
