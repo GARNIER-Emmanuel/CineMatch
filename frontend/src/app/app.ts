@@ -1,11 +1,13 @@
-import { Component, signal } from '@angular/core';
+import { Component } from '@angular/core';
+import { NavbarComponent } from './layout/navbar/navbar';
 
 @Component({
   selector: 'app-root',
-  imports: [],
+  standalone: true,
+  imports: [NavbarComponent],
   templateUrl: './app.html',
   styleUrl: './app.css',
 })
-export class App {
-  protected readonly title = signal('frontend');
+export class AppComponent {
+  title = 'CineMatch';
 }
