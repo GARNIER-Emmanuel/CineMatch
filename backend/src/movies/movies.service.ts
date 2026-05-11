@@ -18,6 +18,7 @@ export class MoviesService {
       params: {
         api_key: this.apiKey,
         with_genres: filters.genres,
+        'with_runtime.lte': filters.maxDuration,
         sort_by: 'vote_average.desc',
         language: 'fr-FR',
       },
