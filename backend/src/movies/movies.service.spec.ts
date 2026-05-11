@@ -67,4 +67,29 @@ describe('MoviesService', () => {
             );
         });
     });
+
+    describe('discover (Scenario 1.2)', () => {
+        it('should return movies sorted by rating when no genre is provided', async () => {
+            // Given
+            mockedAxios.get.mockResolvedValue({
+                data: { results: [] },
+            });
+
+            // When
+            await service.discover({});
+
+            // Then
+            expect(mockedAxios.get).toHaveBeenCalledWith(
+                expect.any(String),
+                expect.objectContaining({
+                    params: expect.objectContaining({
+                        sort_by: 'vote_average.desc',
+                    }),
+                }),
+            );
+
+            const callArgs = mockedAxios.get.mock.calls[0][1];
+            expect(callArgs?.params.with_genres).toBeUndefined();
+        });
+    });
 });
