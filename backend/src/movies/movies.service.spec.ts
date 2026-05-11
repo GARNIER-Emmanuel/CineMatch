@@ -157,5 +157,27 @@ describe('MoviesService', () => {
         }),
       );
     });
+
+    it('should not apply duration filter when not provided (Scenario 2.2)', async () => {
+      // Given
+      const filters: DiscoverMoviesDto = {};
+      const tmdbResponse: Partial<AxiosResponse> = {
+        data: { results: [] },
+      };
+      mockHttpService.get.mockReturnValue(of(tmdbResponse));
+
+      // When
+      await service.discover(filters);
+
+      // Then
+      expect(mockHttpService.get).toHaveBeenCalledWith(
+        expect.any(String),
+        expect.objectContaining({
+          params: expect.not.objectContaining({
+            'with_runtime.lte': expect.anything(),
+          }),
+        }),
+      );
+    });
   });
 });
