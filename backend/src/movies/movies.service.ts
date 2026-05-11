@@ -18,6 +18,7 @@ export class MoviesService {
       params: {
         api_key: this.apiKey,
         with_genres: filters.genres,
+        sort_by: 'vote_average.desc',
         language: 'fr-FR',
       },
     });
