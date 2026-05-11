@@ -96,5 +96,27 @@ describe('MoviesService', () => {
         }),
       );
     });
+
+    it('should return an empty array when TMDB returns no results for a genre (US1-S1.3)', async () => {
+      // Given
+      const mockTmdbResponse = {
+        data: {
+          results: [],
+        },
+      };
+      mockedAxios.get.mockResolvedValue(mockTmdbResponse);
+
+      // When
+      const result = await service.discover({ genres: '99999' });
+
+      // Then
+      expect(result).toEqual([]);
+      expect(mockedAxios.get).toHaveBeenCalledWith(
+        expect.any(String),
+        expect.objectContaining({
+          params: expect.objectContaining({ with_genres: '99999' }),
+        }),
+      );
+    });
   });
 });
