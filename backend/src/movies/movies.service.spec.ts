@@ -169,5 +169,22 @@ describe('MoviesService', () => {
         }),
       );
     });
+
+    it('should pass vote_average.gte=6 to TMDB when minRating is absent (US3-S3.2)', async () => {
+      // Given
+      const mockTmdbResponse = { data: { results: [] } };
+      mockedAxios.get.mockResolvedValue(mockTmdbResponse);
+
+      // When
+      await service.discover({});
+
+      // Then
+      expect(mockedAxios.get).toHaveBeenCalledWith(
+        expect.any(String),
+        expect.objectContaining({
+          params: expect.objectContaining({ 'vote_average.gte': 6 }),
+        }),
+      );
+    });
   });
 });
