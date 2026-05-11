@@ -110,5 +110,30 @@ describe('MoviesService', () => {
         }),
       );
     });
+
+    it('should return an empty array when TMDB returns no results for an invalid genre (Scenario 1.3)', async () => {
+      // Given
+      const filters: DiscoverMoviesDto = { genres: '99999' };
+      const tmdbResponse: Partial<AxiosResponse> = {
+        data: {
+          results: [],
+        },
+      };
+      mockHttpService.get.mockReturnValue(of(tmdbResponse));
+
+      // When
+      const result = await service.discover(filters);
+
+      // Then
+      expect(result).toEqual([]);
+      expect(mockHttpService.get).toHaveBeenCalledWith(
+        expect.any(String),
+        expect.objectContaining({
+          params: expect.objectContaining({
+            with_genres: '99999',
+          }),
+        }),
+      );
+    });
   });
 });
