@@ -203,5 +203,22 @@ describe('MoviesService', () => {
         }),
       );
     });
+
+    it('should pass page=1 to TMDB when page is absent (US4-S4.2)', async () => {
+      // Given
+      const mockTmdbResponse = { data: { results: [] } };
+      mockedAxios.get.mockResolvedValue(mockTmdbResponse);
+
+      // When
+      await service.discover({});
+
+      // Then
+      expect(mockedAxios.get).toHaveBeenCalledWith(
+        expect.any(String),
+        expect.objectContaining({
+          params: expect.objectContaining({ page: 1 }),
+        }),
+      );
+    });
   });
 });
