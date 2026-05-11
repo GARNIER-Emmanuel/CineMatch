@@ -135,5 +135,27 @@ describe('MoviesService', () => {
         }),
       );
     });
+
+    it('should apply maximum duration filter when provided (Scenario 2.1)', async () => {
+      // Given
+      const filters: DiscoverMoviesDto = { maxDuration: 90 };
+      const tmdbResponse: Partial<AxiosResponse> = {
+        data: { results: [] },
+      };
+      mockHttpService.get.mockReturnValue(of(tmdbResponse));
+
+      // When
+      await service.discover(filters);
+
+      // Then
+      expect(mockHttpService.get).toHaveBeenCalledWith(
+        expect.any(String),
+        expect.objectContaining({
+          params: expect.objectContaining({
+            'with_runtime.lte': 90,
+          }),
+        }),
+      );
+    });
   });
 });

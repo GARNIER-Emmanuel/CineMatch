@@ -22,6 +22,7 @@ export class MoviesService {
           sort_by: 'vote_average.desc',
           'vote_count.gte': 200,
           with_genres: filters.genres,
+          'with_runtime.lte': filters.maxDuration,
         },
       }),
     );
