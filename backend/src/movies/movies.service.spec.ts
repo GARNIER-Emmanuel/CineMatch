@@ -10,6 +10,7 @@ describe('MoviesService', () => {
     let service: MoviesService;
 
     beforeEach(async () => {
+        jest.clearAllMocks();
         const module: TestingModule = await Test.createTestingModule({
             providers: [
                 MoviesService,
