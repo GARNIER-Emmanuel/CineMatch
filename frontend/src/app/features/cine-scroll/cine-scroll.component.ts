@@ -70,7 +70,7 @@ import { FilmSlideComponent } from './components/film-slide/film-slide.component
     .exit-btn {
       position: fixed;
       top: 30px;
-      left: 30px;
+      right: 30px;
       z-index: 2000;
       background: rgba(255, 180, 0, 0.1);
       border: 1px solid rgba(255, 180, 0, 0.3);
