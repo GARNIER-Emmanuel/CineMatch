@@ -3,11 +3,12 @@ import { CommonModule } from '@angular/common';
 import { MoviesService, Movie } from '../../core/services/movies';
 import { CineScrollProfileService } from '../../core/services/cine-scroll-profile';
 import { MoodSelectorComponent, Mood } from './components/mood-selector/mood-selector.component';
+import { FilmSlideComponent } from './components/film-slide/film-slide.component';
 
 @Component({
   selector: 'cm-cine-scroll',
   standalone: true,
-  imports: [CommonModule, MoodSelectorComponent],
+  imports: [CommonModule, MoodSelectorComponent, FilmSlideComponent],
   template: `
     <div class="cinescroll-page">
       <!-- Sélection du Mood -->
@@ -29,11 +30,9 @@ import { MoodSelectorComponent, Mood } from './components/mood-selector/mood-sel
       <!-- Expérience de Scroll -->
       @if (state === 'SCROLLING') {
         <div class="scroll-container">
-          <!-- TODO: Intégrer FilmSlideComponent dans l'US7 -->
-          <div class="temp-slide" *ngFor="let movie of movies; let i = index">
-             <h2>{{ movie.title }}</h2>
-             <p>{{ movie.overview }}</p>
-          </div>
+          @for (movie of movies; track movie.id) {
+            <cm-film-slide [movie]="movie"></cm-film-slide>
+          }
         </div>
       }
 
