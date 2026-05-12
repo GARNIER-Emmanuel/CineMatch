@@ -27,6 +27,19 @@ import { WatchlistService } from '../../../core/services/watchlist';
             </div>
             
             <p class="overview">{{ movie.overview }}</p>
+            
+            @if (credits) {
+              <div class="credits-section">
+                <div class="credit-item">
+                  <span class="credit-label">Réalisation</span>
+                  <span class="credit-value">{{ credits.director }}</span>
+                </div>
+                <div class="credit-item">
+                  <span class="credit-label">Distribution</span>
+                  <span class="credit-value">{{ credits.cast.join(', ') }}</span>
+                </div>
+              </div>
+            }
 
             <!-- Plateformes -->
             <div class="providers-section">
@@ -168,7 +181,34 @@ import { WatchlistService } from '../../../core/services/watchlist';
       font-size: 1.1rem;
       line-height: 1.6;
       color: rgba(255, 255, 255, 0.8);
+      margin-bottom: 25px;
+    }
+
+    .credits-section {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 20px;
       margin-bottom: 30px;
+      padding-top: 20px;
+      border-top: 1px solid rgba(255, 255, 255, 0.05);
+    }
+
+    .credit-item {
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+    }
+
+    .credit-label {
+      font-size: 0.8rem;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      color: rgba(255, 255, 255, 0.4);
+    }
+
+    .credit-value {
+      font-weight: 600;
+      color: white;
     }
 
     .providers-section h3 {
@@ -272,6 +312,7 @@ export class MovieDetailModalComponent implements OnInit {
   loadingProviders = true;
   feedbackSent = false;
   isInWatchlist = false;
+  credits: { director: string, cast: string[] } | null = null;
 
   constructor(
     private moviesService: MoviesService,
@@ -289,6 +330,13 @@ export class MovieDetailModalComponent implements OnInit {
       },
       error: () => {
         this.loadingProviders = false;
+        this.cdr.detectChanges();
+      }
+    });
+
+    this.moviesService.getMovieCredits(this.movie.id).subscribe({
+      next: (credits) => {
+        this.credits = credits;
         this.cdr.detectChanges();
       }
     });

@@ -57,6 +57,14 @@ export class SafePipe implements PipeTransform {
       <div class="info-container">
         <span class="rating">★ {{ movie.rating }}</span>
         <h1 class="movie-title">{{ movie.title }} ({{ movie.releaseYear }})</h1>
+        
+        @if (credits) {
+          <div class="credits-mini">
+            <span class="director">De <strong>{{ credits.director }}</strong></span>
+            <span class="cast">Avec {{ credits.cast.join(', ') }}</span>
+          </div>
+        }
+
         <p class="overview">{{ movie.overview }}</p>
       </div>
 
@@ -186,6 +194,19 @@ export class SafePipe implements PipeTransform {
       text-shadow: 0 2px 10px rgba(0,0,0,0.8);
     }
 
+    .credits-mini {
+      font-size: 0.9rem;
+      color: rgba(255, 255, 255, 0.7);
+      margin-bottom: 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .credits-mini strong {
+      color: var(--primary-color);
+    }
+
     .overview {
       font-size: 1rem;
       line-height: 1.5;
@@ -272,6 +293,7 @@ export class FilmSlideComponent implements OnInit {
       } else if (!this.loadingTrailer) {
         this.loadTrailer();
       }
+      this.loadCredits();
     } else {
       this.youtubeKey = null;
     }
@@ -284,6 +306,7 @@ export class FilmSlideComponent implements OnInit {
   
   backdrops: string[] = [];
   currentSlideIndex = 0;
+  credits: { director: string, cast: string[] } | null = null;
   private slideshowInterval: any;
   private watchlistService: WatchlistService;
   private profileService: CineScrollProfileService;
@@ -298,7 +321,14 @@ export class FilmSlideComponent implements OnInit {
   }
 
   ngOnInit(): void {
-    // On ne charge rien au init, on attend que le composant soit "actif"
+    if (this._active) {
+      this.loadCredits();
+    }
+  }
+
+  loadCredits(): void {
+    if (this.credits) return;
+    this.moviesService.getMovieCredits(this.movie.id).subscribe(c => this.credits = c);
   }
 
   loadTrailer(): void {
