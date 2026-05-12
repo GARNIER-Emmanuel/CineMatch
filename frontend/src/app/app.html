@@ -9,7 +9,8 @@
   <div class="content-container" *ngIf="!errorMessage">
     <cm-movie-filters 
       (genreChange)="onGenreChange($event)"
-      (durationChange)="onDurationChange($event)">
+      (durationChange)="onDurationChange($event)"
+      (certificationChange)="onCertificationChange($event)">
     </cm-movie-filters>
 
     <!-- CAS A : Aucun filtre actif (Mises en avant) -->

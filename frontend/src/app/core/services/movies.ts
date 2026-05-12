@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
 
 export interface Movie {
@@ -12,23 +12,33 @@ export interface Movie {
 }
 
 @Injectable({
-  providedIn: 'root'
+  providedIn: 'root',
 })
 export class MoviesService {
-  private apiUrl = 'http://localhost:3000/movies/discover';
+  private apiUrl = 'http://localhost:3000/movies';
 
   constructor(private http: HttpClient) {}
 
   /**
-   * Récupère une liste de films via l'API NestJS
+   * Récupère les films via l'endpoint de découverte avec filtres
    */
-  getMovies(genres?: string | null, maxDuration?: number, minRating?: number, page?: number): Observable<Movie[]> {
-    const params: any = {};
-    if (genres) params.genres = genres;
-    if (maxDuration) params.maxDuration = maxDuration;
-    if (minRating) params.minRating = minRating;
-    if (page) params.page = page;
+  getMovies(
+    genres?: string | null, 
+    maxDuration?: number, 
+    minRating?: number, 
+    page?: number,
+    certCountry?: string | null,
+    certLte?: string | null
+  ): Observable<Movie[]> {
+    let params = new HttpParams();
     
-    return this.http.get<Movie[]>(this.apiUrl, { params });
+    if (genres) params = params.set('genres', genres);
+    if (maxDuration) params = params.set('maxDuration', maxDuration.toString());
+    if (minRating !== undefined) params = params.set('minRating', minRating.toString());
+    if (page) params = params.set('page', page.toString());
+    if (certCountry) params = params.set('certificationCountry', certCountry);
+    if (certLte) params = params.set('certificationLte', certLte);
+
+    return this.http.get<Movie[]>(`${this.apiUrl}/discover`, { params });
   }
 }

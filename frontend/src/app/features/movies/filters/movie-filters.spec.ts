@@ -14,60 +14,66 @@ describe('MovieFiltersComponent', () => {
     component = fixture.componentInstance;
   });
 
-  it('should accumulate genre ids when multiple genres are selected', () => {
+  it('should show romance subfilter only when Romance is selected', () => {
     fixture.detectChanges();
-    let emittedGenres: string | null | undefined;
-
-    component.genreChange.subscribe((val: string | null) => emittedGenres = val);
+    const romanceBtn = fixture.nativeElement.querySelector('[data-test="genre-10749"]');
     
-    const actionBtn = fixture.nativeElement.querySelector('[data-test="genre-28"]');
-    const adventureBtn = fixture.nativeElement.querySelector('[data-test="genre-12"]');
+    expect(fixture.nativeElement.querySelector('.romance-subfilter')).toBeFalsy();
     
-    actionBtn.click();
-    adventureBtn.click();
-
-    expect(emittedGenres).toBe('28,12');
-    expect(component.selectedGenreIds).toEqual(['28', '12']);
+    romanceBtn.click();
+    fixture.detectChanges();
+    expect(fixture.nativeElement.querySelector('.romance-subfilter')).toBeTruthy();
   });
 
-  it('should remove genre id when clicking a selected genre', () => {
+  it('should emit certification for "family" mode by default when Romance is selected', () => {
     fixture.detectChanges();
-    let emittedGenres: string | null | undefined;
-    component.selectedGenreIds = ['28', '12'];
+    let emittedCert: any;
+    component.certificationChange.subscribe(val => emittedCert = val);
     
-    component.genreChange.subscribe((val: string | null) => emittedGenres = val);
-    
-    const actionBtn = fixture.nativeElement.querySelector('[data-test="genre-28"]');
-    actionBtn.click();
+    const romanceBtn = fixture.nativeElement.querySelector('[data-test="genre-10749"]');
+    romanceBtn.click();
 
-    expect(emittedGenres).toBe('12');
-    expect(component.selectedGenreIds).toEqual(['12']);
+    expect(emittedCert).toEqual({ country: 'FR', lte: '12' });
   });
 
-  it('should update value on input but emit only on change (Duration)', () => {
+  it('should emit null certification when romance mode is "all"', () => {
     fixture.detectChanges();
-    const duration = 120;
-    let emittedDuration: number | undefined;
-
-    component.durationChange.subscribe((val: number) => emittedDuration = val);
     
-    const slider = fixture.nativeElement.querySelector('[data-test="duration-slider"]');
-    slider.value = duration.toString();
+    const romanceBtn = fixture.nativeElement.querySelector('[data-test="genre-10749"]');
+    romanceBtn.click();
+    fixture.detectChanges();
     
-    slider.dispatchEvent(new Event('input'));
-    slider.dispatchEvent(new Event('change'));
+    let emittedCert: any;
+    component.certificationChange.subscribe(val => emittedCert = val);
     
-    expect(component.maxDuration).toBe(duration);
-    expect(emittedDuration).toBe(duration);
+    // On clique sur le deuxième bouton (Tout accepter)
+    const toggleButtons = fixture.nativeElement.querySelectorAll('.toggle-btn');
+    toggleButtons[1].click();
+    fixture.detectChanges();
+    
+    expect(emittedCert).toBeNull();
   });
 
-  it('should reset all filters', () => {
-    component.selectedGenreIds = ['28', '12'];
-    component.maxDuration = 90;
+  it('should reset romance mode when Romance genre is deselected', () => {
+    fixture.detectChanges();
+    const romanceBtn = fixture.nativeElement.querySelector('[data-test="genre-10749"]');
     
-    component.resetFilters();
+    // Sélection
+    romanceBtn.click();
+    fixture.detectChanges();
     
+    // On passe en mode "all"
+    const toggleButtons = fixture.nativeElement.querySelectorAll('.toggle-btn');
+    toggleButtons[1].click();
+    fixture.detectChanges();
+    
+    expect(component.romanceMode).toBe('all');
+    
+    // Désélection du genre Romance
+    romanceBtn.click();
+    fixture.detectChanges();
+    
+    expect(component.romanceMode).toBe('family');
     expect(component.selectedGenreIds.length).toBe(0);
-    expect(component.maxDuration).toBe(240);
   });
 });

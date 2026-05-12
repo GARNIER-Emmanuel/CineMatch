@@ -7,6 +7,11 @@ export interface Genre {
   name: string;
 }
 
+export interface Certification {
+  country: string;
+  lte: string;
+}
+
 @Component({
   selector: 'cm-movie-filters',
   standalone: true,
@@ -34,6 +39,25 @@ export interface Genre {
                 {{ genre.name }}
               </button>
             }
+          </div>
+
+          <!-- Sous-filtre Romance (Conditionnel) -->
+          <div class="romance-subfilter" *ngIf="isRomanceActive">
+            <span class="sub-label">Romance :</span>
+            <div class="toggle-group">
+              <button 
+                class="toggle-btn" 
+                [class.active]="romanceMode === 'family'"
+                (click)="setRomanceMode('family')">
+                ● Grand public
+              </button>
+              <button 
+                class="toggle-btn" 
+                [class.active]="romanceMode === 'all'"
+                (click)="setRomanceMode('all')">
+                ○ Tout accepter
+              </button>
+            </div>
           </div>
         </div>
 
@@ -158,6 +182,49 @@ export interface Genre {
       box-shadow: 0 4px 12px rgba(229, 9, 20, 0.3);
     }
 
+    /* Romance Subfilter Styles */
+    .romance-subfilter {
+      margin-top: 15px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 8px 12px;
+      background: rgba(255, 255, 255, 0.03);
+      border-radius: 8px;
+      animation: slideDown 0.3s ease-out;
+    }
+
+    .sub-label {
+      font-size: 0.8rem;
+      color: rgba(255, 255, 255, 0.6);
+      font-weight: 600;
+    }
+
+    .toggle-group {
+      display: flex;
+      gap: 10px;
+    }
+
+    .toggle-btn {
+      background: none;
+      border: none;
+      color: rgba(255, 255, 255, 0.4);
+      font-size: 0.8rem;
+      cursor: pointer;
+      padding: 2px 0;
+      transition: color 0.2s;
+    }
+
+    .toggle-btn.active {
+      color: white;
+      font-weight: 700;
+    }
+
+    @keyframes slideDown {
+      from { opacity: 0; transform: translateY(-10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
     .sliders-group {
       gap: 25px;
     }
@@ -207,9 +274,11 @@ export interface Genre {
 export class MovieFiltersComponent {
   @Output() genreChange = new EventEmitter<string | null>();
   @Output() durationChange = new EventEmitter<number>();
+  @Output() certificationChange = new EventEmitter<Certification | null>();
 
   selectedGenreIds: string[] = [];
   maxDuration: number = 240;
+  romanceMode: 'family' | 'all' = 'family';
 
   genres: Genre[] = [
     { id: '28', name: 'Action' },
@@ -226,20 +295,40 @@ export class MovieFiltersComponent {
     { id: '53', name: 'Thriller' }
   ];
 
+  get isRomanceActive(): boolean {
+    return this.selectedGenreIds.includes('10749');
+  }
+
   selectGenre(id: string): void {
     const index = this.selectedGenreIds.indexOf(id);
     
     if (index > -1) {
       this.selectedGenreIds.splice(index, 1);
+      // Réinitialiser le mode si on retire Romance
+      if (id === '10749') this.romanceMode = 'family';
     } else {
       this.selectedGenreIds.push(id);
     }
     
-    const genresParam = this.selectedGenreIds.length > 0 
-      ? this.selectedGenreIds.join(',') 
-      : null;
-      
+    this.emitAllFilters();
+  }
+
+  setRomanceMode(mode: 'family' | 'all'): void {
+    this.romanceMode = mode;
+    this.emitAllFilters();
+  }
+
+  private emitAllFilters(): void {
+    // Genres
+    const genresParam = this.selectedGenreIds.length > 0 ? this.selectedGenreIds.join(',') : null;
     this.genreChange.emit(genresParam);
+
+    // Certifications
+    if (this.isRomanceActive && this.romanceMode === 'family') {
+      this.certificationChange.emit({ country: 'FR', lte: '12' });
+    } else {
+      this.certificationChange.emit(null);
+    }
   }
 
   onDurationInput(event: Event): void {
@@ -248,14 +337,17 @@ export class MovieFiltersComponent {
 
   emitDurationChange(): void {
     this.durationChange.emit(this.maxDuration);
+    this.emitAllFilters(); // S'assurer que tout est émis
   }
 
   resetFilters(): void {
     this.selectedGenreIds = [];
     this.maxDuration = 240;
+    this.romanceMode = 'family';
     
     this.genreChange.emit(null);
     this.durationChange.emit(240);
+    this.certificationChange.emit(null);
   }
 
   hasActiveFilters(): boolean {

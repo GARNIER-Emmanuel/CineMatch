@@ -2,7 +2,7 @@ import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { NavbarComponent } from './layout/navbar/navbar';
 import { MovieRowComponent, MovieItem } from './features/home/movie-row/movie-row';
-import { MovieFiltersComponent } from './features/movies/filters/movie-filters';
+import { MovieFiltersComponent, Certification } from './features/movies/filters/movie-filters';
 import { MoviePaginationComponent } from './features/movies/pagination/movie-pagination';
 import { MoviesService, Movie } from './core/services/movies';
 
@@ -30,6 +30,9 @@ export class AppComponent implements OnInit {
   maxDuration: number = 240;
   currentPage: number = 1;
   hasMoreResults: boolean = true;
+  
+  certCountry: string | null = null;
+  certLte: string | null = null;
 
   get hasActiveFilters(): boolean {
     return !!this.selectedGenre || this.maxDuration < 240;
@@ -97,23 +100,37 @@ export class AppComponent implements OnInit {
   onGenreChange(genreId: string | null): void {
     this.selectedGenre = genreId;
     this.currentPage = 1;
-    this.loadDiscoveryMovies(false); // Reset liste
+    this.loadDiscoveryMovies(false);
   }
 
   onDurationChange(duration: number): void {
     this.maxDuration = duration;
     this.currentPage = 1;
-    this.loadDiscoveryMovies(false); // Reset liste
+    this.loadDiscoveryMovies(false);
+  }
+
+  onCertificationChange(cert: Certification | null): void {
+    this.certCountry = cert?.country || null;
+    this.certLte = cert?.lte || null;
+    this.currentPage = 1;
+    this.loadDiscoveryMovies(false);
   }
 
   onLoadMore(): void {
     this.currentPage++;
-    this.loadDiscoveryMovies(true); // Accumuler les films
+    this.loadDiscoveryMovies(true);
   }
 
   loadDiscoveryMovies(append: boolean = false): void {
     this.loadingDiscovery = true;
-    this.moviesService.getMovies(this.selectedGenre, this.maxDuration, 0, this.currentPage).subscribe({
+    this.moviesService.getMovies(
+      this.selectedGenre, 
+      this.maxDuration, 
+      0, 
+      this.currentPage,
+      this.certCountry || undefined,
+      this.certLte || undefined
+    ).subscribe({
       next: (movies: Movie[]) => {
         const newItems = this.mapToMovieItems(movies);
         
@@ -123,7 +140,6 @@ export class AppComponent implements OnInit {
           this.discoveryMovies = [...newItems];
         }
 
-        // TMDB renvoie normalement 20 résultats. Si on en a moins, c'est la fin.
         this.hasMoreResults = movies.length >= 20;
         
         this.loadingDiscovery = false;
