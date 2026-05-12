@@ -4,12 +4,20 @@ import { NavbarComponent } from './layout/navbar/navbar';
 import { MovieRowComponent, MovieItem } from './features/home/movie-row/movie-row';
 import { MovieFiltersComponent, Certification } from './features/movies/filters/movie-filters';
 import { MoviePaginationComponent } from './features/movies/pagination/movie-pagination';
+import { MovieDetailModalComponent } from './features/movies/detail-modal/movie-detail-modal'; // Nouveau
 import { MoviesService, Movie } from './core/services/movies';
 
 @Component({
   selector: 'app-root',
   standalone: true,
-  imports: [CommonModule, NavbarComponent, MovieRowComponent, MovieFiltersComponent, MoviePaginationComponent],
+  imports: [
+    CommonModule, 
+    NavbarComponent, 
+    MovieRowComponent, 
+    MovieFiltersComponent, 
+    MoviePaginationComponent,
+    MovieDetailModalComponent // Nouveau
+  ],
   templateUrl: './app.html',
   styleUrl: './app.css',
 })
@@ -27,7 +35,7 @@ export class AppComponent implements OnInit {
   loadingDiscovery = false;
 
   selectedGenre: string | null = null;
-  selectedProviders: string | null = null; // Nouveau
+  selectedProviders: string | null = null;
   maxDuration: number = 240;
   currentPage: number = 1;
   hasMoreResults: boolean = true;
@@ -36,6 +44,7 @@ export class AppComponent implements OnInit {
   certLte: string | null = null;
 
   showFilters: boolean = false;
+  selectedMovieForDetails: MovieItem | null = null; // État pour la modale
 
   get hasActiveFilters(): boolean {
     return !!this.selectedGenre || !!this.selectedProviders || this.maxDuration < 240;
@@ -108,13 +117,25 @@ export class AppComponent implements OnInit {
     this.cdr.detectChanges();
   }
 
+  // Ouvrir la modale
+  openMovieDetails(movie: MovieItem): void {
+    this.selectedMovieForDetails = movie;
+    this.cdr.detectChanges();
+  }
+
+  // Fermer la modale
+  closeMovieDetails(): void {
+    this.selectedMovieForDetails = null;
+    this.cdr.detectChanges();
+  }
+
   onGenreChange(genreId: string | null): void {
     this.selectedGenre = genreId;
     this.currentPage = 1;
     this.loadDiscoveryMovies(false);
   }
 
-  onProviderChange(providers: string | null): void { // Nouveau
+  onProviderChange(providers: string | null): void {
     this.selectedProviders = providers;
     this.currentPage = 1;
     this.loadDiscoveryMovies(false);
@@ -147,7 +168,7 @@ export class AppComponent implements OnInit {
       this.currentPage,
       this.certCountry || undefined,
       this.certLte || undefined,
-      this.selectedProviders || undefined // Transmission au service
+      this.selectedProviders || undefined
     ).subscribe({
       next: (movies: Movie[]) => {
         const newItems = this.mapToMovieItems(movies);
@@ -174,6 +195,7 @@ export class AppComponent implements OnInit {
     return movies.map(m => ({
       id: m.id,
       title: m.title,
+      overview: m.overview, // Transmission du synopsis
       poster: m.poster || 'assets/placeholder.jpg',
       rating: m.rating
     }));

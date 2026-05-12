@@ -5,7 +5,7 @@ import { Observable } from 'rxjs';
 export interface Movie {
   id: number;
   title: string;
-  overview: string;
+  overview: string; // Synopsis
   releaseYear: string;
   rating: string;
   poster: string | null;
@@ -19,9 +19,6 @@ export class MoviesService {
 
   constructor(private http: HttpClient) {}
 
-  /**
-   * Récupère les films via l'endpoint de découverte avec filtres
-   */
   getMovies(
     genres?: string | null, 
     maxDuration?: number, 
@@ -29,7 +26,7 @@ export class MoviesService {
     page?: number,
     certCountry?: string | null,
     certLte?: string | null,
-    providers?: string | null // Nouveau paramètre
+    providers?: string | null
   ): Observable<Movie[]> {
     let params = new HttpParams();
     

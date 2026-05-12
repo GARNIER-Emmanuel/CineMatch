@@ -18,29 +18,51 @@
 
     <!-- CAS A : Aucun filtre actif (Mises en avant) -->
     <div class="highlight-sections" *ngIf="!hasActiveFilters">
-      <cm-movie-row title="Populaires sur CineMatch" [movies]="popularMovies" [loading]="loadingPopular"></cm-movie-row>
-      <cm-movie-row title="Action & Aventure" [movies]="actionMovies" [loading]="loadingAction"></cm-movie-row>
-      <cm-movie-row title="Tendances actuelles" [movies]="trendingMovies" [loading]="loadingTrending"></cm-movie-row>
-    </div>
-
-    <!-- CAS B : Filtres actifs (Grille de résultats de recherche) -->
-    <div class="search-results-section" *ngIf="hasActiveFilters">
       <cm-movie-row 
-        title="Résultats de votre recherche" 
-        [movies]="discoveryMovies" 
-        [loading]="loadingDiscovery"
-        [isGrid]="true">
+        title="Populaires sur CineMatch" 
+        [movies]="popularMovies" 
+        [loading]="loadingPopular"
+        (movieClick)="openMovieDetails($event)">
       </cm-movie-row>
       
-      <div class="pagination-footer" *ngIf="hasMoreResults">
-        <cm-movie-pagination
-          [isLoading]="loadingDiscovery"
-          (loadMore)="onLoadMore()">
-        </cm-movie-pagination>
-      </div>
+      <cm-movie-row 
+        title="Action & Aventure" 
+        [movies]="actionMovies" 
+        [loading]="loadingAction"
+        (movieClick)="openMovieDetails($event)">
+      </cm-movie-row>
+      
+      <cm-movie-row 
+        title="Tendances : Moins de 2h" 
+        [movies]="trendingMovies" 
+        [loading]="loadingTrending"
+        (movieClick)="openMovieDetails($event)">
+      </cm-movie-row>
+    </div>
+
+    <!-- CAS B : Filtres actifs (Résultats de recherche) -->
+    <div class="search-results" *ngIf="hasActiveFilters">
+      <cm-movie-row 
+        [movies]="discoveryMovies" 
+        [loading]="loadingDiscovery" 
+        [isGrid]="true"
+        (movieClick)="openMovieDetails($event)">
+      </cm-movie-row>
+
+      <cm-movie-pagination 
+        *ngIf="hasMoreResults && !loadingDiscovery"
+        (loadMore)="onLoadMore()">
+      </cm-movie-pagination>
     </div>
   </div>
 </main>
+
+<!-- Modale de détails -->
+<cm-movie-detail-modal 
+  *ngIf="selectedMovieForDetails" 
+  [movie]="selectedMovieForDetails"
+  (close)="closeMovieDetails()">
+</cm-movie-detail-modal>
 
 <style>
   main {
