@@ -8,9 +8,9 @@ import { GetMovieTrailerService } from './get-movie-trailer/get-movie-trailer.se
 
 @Module({
   controllers: [
-    MoviesController, 
     GetCineScrollMoviesController,
-    GetMovieTrailerController
+    GetMovieTrailerController,
+    MoviesController, 
   ],
   providers: [
     MoviesService, 

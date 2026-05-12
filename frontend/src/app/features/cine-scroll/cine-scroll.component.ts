@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { MoviesService, Movie } from '../../core/services/movies';
 import { CineScrollProfileService } from '../../core/services/cine-scroll-profile';
@@ -84,16 +84,23 @@ import { FilmSlideComponent } from './components/film-slide/film-slide.component
       scroll-snap-type: y mandatory;
     }
 
-    .temp-slide {
-      height: 100vh;
-      scroll-snap-align: start;
+    .error-container {
       display: flex;
       flex-direction: column;
       align-items: center;
       justify-content: center;
-      padding: 40px;
-      text-align: center;
-      border-bottom: 1px solid rgba(255, 180, 0, 0.1);
+      height: 80vh;
+    }
+
+    .primary-btn {
+      background: #ffb400;
+      color: #030508;
+      border: none;
+      padding: 12px 30px;
+      border-radius: 25px;
+      font-weight: 700;
+      cursor: pointer;
+      margin-top: 20px;
     }
   `]
 })
@@ -106,7 +113,8 @@ export class CineScrollComponent implements OnInit {
 
   constructor(
     private moviesService: MoviesService,
-    private profileService: CineScrollProfileService
+    private profileService: CineScrollProfileService,
+    private cdr: ChangeDetectorRef
   ) {}
 
   ngOnInit(): void {
@@ -131,16 +139,19 @@ export class CineScrollComponent implements OnInit {
   loadMovies(): void {
     console.log('[CineScroll-FE] Chargement des films pour les genres:', this.selectedGenres);
     this.state = 'LOADING';
+    this.cdr.detectChanges();
     this.moviesService.getCineScrollMovies(this.selectedGenres)
       .subscribe({
         next: (movies) => {
           console.log('[CineScroll-FE] Réception de', movies.length, 'films');
           this.movies = movies;
           this.state = 'SCROLLING';
+          this.cdr.detectChanges();
         },
         error: (err) => {
           console.error('[CineScroll-FE] Erreur lors du chargement:', err);
           this.state = 'ERROR';
+          this.cdr.detectChanges();
         }
       });
   }
