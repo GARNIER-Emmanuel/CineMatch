@@ -5,7 +5,7 @@ import { NavbarComponent } from './layout/navbar/navbar';
 import { MovieRowComponent, MovieItem } from './features/home/movie-row/movie-row';
 import { MovieFiltersComponent, Certification } from './features/movies/filters/movie-filters';
 import { DirectorsComponent } from './features/directors/directors';
-import { MoviePaginationComponent } from './features/movies/pagination/movie-pagination';
+import { DirectorDetailModalComponent } from './features/directors/detail-modal/director-detail-modal';
 import { MovieDetailModalComponent } from './features/movies/detail-modal/movie-detail-modal';
 import { MoviesService, Movie } from './core/services/movies';
 import { HistoryService } from './core/services/history';
@@ -22,6 +22,7 @@ import { CineScrollComponent } from './features/cine-scroll/cine-scroll.componen
     MovieFiltersComponent, 
     MoviePaginationComponent,
     MovieDetailModalComponent,
+    DirectorDetailModalComponent,
     CineScrollComponent,
     DirectorsComponent
   ],
@@ -35,6 +36,7 @@ export class AppComponent implements OnInit, OnDestroy {
   searchResults: any[] = [];
   isSearching = false;
   searchQuery = '';
+  selectedDirectorForDetails: any = null;
   popularMovies: MovieItem[] = [];
   auteurMovies: MovieItem[] = [];
   classicMovies: MovieItem[] = [];
@@ -179,6 +181,22 @@ export class AppComponent implements OnInit, OnDestroy {
     window.scrollTo({ top: 0, behavior: 'smooth' });
     this.cdr.markForCheck();
     this.cdr.detectChanges();
+  }
+
+  onDirectorClick(director: any): void {
+    this.selectedDirectorForDetails = director;
+    this.cdr.detectChanges();
+  }
+
+  closeDirectorDetails(): void {
+    this.selectedDirectorForDetails = null;
+    this.cdr.detectChanges();
+  }
+
+  onViewDirectorMovies(directorId: number): void {
+    console.log('Voir les films du réalisateur:', directorId);
+    // Sera implémenté dans l'US13
+    this.closeDirectorDetails();
   }
 
   toggleFilters(): void {

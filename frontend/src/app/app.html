@@ -208,9 +208,17 @@
     </div>
   </footer>
 
+  <!-- MODALES -->
   <cm-movie-detail-modal 
-    *ngIf="selectedMovieForDetails"
-    [movie]="selectedMovieForDetails"
+    *ngIf="selectedMovieForDetails" 
+    [movie]="selectedMovieForDetails" 
     (close)="closeMovieDetails()">
   </cm-movie-detail-modal>
+
+  <cm-director-detail-modal
+    *ngIf="selectedDirectorForDetails"
+    [director]="selectedDirectorForDetails"
+    (close)="closeDirectorDetails()"
+    (viewMovies)="onViewDirectorMovies($event)">
+  </cm-director-detail-modal>
 </div>
