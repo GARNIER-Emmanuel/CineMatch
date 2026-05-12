@@ -315,7 +315,8 @@ export class AppComponent implements OnInit, OnDestroy {
         const newItems = this.mapToMovieItems(movies);
         if (append) this.discoveryMovies = [...this.discoveryMovies, ...newItems];
         else this.discoveryMovies = [...newItems];
-        this.hasMoreResults = movies.length >= 20;
+        // Le bouton reste visible tant qu'on reçoit des résultats (même filtrés < 20)
+        this.hasMoreResults = movies.length > 0;
         this.loadingDiscovery = false;
         this.cdr.detectChanges();
       },
