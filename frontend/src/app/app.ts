@@ -155,6 +155,20 @@ export class AppComponent implements OnInit, OnDestroy {
     console.log('Navigation vers HOME');
     this.currentView = 'home';
     this.showFilters = false;
+    
+    // Reset filters
+    this.selectedGenre = null;
+    this.selectedProviders = null;
+    this.maxDuration = 240;
+    this.certCountry = null;
+    this.certLte = null;
+    this.discoveryMovies = [];
+    
+    // Reset search
+    this.searchQuery = '';
+    this.searchResults = [];
+    this.isSearching = false;
+
     window.scrollTo({ top: 0, behavior: 'smooth' });
     this.cdr.markForCheck();
     this.cdr.detectChanges();
