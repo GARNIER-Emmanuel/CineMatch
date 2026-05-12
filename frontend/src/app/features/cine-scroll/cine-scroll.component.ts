@@ -30,7 +30,7 @@ import { FilmSlideComponent } from './components/film-slide/film-slide.component
       <!-- Expérience de Scroll -->
       @if (state === 'SCROLLING') {
         <div class="scroll-container" (scroll)="onScroll($event)">
-          @for (movie of movies; track movie.id; let i = index) {
+          @for (movie of movies; track movie.id; let i = $index) {
             <cm-film-slide 
               [movie]="movie" 
               [active]="i === activeIndex || i === activeIndex + 1">
