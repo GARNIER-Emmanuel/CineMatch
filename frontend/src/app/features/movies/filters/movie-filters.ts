@@ -12,6 +12,12 @@ export interface Certification {
   lte: string;
 }
 
+export interface Provider {
+  id: string;
+  name: string;
+  icon?: string;
+}
+
 @Component({
   selector: 'cm-movie-filters',
   standalone: true,
@@ -26,37 +32,56 @@ export interface Certification {
       </div>
 
       <div class="filters-grid">
-        <!-- Section Genres -->
-        <div class="filter-group genres-group">
-          <label class="group-label">Genres</label>
-          <div class="genres-chips">
-            @for (genre of genres; track genre.id) {
-              <button 
-                class="chip" 
-                [class.active]="selectedGenreIds.includes(genre.id)"
-                [attr.data-test]="'genre-' + genre.id"
-                (click)="selectGenre(genre.id)">
-                {{ genre.name }}
-              </button>
-            }
+        <!-- Section Genres & Plateformes -->
+        <div class="filter-group main-group">
+          <!-- Genres -->
+          <div class="sub-group">
+            <label class="group-label">Genres</label>
+            <div class="genres-chips">
+              @for (genre of genres; track genre.id) {
+                <button 
+                  class="chip" 
+                  [class.active]="selectedGenreIds.includes(genre.id)"
+                  [attr.data-test]="'genre-' + genre.id"
+                  (click)="selectGenre(genre.id)">
+                  {{ genre.name }}
+                </button>
+              }
+            </div>
+
+            <!-- Sous-filtre Romance (Conditionnel) -->
+            <div class="romance-subfilter" *ngIf="isRomanceActive">
+              <span class="sub-label">Romance :</span>
+              <div class="toggle-group">
+                <button 
+                  class="toggle-btn" 
+                  [class.active]="romanceMode === 'family'"
+                  (click)="setRomanceMode('family')">
+                  ● Grand public
+                </button>
+                <button 
+                  class="toggle-btn" 
+                  [class.active]="romanceMode === 'all'"
+                  (click)="setRomanceMode('all')">
+                  ○ Tout accepter
+                </button>
+              </div>
+            </div>
           </div>
 
-          <!-- Sous-filtre Romance (Conditionnel) -->
-          <div class="romance-subfilter" *ngIf="isRomanceActive">
-            <span class="sub-label">Romance :</span>
-            <div class="toggle-group">
-              <button 
-                class="toggle-btn" 
-                [class.active]="romanceMode === 'family'"
-                (click)="setRomanceMode('family')">
-                ● Grand public
-              </button>
-              <button 
-                class="toggle-btn" 
-                [class.active]="romanceMode === 'all'"
-                (click)="setRomanceMode('all')">
-                ○ Tout accepter
-              </button>
+          <!-- Plateformes -->
+          <div class="sub-group providers-section">
+            <label class="group-label">Plateformes</label>
+            <div class="providers-chips">
+              @for (provider of providers; track provider.id) {
+                <button 
+                  class="provider-chip" 
+                  [class.active]="selectedProviderIds.includes(provider.id)"
+                  [attr.data-test]="'provider-' + provider.id"
+                  (click)="selectProvider(provider.id)">
+                  {{ provider.name }}
+                </button>
+              }
             </div>
           </div>
         </div>
@@ -143,6 +168,15 @@ export interface Certification {
       flex-direction: column;
     }
 
+    .main-group {
+      gap: 30px;
+    }
+
+    .sub-group {
+      display: flex;
+      flex-direction: column;
+    }
+
     .group-label {
       font-size: 0.85rem;
       text-transform: uppercase;
@@ -152,13 +186,13 @@ export interface Certification {
       font-weight: 600;
     }
 
-    .genres-chips {
+    .genres-chips, .providers-chips {
       display: flex;
       flex-wrap: wrap;
       gap: 8px;
     }
 
-    .chip {
+    .chip, .provider-chip {
       padding: 6px 14px;
       border-radius: 6px;
       border: 1px solid rgba(255, 255, 255, 0.1);
@@ -169,7 +203,7 @@ export interface Certification {
       transition: all 0.2s ease;
     }
 
-    .chip:hover {
+    .chip:hover, .provider-chip:hover {
       background: rgba(255, 255, 255, 0.1);
       color: white;
     }
@@ -182,7 +216,14 @@ export interface Certification {
       box-shadow: 0 4px 12px rgba(229, 9, 20, 0.3);
     }
 
-    /* Romance Subfilter Styles */
+    .provider-chip.active {
+      background: #0070f3; /* Bleu premium pour les plateformes */
+      border-color: #0070f3;
+      color: white;
+      font-weight: 600;
+      box-shadow: 0 4px 12px rgba(0, 112, 243, 0.3);
+    }
+
     .romance-subfilter {
       margin-top: 15px;
       display: flex;
@@ -191,7 +232,6 @@ export interface Certification {
       padding: 8px 12px;
       background: rgba(255, 255, 255, 0.03);
       border-radius: 8px;
-      animation: slideDown 0.3s ease-out;
     }
 
     .sub-label {
@@ -212,17 +252,11 @@ export interface Certification {
       font-size: 0.8rem;
       cursor: pointer;
       padding: 2px 0;
-      transition: color 0.2s;
     }
 
     .toggle-btn.active {
       color: white;
       font-weight: 700;
-    }
-
-    @keyframes slideDown {
-      from { opacity: 0; transform: translateY(-10px); }
-      to { opacity: 1; transform: translateY(0); }
     }
 
     .sliders-group {
@@ -265,18 +299,16 @@ export interface Certification {
       box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
       transition: transform 0.2s;
     }
-
-    .modern-slider::-webkit-slider-thumb:hover {
-      transform: scale(1.2);
-    }
   `]
 })
 export class MovieFiltersComponent {
   @Output() genreChange = new EventEmitter<string | null>();
   @Output() durationChange = new EventEmitter<number>();
   @Output() certificationChange = new EventEmitter<Certification | null>();
+  @Output() providerChange = new EventEmitter<string | null>();
 
   selectedGenreIds: string[] = [];
+  selectedProviderIds: string[] = [];
   maxDuration: number = 240;
   romanceMode: 'family' | 'all' = 'family';
 
@@ -295,21 +327,36 @@ export class MovieFiltersComponent {
     { id: '53', name: 'Thriller' }
   ];
 
+  providers: Provider[] = [
+    { id: '8', name: 'Netflix' },
+    { id: '337', name: 'Disney+' },
+    { id: '119', name: 'Amazon Prime' },
+    { id: '381', name: 'Canal+' },
+    { id: '2', name: 'Apple TV' }
+  ];
+
   get isRomanceActive(): boolean {
     return this.selectedGenreIds.includes('10749');
   }
 
   selectGenre(id: string): void {
     const index = this.selectedGenreIds.indexOf(id);
-    
     if (index > -1) {
       this.selectedGenreIds.splice(index, 1);
-      // Réinitialiser le mode si on retire Romance
       if (id === '10749') this.romanceMode = 'family';
     } else {
       this.selectedGenreIds.push(id);
     }
-    
+    this.emitAllFilters();
+  }
+
+  selectProvider(id: string): void {
+    const index = this.selectedProviderIds.indexOf(id);
+    if (index > -1) {
+      this.selectedProviderIds.splice(index, 1);
+    } else {
+      this.selectedProviderIds.push(id);
+    }
     this.emitAllFilters();
   }
 
@@ -319,9 +366,13 @@ export class MovieFiltersComponent {
   }
 
   private emitAllFilters(): void {
-    // Genres
+    // Genres (ET logique : virgule)
     const genresParam = this.selectedGenreIds.length > 0 ? this.selectedGenreIds.join(',') : null;
     this.genreChange.emit(genresParam);
+
+    // Plateformes (OU logique : barre verticale)
+    const providersParam = this.selectedProviderIds.length > 0 ? this.selectedProviderIds.join('|') : null;
+    this.providerChange.emit(providersParam);
 
     // Certifications
     if (this.isRomanceActive && this.romanceMode === 'family') {
@@ -337,20 +388,22 @@ export class MovieFiltersComponent {
 
   emitDurationChange(): void {
     this.durationChange.emit(this.maxDuration);
-    this.emitAllFilters(); // S'assurer que tout est émis
+    this.emitAllFilters();
   }
 
   resetFilters(): void {
     this.selectedGenreIds = [];
+    this.selectedProviderIds = [];
     this.maxDuration = 240;
     this.romanceMode = 'family';
     
     this.genreChange.emit(null);
+    this.providerChange.emit(null);
     this.durationChange.emit(240);
     this.certificationChange.emit(null);
   }
 
   hasActiveFilters(): boolean {
-    return this.selectedGenreIds.length > 0 || this.maxDuration !== 240;
+    return this.selectedGenreIds.length > 0 || this.selectedProviderIds.length > 0 || this.maxDuration !== 240;
   }
 }

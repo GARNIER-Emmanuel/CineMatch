@@ -27,6 +27,7 @@ export class AppComponent implements OnInit {
   loadingDiscovery = false;
 
   selectedGenre: string | null = null;
+  selectedProviders: string | null = null; // Nouveau
   maxDuration: number = 240;
   currentPage: number = 1;
   hasMoreResults: boolean = true;
@@ -34,10 +35,10 @@ export class AppComponent implements OnInit {
   certCountry: string | null = null;
   certLte: string | null = null;
 
-  showFilters: boolean = false; // État de visibilité des filtres
+  showFilters: boolean = false;
 
   get hasActiveFilters(): boolean {
-    return !!this.selectedGenre || this.maxDuration < 240;
+    return !!this.selectedGenre || !!this.selectedProviders || this.maxDuration < 240;
   }
 
   errorMessage: string | null = null;
@@ -101,11 +102,20 @@ export class AppComponent implements OnInit {
 
   toggleFilters(): void {
     this.showFilters = !this.showFilters;
+    if (this.showFilters) {
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
     this.cdr.detectChanges();
   }
 
   onGenreChange(genreId: string | null): void {
     this.selectedGenre = genreId;
+    this.currentPage = 1;
+    this.loadDiscoveryMovies(false);
+  }
+
+  onProviderChange(providers: string | null): void { // Nouveau
+    this.selectedProviders = providers;
     this.currentPage = 1;
     this.loadDiscoveryMovies(false);
   }
@@ -136,7 +146,8 @@ export class AppComponent implements OnInit {
       0, 
       this.currentPage,
       this.certCountry || undefined,
-      this.certLte || undefined
+      this.certLte || undefined,
+      this.selectedProviders || undefined // Transmission au service
     ).subscribe({
       next: (movies: Movie[]) => {
         const newItems = this.mapToMovieItems(movies);

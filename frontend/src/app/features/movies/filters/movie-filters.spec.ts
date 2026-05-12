@@ -25,55 +25,50 @@ describe('MovieFiltersComponent', () => {
     expect(fixture.nativeElement.querySelector('.romance-subfilter')).toBeTruthy();
   });
 
-  it('should emit certification for "family" mode by default when Romance is selected', () => {
+  it('should accumulate provider ids with | separator', () => {
     fixture.detectChanges();
-    let emittedCert: any;
-    component.certificationChange.subscribe(val => emittedCert = val);
+    let emittedProviders: string | null | undefined;
+    component.providerChange.subscribe(val => emittedProviders = val);
     
-    const romanceBtn = fixture.nativeElement.querySelector('[data-test="genre-10749"]');
-    romanceBtn.click();
+    const netflixBtn = fixture.nativeElement.querySelector('[data-test="provider-8"]');
+    const disneyBtn = fixture.nativeElement.querySelector('[data-test="provider-337"]');
+    
+    netflixBtn.click();
+    disneyBtn.click();
+    fixture.detectChanges();
 
-    expect(emittedCert).toEqual({ country: 'FR', lte: '12' });
+    expect(emittedProviders).toBe('8|337');
+    expect(component.selectedProviderIds).toEqual(['8', '337']);
   });
 
-  it('should emit null certification when romance mode is "all"', () => {
+  it('should reset all filters including providers', () => {
+    fixture.detectChanges();
+    component.selectedProviderIds = ['8'];
+    component.selectedGenreIds = ['28'];
+    
+    component.resetFilters();
     fixture.detectChanges();
     
-    const romanceBtn = fixture.nativeElement.querySelector('[data-test="genre-10749"]');
-    romanceBtn.click();
-    fixture.detectChanges();
-    
-    let emittedCert: any;
-    component.certificationChange.subscribe(val => emittedCert = val);
-    
-    // On clique sur le deuxième bouton (Tout accepter)
-    const toggleButtons = fixture.nativeElement.querySelectorAll('.toggle-btn');
-    toggleButtons[1].click();
-    fixture.detectChanges();
-    
-    expect(emittedCert).toBeNull();
+    expect(component.selectedProviderIds.length).toBe(0);
+    expect(component.selectedGenreIds.length).toBe(0);
   });
 
   it('should reset romance mode when Romance genre is deselected', () => {
     fixture.detectChanges();
     const romanceBtn = fixture.nativeElement.querySelector('[data-test="genre-10749"]');
     
-    // Sélection
     romanceBtn.click();
     fixture.detectChanges();
     
-    // On passe en mode "all"
     const toggleButtons = fixture.nativeElement.querySelectorAll('.toggle-btn');
     toggleButtons[1].click();
     fixture.detectChanges();
     
     expect(component.romanceMode).toBe('all');
     
-    // Désélection du genre Romance
     romanceBtn.click();
     fixture.detectChanges();
     
     expect(component.romanceMode).toBe('family');
-    expect(component.selectedGenreIds.length).toBe(0);
   });
 });

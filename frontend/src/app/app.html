@@ -10,6 +10,7 @@
     <div class="filters-wrapper" *ngIf="showFilters">
       <cm-movie-filters 
         (genreChange)="onGenreChange($event)"
+        (providerChange)="onProviderChange($event)"
         (durationChange)="onDurationChange($event)"
         (certificationChange)="onCertificationChange($event)">
       </cm-movie-filters>
