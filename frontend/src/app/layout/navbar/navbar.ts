@@ -9,7 +9,7 @@ import { CommonModule } from '@angular/common';
     <nav class="navbar" [class.scrolled]="isScrolled">
       <div class="nav-left">
         <div class="logo" (click)="onHomeClick()">
-          <h1 class="logo-text">CineMatch</h1>
+          <h1 class="logo-text">Cine<span>Match</span></h1>
         </div>
         <ul class="nav-links">
           <li [class.active]="currentView === 'home'" (click)="onHomeClick()">Accueil</li>
@@ -22,7 +22,7 @@ import { CommonModule } from '@angular/common';
       <div class="nav-right">
         <button class="filter-toggle" (click)="onToggleFilters()">
           <span class="icon">🔍</span>
-          <span>Recherche & Filtres</span>
+          <span>Recherche VIP</span>
         </button>
         <div class="user-profile">
           <img src="https://api.dicebear.com/7.x/avataaars/svg?seed=Felix" alt="User Avatar">
@@ -35,18 +35,20 @@ import { CommonModule } from '@angular/common';
       position: fixed;
       top: 0;
       width: 100%;
-      height: 68px;
+      height: 70px;
       display: flex;
       align-items: center;
       justify-content: space-between;
       padding: 0 4%;
-      background: linear-gradient(to bottom, rgba(0,0,0,0.8) 0%, transparent 100%);
+      background: linear-gradient(to bottom, rgba(5, 8, 15, 0.9) 0%, transparent 100%);
       z-index: 1000;
-      transition: background 0.3s ease;
+      transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
     }
 
     .navbar.scrolled {
-      background: #141414;
+      background: #05080f;
+      border-bottom: 1px solid rgba(255, 180, 0, 0.1);
+      height: 60px;
     }
 
     .nav-left {
@@ -60,75 +62,93 @@ import { CommonModule } from '@angular/common';
     }
 
     .logo-text {
-      color: #E50914;
-      font-size: 1.6rem;
-      font-weight: 800;
+      color: white;
+      font-family: 'Playfair Display', serif;
+      font-size: 1.8rem;
+      font-weight: 900;
       margin: 0;
-      letter-spacing: -1px;
+      letter-spacing: -0.5px;
+    }
+
+    .logo-text span {
+      color: #ffb400; /* Or Ambré */
     }
 
     .nav-links {
       display: flex;
       list-style: none;
-      gap: 20px;
+      gap: 25px;
       margin: 0;
       padding: 0;
     }
 
     .nav-links li {
-      color: #e5e5e5;
+      color: rgba(255, 255, 255, 0.7);
       font-size: 0.85rem;
+      font-weight: 500;
       cursor: pointer;
-      transition: color 0.3s;
+      transition: all 0.3s;
       position: relative;
     }
 
     .nav-links li:hover, .nav-links li.active {
-      color: white;
+      color: #ffb400;
     }
 
     .nav-links li.active::after {
       content: '';
       position: absolute;
-      bottom: -5px;
-      left: 0;
-      width: 100%;
-      height: 2px;
-      background: #E50914;
+      bottom: -8px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 4px;
+      height: 4px;
+      background: #ffb400;
+      border-radius: 50%;
+      box-shadow: 0 0 10px #ffb400;
     }
 
     .nav-right {
       display: flex;
       align-items: center;
-      gap: 25px;
+      gap: 30px;
     }
 
     .filter-toggle {
-      background: rgba(255, 255, 255, 0.1);
-      border: 1px solid rgba(255, 255, 255, 0.2);
-      color: white;
-      padding: 8px 18px;
-      border-radius: 4px;
+      background: rgba(255, 180, 0, 0.1);
+      border: 1px solid rgba(255, 180, 0, 0.3);
+      color: #ffb400;
+      padding: 8px 20px;
+      border-radius: 20px; /* Plus arrondi pour le look Cinema */
       cursor: pointer;
       display: flex;
       align-items: center;
       gap: 10px;
-      font-size: 0.85rem;
-      font-weight: 600;
-      transition: all 0.2s ease;
+      font-size: 0.8rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      transition: all 0.3s ease;
     }
 
     .filter-toggle:hover {
-      background: rgba(255, 255, 255, 0.2);
-      border-color: rgba(255, 255, 255, 0.4);
+      background: #ffb400;
+      color: #05080f;
+      box-shadow: 0 0 20px rgba(255, 180, 0, 0.4);
     }
 
     .user-profile img {
-      width: 34px;
-      height: 34px;
-      border-radius: 4px;
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      border: 2px solid rgba(255, 180, 0, 0.2);
       cursor: pointer;
-      box-shadow: 0 0 10px rgba(0,0,0,0.5);
+      transition: transform 0.3s;
+    }
+
+    .user-profile img:hover {
+      transform: scale(1.1);
+      border-color: #ffb400;
     }
   `]
 })

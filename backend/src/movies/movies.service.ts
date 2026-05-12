@@ -36,9 +36,12 @@ export class MoviesService {
         title: movie.title,
         overview: movie.overview,
         releaseYear: movie.release_date ? movie.release_date.split('-')[0] : '',
-        rating: movie.vote_average.toString(),
+        rating: movie.vote_average.toFixed(1),
         poster: movie.poster_path
           ? `https://image.tmdb.org/t/p/w500${movie.poster_path}`
+          : null,
+        backdrop: movie.backdrop_path
+          ? `https://image.tmdb.org/t/p/w1280${movie.backdrop_path}`
           : null,
       }));
     } catch (error: any) {

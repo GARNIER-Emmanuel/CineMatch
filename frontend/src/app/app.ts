@@ -50,6 +50,7 @@ export class AppComponent implements OnInit {
   showFilters: boolean = false;
   selectedMovieForDetails: MovieItem | null = null;
   currentView: 'home' | 'watchlist' = 'home';
+  heroMovie: MovieItem | null = null;
 
   get hasActiveFilters(): boolean {
     return !!this.selectedGenre || !!this.selectedProviders || this.maxDuration < 240;
@@ -68,12 +69,12 @@ export class AppComponent implements OnInit {
     this.loadAllMovies();
     
     this.historyService.history$.subscribe(history => {
-      this.historyMovies = history;
+      this.historyMovies = this.roundRatings(history);
       this.cdr.detectChanges();
     });
 
     this.watchlistService.watchlist$.subscribe(watchlist => {
-      this.watchlistMovies = watchlist;
+      this.watchlistMovies = this.roundRatings(watchlist);
       this.cdr.detectChanges();
     });
   }
@@ -96,6 +97,10 @@ export class AppComponent implements OnInit {
       next: (movies: Movie[]) => {
         this.popularMovies = [...this.mapToMovieItems(movies)];
         this.loadingPopular = false;
+        // Sélectionner le premier film avec un backdrop pour le Hero
+        if (!this.heroMovie) {
+          this.heroMovie = this.popularMovies.find(m => m.backdrop) || this.popularMovies[0] || null;
+        }
         this.cdr.detectChanges();
       },
       error: errorHandler
@@ -225,7 +230,15 @@ export class AppComponent implements OnInit {
       title: m.title,
       overview: m.overview,
       poster: m.poster || 'assets/placeholder.jpg',
-      rating: m.rating
+      rating: m.rating ? parseFloat(m.rating).toFixed(1) : '0.0',
+      backdrop: m.backdrop || null
+    }));
+  }
+
+  private roundRatings(movies: MovieItem[]): MovieItem[] {
+    return movies.map(m => ({
+      ...m,
+      rating: m.rating ? parseFloat(m.rating).toFixed(1) : '0.0'
     }));
   }
 }

@@ -9,6 +9,7 @@ export interface Movie {
   releaseYear: string;
   rating: string;
   poster: string | null;
+  backdrop: string | null;
 }
 
 export interface WatchProvider {

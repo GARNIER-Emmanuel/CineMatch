@@ -11,6 +11,25 @@
     <!-- SECTION ACCUEIL -->
     <div *ngIf="currentView === 'home'" class="view-home">
 
+      <!-- HERO BANNER -->
+      <div class="hero-banner" *ngIf="heroMovie && !hasActiveFilters">
+        <div class="hero-backdrop" [style.backgroundImage]="'url(' + heroMovie.backdrop + ')'"></div>
+        <div class="hero-gradient"></div>
+        <div class="hero-content">
+          <span class="hero-badge">★ Film Populaire</span>
+          <h1 class="hero-title">{{ heroMovie.title }}</h1>
+          <p class="hero-overview">{{ heroMovie.overview }}</p>
+          <div class="hero-actions">
+            <button class="hero-btn-primary" (click)="openMovieDetails(heroMovie)">
+              ▶ Découvrir
+            </button>
+            <button class="hero-btn-secondary" (click)="toggleFilters()">
+              🔍 Explorer
+            </button>
+          </div>
+        </div>
+      </div>
+
       <div class="filters-wrapper" *ngIf="showFilters">
         <cm-movie-filters 
           (genreChange)="onGenreChange($event)"
@@ -26,7 +45,6 @@
 
       <!-- CAS A : Aucun filtre actif (Mises en avant) -->
       <div class="highlight-sections" *ngIf="!hasActiveFilters">
-        <!-- Historique (Conditionnel) -->
         <cm-movie-row 
           *ngIf="historyMovies.length > 0"
           title="Récemment consultés" 
@@ -86,7 +104,7 @@
           @for (movie of watchlistMovies; track movie.id) {
             <div class="movie-card-wrapper" (click)="openMovieDetails(movie)">
               <div class="movie-card">
-                <img [src]="movie.poster" [alt]="movie.title">
+                <img [src]="movie.poster" [alt]="movie.title" title="">
                 <div class="card-overlay">
                   <span class="rating">★ {{ movie.rating }}</span>
                   <span class="title">{{ movie.title }}</span>
@@ -98,7 +116,7 @@
 
         <div class="empty-watchlist" *ngIf="watchlistMovies.length === 0">
           <div class="empty-content">
-            <span class="empty-icon">📂</span>
+            <span class="empty-icon">🎬</span>
             <h2>Votre liste est vide</h2>
             <p>Ajoutez des films pour les retrouver facilement ici.</p>
             <button class="primary-btn" (click)="goToHome()">Explorer les films</button>
@@ -108,6 +126,25 @@
     </div>
 
   </main>
+
+  <!-- FOOTER CINÉMATOGRAPHIQUE -->
+  <footer class="cinema-footer">
+    <div class="footer-content">
+      <div class="footer-brand">
+        <h3 class="footer-logo">Cine<span>Match</span></h3>
+        <p class="footer-tagline">Le cinéma, à portée de clic.</p>
+      </div>
+      <div class="footer-links">
+        <a (click)="goToHome()">Accueil</a>
+        <a (click)="goToWatchlist()">Ma Liste</a>
+        <a (click)="toggleFilters()">Recherche</a>
+      </div>
+      <div class="footer-credits">
+        <p>Données fournies par <a href="https://www.themoviedb.org/" target="_blank" rel="noopener">TMDB</a></p>
+        <p class="copyright">© 2026 CineMatch — Projet SUP DE VINCI</p>
+      </div>
+    </div>
+  </footer>
 
   <cm-movie-detail-modal 
     *ngIf="selectedMovieForDetails"

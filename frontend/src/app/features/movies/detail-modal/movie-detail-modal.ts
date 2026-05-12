@@ -1,4 +1,4 @@
-import { Component, Input, Output, EventEmitter, HostListener, OnInit, inject, ChangeDetectorRef } from '@angular/core';
+import { Component, Input, Output, EventEmitter, OnInit, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { MovieItem } from '../../home/movie-row/movie-row';
 import { MoviesService, WatchProvider } from '../../../core/services/movies';
@@ -11,60 +11,56 @@ import { WatchlistService } from '../../../core/services/watchlist';
   template: `
     <div class="modal-backdrop" (click)="onClose()">
       <div class="modal-container glass" (click)="$event.stopPropagation()">
-        <button class="close-btn" (click)="onClose()">×</button>
+        <button class="close-btn" (click)="onClose()">✕</button>
         
         <div class="modal-content">
-          <div class="poster-side">
-            <img [src]="movie?.poster" [alt]="movie?.title">
+          <div class="movie-poster">
+            <img [src]="movie.poster" [alt]="movie.title">
+            <div class="poster-glow"></div>
           </div>
-          
-          <div class="info-side">
-            <div class="header-info">
-              <div class="meta-row">
-                <span class="rating-badge">★ {{ formatRating(movie?.rating) }}</span>
-                <div class="vote-actions" *ngIf="!hasVoted">
-                  <button class="vote-btn like" (click)="onVote(true)" title="J'aime">👍</button>
-                  <button class="vote-btn dislike" (click)="onVote(false)" title="Pas pour moi">👎</button>
-                </div>
-                <span class="vote-feedback" *ngIf="hasVoted">Merci pour votre avis !</span>
-              </div>
-              <h2 class="title">{{ movie?.title }}</h2>
+
+          <div class="movie-info">
+            <h1 class="movie-title">{{ movie.title }}</h1>
+            <div class="movie-meta">
+              <span class="rating">★ {{ movie.rating }}</span>
+              <span class="year">Cinéma Excellence</span>
             </div>
+            
+            <p class="overview">{{ movie.overview }}</p>
 
             <!-- Plateformes -->
-            <div class="providers-container">
+            <div class="providers-section">
               <h3>Disponible sur</h3>
               <div class="providers-list">
-                @if (loadingProviders) {
-                  <div class="loader-small"></div>
-                } @else if (providers.length > 0) {
-                  @for (p of providers; track p.id) {
-                    <div class="provider-item" [title]="p.name">
-                      <img [src]="p.logo" [alt]="p.name">
-                    </div>
-                  }
-                } @else {
-                  <span class="no-providers">Non disponible en streaming (FR)</span>
+                <div *ngIf="loadingProviders" class="provider-skeleton"></div>
+                @for (provider of providers; track provider.id) {
+                  <div class="provider-item" [title]="provider.name">
+                    <img [src]="'https://image.tmdb.org/t/p/original' + provider.logo" [alt]="provider.name">
+                  </div>
                 }
+                <p *ngIf="!loadingProviders && providers.length === 0" class="no-providers">
+                  Non disponible en streaming actuellement.
+                </p>
               </div>
-            </div>
-
-            <div class="synopsis-container">
-              <h3>Synopsis</h3>
-              <p class="synopsis">{{ movie?.overview || 'Aucun synopsis disponible pour ce film.' }}</p>
             </div>
 
             <div class="actions">
               <button 
-                class="list-btn" 
-                [class.active]="isInWatchlist"
-                (click)="onToggleWatchlist()">
-                {{ isInWatchlist ? '✓ Dans ma liste' : '+ Ma Liste' }}
+                class="btn-primary" 
+                [class.in-list]="isInWatchlist"
+                (click)="toggleWatchlist()">
+                {{ isInWatchlist ? '✓ Dans Ma Liste' : '+ Ajouter à Ma Liste' }}
               </button>
-              <button class="share-btn" (click)="onShare()">
-                <span class="share-icon">{{ shareStatus === 'copied' ? '✅' : '🔗' }}</span>
-                {{ shareStatus === 'copied' ? 'Copié !' : 'Partager' }}
-              </button>
+              
+              <div class="feedback-actions">
+                <button class="btn-icon" (click)="giveFeedback('like')" [title]="'J\\'aime'">👍</button>
+                <button class="btn-icon" (click)="giveFeedback('dislike')" [title]="'Je n\\'aime pas'">👎</button>
+                <button class="btn-icon share" (click)="onShare()" title="Partager">📤</button>
+              </div>
+            </div>
+
+            <div class="feedback-msg" *ngIf="feedbackSent">
+              Merci pour votre avis !
             </div>
           </div>
         </div>
@@ -78,7 +74,7 @@ import { WatchlistService } from '../../../core/services/watchlist';
       left: 0;
       width: 100%;
       height: 100%;
-      background: rgba(0, 0, 0, 0.7);
+      background: rgba(5, 8, 15, 0.9);
       backdrop-filter: blur(8px);
       z-index: 2000;
       display: flex;
@@ -91,218 +87,203 @@ import { WatchlistService } from '../../../core/services/watchlist';
     .modal-container {
       width: 100%;
       max-width: 900px;
-      background: #181818;
-      border-radius: 12px;
-      overflow: hidden;
+      max-height: 90vh;
+      background: #0a0e1a;
+      border-radius: 16px;
       position: relative;
-      box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5);
-      border: 1px solid rgba(255, 255, 255, 0.1);
-      animation: zoomIn 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+      overflow-y: auto;
+      border: 1px solid rgba(255, 180, 0, 0.2);
+      animation: scaleUp 0.4s cubic-bezier(0.16, 1, 0.3, 1);
     }
 
     .close-btn {
       position: absolute;
-      top: 15px;
+      top: 20px;
       right: 20px;
-      background: rgba(0, 0, 0, 0.5);
-      border: none;
-      color: white;
-      font-size: 2rem;
-      cursor: pointer;
-      z-index: 10;
       width: 40px;
       height: 40px;
       border-radius: 50%;
-      display: flex;
-      align-items: center;
-      justify-content: center;
+      background: rgba(255, 255, 255, 0.1);
+      border: none;
+      color: white;
+      font-size: 1.2rem;
+      cursor: pointer;
+      z-index: 10;
+      transition: all 0.3s;
+    }
+
+    .close-btn:hover {
+      background: #ffb400;
+      color: #05080f;
     }
 
     .modal-content {
-      display: flex;
-      flex-direction: row;
-      min-height: 550px;
+      display: grid;
+      grid-template-columns: 350px 1fr;
+      gap: 40px;
+      padding: 40px;
     }
 
-    .poster-side {
-      flex: 0 0 350px;
-      background: #000;
+    .movie-poster {
+      position: relative;
     }
 
-    .poster-side img {
+    .movie-poster img {
+      width: 100%;
+      border-radius: 12px;
+      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.6);
+      border: 1px solid rgba(255, 180, 0, 0.1);
+    }
+
+    .poster-glow {
+      position: absolute;
+      top: 0;
+      left: 0;
       width: 100%;
       height: 100%;
-      object-fit: cover;
+      box-shadow: 0 0 60px rgba(255, 180, 0, 0.1);
+      pointer-events: none;
     }
 
-    .info-side {
-      flex: 1;
-      padding: 40px;
-      display: flex;
-      flex-direction: column;
-      gap: 20px;
-    }
-
-    .meta-row {
-      display: flex;
-      align-items: center;
-      gap: 20px;
+    .movie-title {
+      font-family: 'Playfair Display', serif;
+      font-size: 3rem;
+      font-weight: 900;
       margin-bottom: 10px;
+      line-height: 1.1;
+      color: white;
     }
 
-    .vote-actions {
+    .movie-meta {
       display: flex;
-      gap: 8px;
+      gap: 20px;
+      margin-bottom: 25px;
+      font-weight: 700;
     }
 
-    .vote-btn {
-      background: rgba(255, 255, 255, 0.1);
-      border: 1px solid rgba(255, 255, 255, 0.2);
-      border-radius: 50%;
-      width: 32px;
-      height: 32px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      cursor: pointer;
+    .rating { color: #ffb400; }
+    .year { color: rgba(255, 255, 255, 0.5); }
+
+    .overview {
+      font-size: 1.1rem;
+      line-height: 1.6;
+      color: rgba(255, 255, 255, 0.8);
+      margin-bottom: 30px;
+    }
+
+    .providers-section h3 {
       font-size: 0.9rem;
-    }
-
-    .vote-feedback {
-      font-size: 0.85rem;
-      color: #46d369;
-      font-weight: 600;
-      animation: slideInRight 0.3s ease-out;
-    }
-
-    .title {
-      font-size: 2.2rem;
-      font-weight: 800;
-      margin: 0;
-    }
-
-    .rating-badge {
-      color: #46d369;
-      font-weight: 800;
-    }
-
-    .providers-container h3, .synopsis-container h3 {
-      font-size: 0.85rem;
       text-transform: uppercase;
       letter-spacing: 1px;
-      color: rgba(255, 255, 255, 0.5);
-      margin-bottom: 12px;
-      font-weight: 700;
+      color: rgba(255, 255, 255, 0.4);
+      margin-bottom: 15px;
     }
 
     .providers-list {
       display: flex;
-      flex-wrap: wrap;
-      gap: 12px;
+      gap: 15px;
+      margin-bottom: 40px;
       min-height: 45px;
-      align-items: center;
     }
 
     .provider-item img {
       width: 45px;
       height: 45px;
       border-radius: 8px;
-    }
-
-    .synopsis {
-      font-size: 1rem;
-      line-height: 1.6;
-      color: #d2d2d2;
-      max-height: 150px;
-      overflow-y: auto;
+      border: 1px solid rgba(255, 255, 255, 0.1);
     }
 
     .actions {
-      margin-top: auto;
       display: flex;
-      gap: 12px;
-      padding-top: 20px;
-      flex-wrap: wrap;
+      align-items: center;
+      gap: 20px;
     }
 
-    .list-btn {
+    .btn-primary {
+      background: #ffb400;
+      color: #05080f;
+      border: none;
+      padding: 14px 28px;
+      border-radius: 30px;
+      font-weight: 800;
+      font-size: 1rem;
+      cursor: pointer;
+      transition: all 0.3s;
+      box-shadow: 0 4px 15px rgba(255, 180, 0, 0.3);
+    }
+
+    .btn-primary:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 25px rgba(255, 180, 0, 0.4);
+    }
+
+    .btn-primary.in-list {
       background: rgba(255, 255, 255, 0.1);
       color: white;
-      padding: 12px 30px;
-      border-radius: 4px;
-      border: 1px solid rgba(255, 255, 255, 0.3);
+      box-shadow: none;
+    }
+
+    .feedback-actions {
+      display: flex;
+      gap: 10px;
+    }
+
+    .btn-icon {
+      width: 45px;
+      height: 45px;
+      border-radius: 50%;
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.1);
       cursor: pointer;
-      font-weight: 700;
-      font-size: 1.1rem;
+      font-size: 1.2rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
       transition: all 0.2s;
     }
 
-    .list-btn.active {
-      background: white;
-      color: black;
-      border-color: white;
+    .btn-icon:hover {
+      background: rgba(255, 180, 0, 0.1);
+      border-color: #ffb400;
     }
 
-    .share-btn {
-      background: rgba(255, 255, 255, 0.05);
-      color: white;
-      padding: 12px 25px;
-      border-radius: 4px;
-      border: 1px solid rgba(255, 255, 255, 0.2);
-      cursor: pointer;
+    .feedback-msg {
+      margin-top: 20px;
+      color: #ffb400;
       font-weight: 700;
-      display: flex;
-      align-items: center;
-      gap: 8px;
+      animation: fadeIn 0.3s;
     }
 
-    .loader-small {
-      width: 20px;
-      height: 20px;
-      border: 2px solid rgba(255, 255, 255, 0.1);
-      border-top: 2px solid white;
-      border-radius: 50%;
-      animation: spin 0.8s linear infinite;
-    }
-
-    @keyframes spin { 100% { transform: rotate(360deg); } }
     @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
-    @keyframes zoomIn { from { opacity: 0; transform: scale(0.9); } to { opacity: 1; transform: scale(1); } }
-    @keyframes slideInRight { from { opacity: 0; transform: translateX(10px); } to { opacity: 1; transform: translateX(0); } }
+    @keyframes scaleUp { from { transform: scale(0.9); opacity: 0; } to { transform: scale(1); opacity: 1; } }
 
-    @media (max-width: 800px) {
-      .modal-content { flex-direction: column; }
-      .poster-side { flex: 0 0 200px; }
-      .info-side { padding: 25px; }
+    @media (max-width: 850px) {
+      .modal-content { grid-template-columns: 1fr; padding: 30px; }
+      .movie-poster { display: none; }
+      .movie-title { font-size: 2rem; }
     }
   `]
 })
 export class MovieDetailModalComponent implements OnInit {
-  private moviesService = inject(MoviesService);
-  private watchlistService = inject(WatchlistService);
-  private cdr = inject(ChangeDetectorRef);
-
-  @Input() movie: MovieItem | null = null;
+  @Input() movie!: MovieItem;
   @Output() close = new EventEmitter<void>();
 
   providers: WatchProvider[] = [];
   loadingProviders = true;
-  hasVoted = false;
-  shareStatus: 'idle' | 'copied' = 'idle';
+  feedbackSent = false;
   isInWatchlist = false;
 
-  ngOnInit(): void {
-    if (this.movie) {
-      this.fetchProviders(this.movie.id);
-      this.isInWatchlist = this.watchlistService.isInWatchlist(this.movie.id);
-    }
-  }
+  constructor(
+    private moviesService: MoviesService,
+    private watchlistService: WatchlistService,
+    private cdr: ChangeDetectorRef
+  ) {}
 
-  fetchProviders(movieId: number): void {
+  ngOnInit() {
     this.loadingProviders = true;
-    this.moviesService.getMovieProviders(movieId).subscribe({
-      next: (data) => {
-        this.providers = data;
+    this.moviesService.getMovieProviders(this.movie.id).subscribe({
+      next: (providers) => {
+        this.providers = providers;
         this.loadingProviders = false;
         this.cdr.detectChanges();
       },
@@ -311,52 +292,51 @@ export class MovieDetailModalComponent implements OnInit {
         this.cdr.detectChanges();
       }
     });
+
+    this.watchlistService.watchlist$.subscribe(list => {
+      this.isInWatchlist = list.some(m => m.id === this.movie.id);
+      this.cdr.detectChanges();
+    });
   }
 
-  onVote(isLike: boolean): void {
-    this.hasVoted = true;
+  onClose() {
+    this.close.emit();
+  }
+
+  toggleWatchlist() {
+    if (this.isInWatchlist) {
+      this.watchlistService.removeFromWatchlist(this.movie.id);
+    } else {
+      this.watchlistService.addToWatchlist(this.movie);
+    }
+  }
+
+  giveFeedback(type: 'like' | 'dislike') {
+    this.feedbackSent = true;
     this.cdr.detectChanges();
     setTimeout(() => {
       this.onClose();
     }, 1500);
   }
 
-  onToggleWatchlist(): void {
-    if (this.movie) {
-      this.watchlistService.toggleWatchlist(this.movie);
-      this.isInWatchlist = !this.isInWatchlist;
-      this.cdr.detectChanges();
+  onShare() {
+    const shareData = {
+      title: `CineMatch - ${this.movie.title}`,
+      text: `Regarde ce film sur CineMatch : ${this.movie.overview}`,
+      url: window.location.href
+    };
+
+    if (navigator.share) {
+      navigator.share(shareData).catch(() => {
+        this.copyToClipboard(shareData.url);
+      });
+    } else {
+      this.copyToClipboard(shareData.url);
     }
   }
 
-  async onShare(): Promise<void> {
-    if (!this.movie) return;
-    const shareData = {
-      title: `CineMatch - ${this.movie.title}`,
-      text: `J'ai trouvé ce film sur CineMatch : "${this.movie.title}".`,
-      url: `https://www.themoviedb.org/movie/${this.movie.id}`
-    };
-
-    try {
-      if (navigator.share) {
-        await navigator.share(shareData);
-      } else {
-        await navigator.clipboard.writeText(`${shareData.text} ${shareData.url}`);
-        this.shareStatus = 'copied';
-        this.cdr.detectChanges();
-        setTimeout(() => { this.shareStatus = 'idle'; this.cdr.detectChanges(); }, 2000);
-      }
-    } catch (err) {}
-  }
-
-  @HostListener('window:keydown.escape')
-  onEscape() { this.onClose(); }
-
-  onClose(): void { this.close.emit(); }
-
-  formatRating(rating: string | undefined): string {
-    if (!rating) return '0.0';
-    const val = parseFloat(rating);
-    return isNaN(val) ? '0.0' : val.toFixed(1);
+  private copyToClipboard(text: string) {
+    navigator.clipboard.writeText(text);
+    alert('Lien copié dans le presse-papier !');
   }
 }

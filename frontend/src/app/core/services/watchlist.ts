@@ -12,20 +12,39 @@ export class WatchlistService {
   watchlist$ = this.watchlistSubject.asObservable();
 
   /**
-   * Ajoute ou retire un film de la liste
+   * Ajoute un film à la liste
+   */
+  addToWatchlist(movie: MovieItem): void {
+    const current = this.loadFromStorage();
+    if (!current.some(m => m.id === movie.id)) {
+      current.unshift(movie);
+      this.saveToStorage(current);
+      this.watchlistSubject.next(current);
+    }
+  }
+
+  /**
+   * Retire un film de la liste par son ID
+   */
+  removeFromWatchlist(movieId: number): void {
+    let current = this.loadFromStorage();
+    const index = current.findIndex(m => m.id === movieId);
+    if (index > -1) {
+      current.splice(index, 1);
+      this.saveToStorage(current);
+      this.watchlistSubject.next(current);
+    }
+  }
+
+  /**
+   * Ajoute ou retire un film de la liste (Legacy support)
    */
   toggleWatchlist(movie: MovieItem): void {
-    let current = this.loadFromStorage();
-    const index = current.findIndex(m => m.id === movie.id);
-
-    if (index > -1) {
-      current.splice(index, 1); // Retirer
+    if (this.isInWatchlist(movie.id)) {
+      this.removeFromWatchlist(movie.id);
     } else {
-      current.unshift(movie); // Ajouter
+      this.addToWatchlist(movie);
     }
-
-    this.saveToStorage(current);
-    this.watchlistSubject.next(current);
   }
 
   /**
@@ -36,11 +55,13 @@ export class WatchlistService {
   }
 
   private loadFromStorage(): MovieItem[] {
+    if (typeof localStorage === 'undefined') return [];
     const data = localStorage.getItem(this.STORAGE_KEY);
     return data ? JSON.parse(data) : [];
   }
 
   private saveToStorage(watchlist: MovieItem[]): void {
+    if (typeof localStorage === 'undefined') return;
     localStorage.setItem(this.STORAGE_KEY, JSON.stringify(watchlist));
   }
 }

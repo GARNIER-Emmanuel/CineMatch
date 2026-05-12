@@ -1,20 +1,21 @@
-/* Import des polices modernes (Google Fonts) */
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Montserrat:wght@600;700;800&display=swap');
+/* Import des polices Cinema Premium */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Playfair+Display:wght@700;800;900&display=swap');
 
 :root {
-  /* Palette de couleurs "CineMatch" (Netflix inspired) */
-  --bg-color: #000000;
-  --surface-color: #141414;
-  --surface-hover: #181818;
-  --primary-color: #e50914; /* Rouge Netflix */
+  /* Nouvelle Palette "Grand Cinema Experience" */
+  --bg-color: #05080f; /* Bleu nuit profond */
+  --surface-color: #0a0e1a;
+  --surface-hover: #111827;
+  --primary-color: #ffb400; /* Or Ambré */
+  --primary-hover: #e6a200;
   --text-primary: #ffffff;
-  --text-secondary: #b3b3b3;
-  --glass-bg: rgba(0, 0, 0, 0.7);
-  --glass-border: rgba(255, 255, 255, 0.1);
+  --text-secondary: rgba(255, 255, 255, 0.6);
+  --glass-bg: rgba(5, 8, 15, 0.85);
+  --glass-border: rgba(255, 180, 0, 0.15);
 
   /* Typographie */
   --font-main: 'Inter', sans-serif;
-  --font-display: 'Montserrat', sans-serif;
+  --font-display: 'Playfair Display', serif;
 
   /* Spacing */
   --nav-height: 70px;
@@ -34,37 +35,55 @@ body {
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   overflow-x: hidden;
+  position: relative;
 }
 
-h1, h2, h3, .logo {
+/* Texture Film Grain (Subtile) */
+body::before {
+  content: "";
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-image: url("https://www.transparenttextures.com/patterns/stardust.png");
+  opacity: 0.05;
+  pointer-events: none;
+  z-index: 9999;
+}
+
+h1, h2, h3 {
   font-family: var(--font-display);
   font-weight: 800;
+  letter-spacing: -0.02em;
 }
 
-/* Utilitaires de Glassmorphism */
+.main-content {
+  padding-top: calc(var(--nav-height) + 40px);
+  min-height: 100vh;
+}
+
+/* Utilitaires Glassmorphism Cinema */
 .glass {
   background: var(--glass-bg);
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
   border: 1px solid var(--glass-border);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
 }
 
-/* Scrollbar personnalisée style Netflix */
+/* Scrollbar Style Cinéma (Or) */
 ::-webkit-scrollbar {
-  width: 8px;
+  width: 6px;
 }
 ::-webkit-scrollbar-track {
   background: var(--bg-color);
 }
 ::-webkit-scrollbar-thumb {
-  background: #333;
-  border-radius: 4px;
+  background: var(--primary-color);
+  border-radius: 3px;
+  opacity: 0.5;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: #555;
-}
-
-.main-content {
-  padding-top: calc(var(--nav-height) + 20px);
-  min-height: 100vh;
+  background: var(--primary-hover);
 }
