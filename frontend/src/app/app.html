@@ -5,13 +5,62 @@
     (toggleFilters)="toggleFilters()"
     (navigateHome)="goToHome()"
     (navigateWatchlist)="goToWatchlist()"
-    (navigateCineScroll)="goToCineScroll()">
+    (navigateCineScroll)="goToCineScroll()"
+    (search)="onSearch($event)">
   </cm-navbar>
 
   <main class="main-content" [class.full-screen-view]="currentView === 'cinescroll'">
     
+    <!-- SECTION RECHERCHE -->
+    <div *ngIf="searchQuery.trim()" class="search-results-overlay">
+      <div class="search-header">
+        <h2>Résultats pour "{{ searchQuery }}"</h2>
+        <span class="results-count" *ngIf="!isSearching">{{ searchResults.length }} résultats trouvés</span>
+      </div>
+
+      <div class="loader-container" *ngIf="isSearching">
+        <div class="cinema-loader"></div>
+      </div>
+
+      <div class="results-grid" *ngIf="!isSearching">
+        @for (item of searchResults; track item.id) {
+          <!-- Cas Film -->
+          @if (item.media_type === 'movie') {
+            <div class="result-card movie" (click)="openMovieDetails(item)">
+              <div class="card-image">
+                <img [src]="item.poster || 'assets/placeholder.jpg'" alt="">
+                <div class="card-badge">Film</div>
+              </div>
+              <div class="card-info">
+                <h3>{{ item.title }}</h3>
+                <span class="meta">{{ item.releaseYear }} • ★ {{ item.rating }}</span>
+              </div>
+            </div>
+          }
+
+          <!-- Cas Personne (Réalisateur) -->
+          @if (item.media_type === 'person') {
+            <div class="result-card person">
+              <div class="card-image circular">
+                <img [src]="item.profilePath || 'assets/person-placeholder.jpg'" alt="">
+                <div class="card-badge person">Bio</div>
+              </div>
+              <div class="card-info">
+                <h3>{{ item.name }}</h3>
+                <span class="meta">{{ item.knownFor }}</span>
+              </div>
+            </div>
+          }
+        }
+      </div>
+
+      <div class="no-results" *ngIf="!isSearching && searchResults.length === 0">
+        <p>Aucun résultat correspondant à votre recherche.</p>
+      </div>
+    </div>
+
     <!-- SECTION ACCUEIL -->
-    <div *ngIf="currentView === 'home'" class="view-home">
+    <div *ngIf="currentView === 'home' && !searchQuery.trim()" class="view-home">
 
       <!-- HERO BANNER -->
       <div class="hero-banner" *ngIf="heroMovie && !hasActiveFilters">

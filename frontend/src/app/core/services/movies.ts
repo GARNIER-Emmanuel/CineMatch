@@ -88,4 +88,8 @@ export class MoviesService {
   getMovieCredits(movieId: number): Observable<{ director: string; cast: string[]; runtime: number }> {
     return this.http.get<{ director: string; cast: string[]; runtime: number }>(`${this.apiUrl}/${movieId}/credits`);
   }
+
+  search(query: string): Observable<any[]> {
+    return this.http.get<any[]>(`http://localhost:3000/search?q=${query}`);
+  }
 }

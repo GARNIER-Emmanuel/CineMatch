@@ -1,5 +1,6 @@
-import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
+import { Component, OnInit, ChangeDetectorRef, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { Subject, debounceTime, distinctUntilChanged } from 'rxjs';
 import { NavbarComponent } from './layout/navbar/navbar';
 import { MovieRowComponent, MovieItem } from './features/home/movie-row/movie-row';
 import { MovieFiltersComponent, Certification } from './features/movies/filters/movie-filters';
@@ -25,10 +26,13 @@ import { CineScrollComponent } from './features/cine-scroll/cine-scroll.componen
   templateUrl: './app.html',
   styleUrl: './app.css',
 })
-export class AppComponent implements OnInit {
+export class AppComponent implements OnInit, OnDestroy {
   title = 'CineMatch';
 
-  popularMovies: MovieItem[] = [];
+  private searchSubject = new Subject<string>();
+  searchResults: any[] = [];
+  isSearching = false;
+  searchQuery = '';
   auteurMovies: MovieItem[] = [];
   classicMovies: MovieItem[] = [];
   discoveryMovies: MovieItem[] = [];
@@ -79,6 +83,17 @@ export class AppComponent implements OnInit {
       this.watchlistMovies = this.roundRatings(watchlist);
       this.cdr.detectChanges();
     });
+
+    this.searchSubject.pipe(
+      debounceTime(400),
+      distinctUntilChanged()
+    ).subscribe(query => {
+      this.performSearch(query);
+    });
+  }
+
+  ngOnDestroy(): void {
+    this.searchSubject.complete();
   }
 
   loadAllMovies(): void {
@@ -189,6 +204,32 @@ export class AppComponent implements OnInit {
     this.selectedProviders = providers;
     this.currentPage = 1;
     this.loadDiscoveryMovies(false);
+  }
+
+  onSearch(query: string): void {
+    this.searchQuery = query;
+    if (!query.trim()) {
+      this.isSearching = false;
+      this.searchResults = [];
+      this.cdr.detectChanges();
+      return;
+    }
+    this.isSearching = true;
+    this.searchSubject.next(query);
+  }
+
+  private performSearch(query: string): void {
+    this.moviesService.search(query).subscribe({
+      next: (results) => {
+        this.searchResults = results;
+        this.isSearching = false;
+        this.cdr.detectChanges();
+      },
+      error: () => {
+        this.isSearching = false;
+        this.cdr.detectChanges();
+      }
+    });
   }
 
   onDurationChange(duration: number): void {

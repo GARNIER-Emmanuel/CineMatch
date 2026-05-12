@@ -13,6 +13,7 @@ import { CommonModule } from '@angular/common';
         </div>
         <ul class="nav-links">
           <li [class.active]="currentView === 'home'" (click)="onHomeClick()">Accueil</li>
+          <li [class.active]="currentView === 'directors'" (click)="onDirectorsClick()">Réalisateurs</li>
           <li class="cinescroll-link" [class.active]="currentView === 'cinescroll'" (click)="onCineScrollClick()">
             CineScroll
           </li>
@@ -21,9 +22,17 @@ import { CommonModule } from '@angular/common';
       </div>
       
       <div class="nav-right">
+        <div class="search-bar">
+          <span class="search-icon">🔍</span>
+          <input 
+            type="text" 
+            placeholder="Rechercher un film, un réalisateur..." 
+            (input)="onSearchInput($event)"
+            #searchInput>
+        </div>
         <button class="filter-toggle" (click)="onToggleFilters()">
-          <span class="icon">🔍</span>
-          <span>Recherche VIP</span>
+          <span class="icon">✨</span>
+          <span>Filtres</span>
         </button>
         <div class="user-profile">
           <img src="https://api.dicebear.com/7.x/avataaars/svg?seed=Felix" alt="User Avatar">
@@ -115,20 +124,53 @@ import { CommonModule } from '@angular/common';
       gap: 30px;
     }
 
+    .search-bar {
+      display: flex;
+      align-items: center;
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      padding: 6px 15px;
+      border-radius: 20px;
+      gap: 10px;
+      width: 300px;
+      transition: all 0.3s;
+    }
+
+    .search-bar:focus-within {
+      background: rgba(255, 255, 255, 0.1);
+      border-color: rgba(255, 180, 0, 0.5);
+      width: 350px;
+    }
+
+    .search-bar input {
+      background: transparent;
+      border: none;
+      color: white;
+      font-size: 0.85rem;
+      width: 100%;
+      outline: none;
+    }
+
+    .search-bar input::placeholder {
+      color: rgba(255, 255, 255, 0.3);
+    }
+
+    .search-icon { font-size: 0.9rem; opacity: 0.5; }
+
     .filter-toggle {
-      background: rgba(255, 180, 0, 0.1);
-      border: 1px solid rgba(255, 180, 0, 0.3);
-      color: #ffb400;
-      padding: 8px 20px;
-      border-radius: 20px; /* Plus arrondi pour le look Cinema */
+      background: transparent;
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      color: white;
+      padding: 8px 18px;
+      border-radius: 20px;
       cursor: pointer;
       display: flex;
       align-items: center;
-      gap: 10px;
-      font-size: 0.8rem;
-      font-weight: 700;
+      gap: 8px;
+      font-size: 0.75rem;
+      font-weight: 600;
       text-transform: uppercase;
-      letter-spacing: 1px;
+      letter-spacing: 0.5px;
       transition: all 0.3s ease;
     }
 
@@ -159,6 +201,8 @@ export class NavbarComponent {
   @Output() navigateHome = new EventEmitter<void>();
   @Output() navigateWatchlist = new EventEmitter<void>();
   @Output() navigateCineScroll = new EventEmitter<void>();
+  @Output() navigateDirectors = new EventEmitter<void>();
+  @Output() search = new EventEmitter<string>();
 
   isScrolled = false;
 
@@ -184,5 +228,14 @@ export class NavbarComponent {
 
   onCineScrollClick() {
     this.navigateCineScroll.emit();
+  }
+
+  onDirectorsClick() {
+    this.navigateDirectors.emit();
+  }
+
+  onSearchInput(event: any) {
+    const query = event.target.value;
+    this.search.emit(query);
   }
 }
