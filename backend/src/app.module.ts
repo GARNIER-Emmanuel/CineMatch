@@ -4,6 +4,7 @@ import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { MoviesModule } from './movies/movies.module';
 import { SearchModule } from './search/search.module';
+import { DirectorsModule } from './directors/directors.module';
 import { TmdbModule } from './tmdb/tmdb.module';
 
 @Module({
@@ -11,6 +12,7 @@ import { TmdbModule } from './tmdb/tmdb.module';
     ConfigModule.forRoot({ isGlobal: true }), // Rend les variables d'environnement accessibles partout
     MoviesModule, // Ajout de notre nouvelle slice
     SearchModule,
+    DirectorsModule,
     TmdbModule,
   ],
   controllers: [AppController],
