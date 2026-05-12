@@ -33,15 +33,17 @@ export class MoviesService {
         },
       });
 
-      return response.data.results.slice(0, 20).map((movie: any) => ({
+      const validMovies = response.data.results.filter(
+        (movie: any) => movie.poster_path !== null && movie.vote_average > 0
+      );
+
+      return validMovies.slice(0, 20).map((movie: any) => ({
         id: movie.id,
         title: movie.title,
         overview: movie.overview,
         releaseYear: movie.release_date ? movie.release_date.split('-')[0] : '',
         rating: movie.vote_average.toFixed(1),
-        poster: movie.poster_path
-          ? `https://image.tmdb.org/t/p/w500${movie.poster_path}`
-          : null,
+        poster: `https://image.tmdb.org/t/p/w500${movie.poster_path}`,
         backdrop: movie.backdrop_path
           ? `https://image.tmdb.org/t/p/w1280${movie.backdrop_path}`
           : null,
