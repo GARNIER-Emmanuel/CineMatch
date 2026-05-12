@@ -27,7 +27,7 @@ export interface MovieItem {
               <img [src]="movie.poster" [alt]="movie.title">
               <div class="movie-info">
                 <h3>{{ movie.title }}</h3>
-                <span class="rating" *ngIf="movie.rating">⭐ {{ movie.rating }}</span>
+                <span class="rating" *ngIf="movie.rating">⭐ {{ formatRating(movie.rating) }}</span>
               </div>
             </div>
           }
@@ -149,4 +149,8 @@ export class MovieRowComponent {
   @Input() movies: MovieItem[] = [];
   @Input() loading: boolean = false;
   @Input() isGrid: boolean = false;
+
+  formatRating(rating: string | undefined): string {
+    return rating ? Number(rating).toFixed(1) : '';
+  }
 }

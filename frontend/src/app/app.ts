@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { NavbarComponent } from './layout/navbar/navbar';
 import { MovieRowComponent, MovieItem } from './features/home/movie-row/movie-row';
@@ -37,7 +37,10 @@ export class AppComponent implements OnInit {
 
   errorMessage: string | null = null;
 
-  constructor(private moviesService: MoviesService) {}
+  constructor(
+    private moviesService: MoviesService,
+    private cdr: ChangeDetectorRef
+  ) {}
 
   ngOnInit(): void {
     this.loadAllMovies();
@@ -60,28 +63,32 @@ export class AppComponent implements OnInit {
       this.loadingPopular = false;
       this.loadingAction = false;
       this.loadingTrending = false;
+      this.cdr.detectChanges();
     };
 
     this.moviesService.getMovies().subscribe({
       next: (movies: Movie[]) => {
-        this.popularMovies = this.mapToMovieItems(movies);
+        this.popularMovies = [...this.mapToMovieItems(movies)];
         this.loadingPopular = false;
+        this.cdr.detectChanges();
       },
       error: errorHandler
     });
 
     this.moviesService.getMovies('28').subscribe({
       next: (movies: Movie[]) => {
-        this.actionMovies = this.mapToMovieItems(movies);
+        this.actionMovies = [...this.mapToMovieItems(movies)];
         this.loadingAction = false;
+        this.cdr.detectChanges();
       },
       error: errorHandler
     });
 
     this.moviesService.getMovies(null, 120, 7).subscribe({
       next: (movies: Movie[]) => {
-        this.trendingMovies = this.mapToMovieItems(movies);
+        this.trendingMovies = [...this.mapToMovieItems(movies)];
         this.loadingTrending = false;
+        this.cdr.detectChanges();
       },
       error: errorHandler
     });
@@ -108,7 +115,6 @@ export class AppComponent implements OnInit {
   onPageChange(page: number): void {
     this.currentPage = page;
     this.loadDiscoveryMovies();
-    // Scroll to top of discovery row if needed
     window.scrollTo({ top: 400, behavior: 'smooth' });
   }
 
@@ -116,24 +122,29 @@ export class AppComponent implements OnInit {
     this.loadingDiscovery = true;
     this.moviesService.getMovies(this.selectedGenre, this.maxDuration, this.minRating, this.currentPage).subscribe({
       next: (movies: Movie[]) => {
-        this.discoveryMovies = this.mapToMovieItems(movies);
+        this.discoveryMovies = [...this.mapToMovieItems(movies)];
         this.loadingDiscovery = false;
+        this.cdr.detectChanges();
       },
       error: () => {
         this.loadingDiscovery = false;
+        this.cdr.detectChanges();
       }
     });
   }
 
   /**
    * Transforme le modèle Movie de l'API en modèle MovieItem pour le design
+   * Inclut le tri par note décroissante (Tâche 1)
    */
   private mapToMovieItems(movies: Movie[]): MovieItem[] {
-    return movies.map(m => ({
-      id: m.id,
-      title: m.title,
-      poster: m.poster || 'assets/placeholder.jpg',
-      rating: m.rating
-    }));
+    return movies
+      .map(m => ({
+        id: m.id,
+        title: m.title,
+        poster: m.poster || 'assets/placeholder.jpg',
+        rating: m.rating
+      }))
+      .sort((a, b) => Number(b.rating) - Number(a.rating));
   }
 }
