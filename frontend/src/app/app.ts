@@ -28,11 +28,10 @@ export class AppComponent implements OnInit {
 
   selectedGenre: string | null = null;
   maxDuration: number = 240;
-  minRating: number = 6;
   currentPage: number = 1;
 
   get hasActiveFilters(): boolean {
-    return !!this.selectedGenre || this.maxDuration < 240 || this.minRating > 6;
+    return !!this.selectedGenre || this.maxDuration < 240;
   }
 
   errorMessage: string | null = null;
@@ -84,7 +83,7 @@ export class AppComponent implements OnInit {
       error: errorHandler
     });
 
-    this.moviesService.getMovies(null, 120, 7).subscribe({
+    this.moviesService.getMovies(null, 120, 0).subscribe({ // minRating à 0 par défaut
       next: (movies: Movie[]) => {
         this.trendingMovies = [...this.mapToMovieItems(movies)];
         this.loadingTrending = false;
@@ -106,12 +105,6 @@ export class AppComponent implements OnInit {
     this.loadDiscoveryMovies();
   }
 
-  onRatingChange(rating: number): void {
-    this.minRating = rating;
-    this.currentPage = 1;
-    this.loadDiscoveryMovies();
-  }
-
   onPageChange(page: number): void {
     this.currentPage = page;
     this.loadDiscoveryMovies();
@@ -120,7 +113,8 @@ export class AppComponent implements OnInit {
 
   loadDiscoveryMovies(): void {
     this.loadingDiscovery = true;
-    this.moviesService.getMovies(this.selectedGenre, this.maxDuration, this.minRating, this.currentPage).subscribe({
+    // On envoie 0 pour le minRating afin de ne plus filtrer sur la note
+    this.moviesService.getMovies(this.selectedGenre, this.maxDuration, 0, this.currentPage).subscribe({
       next: (movies: Movie[]) => {
         this.discoveryMovies = [...this.mapToMovieItems(movies)];
         this.loadingDiscovery = false;
@@ -133,18 +127,12 @@ export class AppComponent implements OnInit {
     });
   }
 
-  /**
-   * Transforme le modèle Movie de l'API en modèle MovieItem pour le design
-   * Inclut le tri par note décroissante (Tâche 1)
-   */
   private mapToMovieItems(movies: Movie[]): MovieItem[] {
-    return movies
-      .map(m => ({
-        id: m.id,
-        title: m.title,
-        poster: m.poster || 'assets/placeholder.jpg',
-        rating: m.rating
-      }))
-      .sort((a, b) => Number(b.rating) - Number(a.rating));
+    return movies.map(m => ({
+      id: m.id,
+      title: m.title,
+      poster: m.poster || 'assets/placeholder.jpg',
+      rating: m.rating
+    }));
   }
 }

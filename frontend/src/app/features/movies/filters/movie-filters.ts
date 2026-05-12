@@ -55,23 +55,6 @@ export interface Genre {
               class="modern-slider"
               data-test="duration-slider">
           </div>
-
-          <div class="slider-control">
-            <div class="slider-header">
-              <label class="group-label">Note min</label>
-              <span class="value-badge">{{ minRating }}/10</span>
-            </div>
-            <input 
-              type="range" 
-              min="0" 
-              max="10" 
-              step="1" 
-              [(ngModel)]="minRating"
-              (input)="onRatingInput($event)"
-              (change)="emitRatingChange()"
-              class="modern-slider"
-              data-test="rating-input">
-          </div>
         </div>
       </div>
     </div>
@@ -227,11 +210,9 @@ export interface Genre {
 export class MovieFiltersComponent {
   @Output() genreChange = new EventEmitter<string | null>();
   @Output() durationChange = new EventEmitter<number>();
-  @Output() ratingChange = new EventEmitter<number>();
 
   selectedGenreId: string | null = null;
   maxDuration: number = 240;
-  minRating: number = 6;
 
   genres: Genre[] = [
     { id: '28', name: 'Action' },
@@ -265,25 +246,15 @@ export class MovieFiltersComponent {
     this.durationChange.emit(this.maxDuration);
   }
 
-  onRatingInput(event: Event): void {
-    this.minRating = parseInt((event.target as HTMLInputElement).value, 10);
-  }
-
-  emitRatingChange(): void {
-    this.ratingChange.emit(this.minRating);
-  }
-
   resetFilters(): void {
     this.selectedGenreId = null;
     this.maxDuration = 240;
-    this.minRating = 6;
     
     this.genreChange.emit(null);
     this.durationChange.emit(240);
-    this.ratingChange.emit(6);
   }
 
   hasActiveFilters(): boolean {
-    return this.selectedGenreId !== null || this.maxDuration !== 240 || this.minRating !== 6;
+    return this.selectedGenreId !== null || this.maxDuration !== 240;
   }
 }
