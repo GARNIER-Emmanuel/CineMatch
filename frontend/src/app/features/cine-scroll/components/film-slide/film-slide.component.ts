@@ -207,16 +207,33 @@ export class SafePipe implements PipeTransform {
 })
 export class FilmSlideComponent implements OnInit {
   @Input() movie!: Movie;
+  @Input() set active(value: boolean) {
+    if (value && !this.youtubeKey && !this.loadingTrailer) {
+      this.loadTrailer();
+    }
+  }
+
   youtubeKey: string | null = null;
+  loadingTrailer = false;
 
   constructor(private moviesService: MoviesService) {}
 
   ngOnInit(): void {
-    if (this.movie.id) {
-      this.moviesService.getMovieTrailer(this.movie.id).subscribe(trailer => {
+    // On ne charge rien au init, on attend que le composant soit "actif"
+  }
+
+  loadTrailer(): void {
+    if (!this.movie.id) return;
+    this.loadingTrailer = true;
+    this.moviesService.getMovieTrailer(this.movie.id).subscribe({
+      next: (trailer) => {
         this.youtubeKey = trailer?.youtubeKey || null;
-      });
-    }
+        this.loadingTrailer = false;
+      },
+      error: () => {
+        this.loadingTrailer = false;
+      }
+    });
   }
 
   onToggleWatchlist(): void {

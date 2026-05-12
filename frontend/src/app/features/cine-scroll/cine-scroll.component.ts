@@ -29,9 +29,12 @@ import { FilmSlideComponent } from './components/film-slide/film-slide.component
 
       <!-- Expérience de Scroll -->
       @if (state === 'SCROLLING') {
-        <div class="scroll-container">
-          @for (movie of movies; track movie.id) {
-            <cm-film-slide [movie]="movie"></cm-film-slide>
+        <div class="scroll-container" (scroll)="onScroll($event)">
+          @for (movie of movies; track movie.id; let i = index) {
+            <cm-film-slide 
+              [movie]="movie" 
+              [active]="i === activeIndex || i === activeIndex + 1">
+            </cm-film-slide>
           }
         </div>
       }
@@ -99,6 +102,7 @@ export class CineScrollComponent implements OnInit {
   movies: Movie[] = [];
   currentPage = 1;
   selectedGenres: string = '';
+  activeIndex = 0;
 
   constructor(
     private moviesService: MoviesService,
@@ -117,6 +121,11 @@ export class CineScrollComponent implements OnInit {
   onSkip(): void {
     this.selectedGenres = '';
     this.loadMovies();
+  }
+
+  onScroll(event: any): void {
+    const element = event.target;
+    this.activeIndex = Math.round(element.scrollTop / element.clientHeight);
   }
 
   loadMovies(): void {
