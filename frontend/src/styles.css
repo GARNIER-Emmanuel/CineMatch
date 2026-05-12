@@ -63,3 +63,8 @@ h1, h2, h3, .logo {
 ::-webkit-scrollbar-thumb:hover {
   background: #555;
 }
+
+.main-content {
+  padding-top: calc(var(--nav-height) + 20px);
+  min-height: 100vh;
+}

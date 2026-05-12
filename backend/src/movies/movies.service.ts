@@ -42,13 +42,10 @@ export class MoviesService {
           : null,
       }));
     } catch (error: any) {
-      this.handleError(error);
+      return this.handleError(error);
     }
   }
 
-  /**
-   * Récupère les plateformes de streaming disponibles pour un film spécifique en France.
-   */
   async getWatchProviders(movieId: number): Promise<any[]> {
     try {
       const response = await axios.get(`${this.baseUrl}/movie/${movieId}/watch/providers`, {
@@ -57,7 +54,6 @@ export class MoviesService {
 
       const frResults = response.data.results?.FR;
       
-      // On ne prend que les plateformes avec abonnement (flatrate)
       if (frResults && frResults.flatrate) {
         return frResults.flatrate.map((provider: any) => ({
           id: provider.provider_id,
@@ -68,11 +64,14 @@ export class MoviesService {
 
       return [];
     } catch (error: any) {
-      this.handleError(error);
+      return this.handleError(error);
     }
   }
 
-  private handleError(error: any) {
+  /**
+   * Type never indique que la fonction lève toujours une erreur.
+   */
+  private handleError(error: any): never {
     if (error.response?.status === 401) {
       throw new HttpException('Invalid TMDB API key', HttpStatus.UNAUTHORIZED);
     }

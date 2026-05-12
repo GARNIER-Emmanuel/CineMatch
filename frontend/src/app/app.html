@@ -1,102 +1,117 @@
-<cm-navbar (toggleFilters)="toggleFilters()"></cm-navbar>
+<div class="app-container">
+  <cm-navbar 
+    [currentView]="currentView"
+    (toggleFilters)="toggleFilters()"
+    (navigateHome)="goToHome()"
+    (navigateWatchlist)="goToWatchlist()">
+  </cm-navbar>
 
-<main>
-  <div class="error-container" *ngIf="errorMessage">
-    <p>{{ errorMessage }}</p>
-    <button (click)="loadAllMovies()" class="btn-retry glass">Réessayer</button>
-  </div>
-  
-  <div class="content-container" *ngIf="!errorMessage">
-    <div class="filters-wrapper" *ngIf="showFilters">
-      <cm-movie-filters 
-        (genreChange)="onGenreChange($event)"
-        (providerChange)="onProviderChange($event)"
-        (durationChange)="onDurationChange($event)"
-        (certificationChange)="onCertificationChange($event)">
-      </cm-movie-filters>
+  <main class="main-content">
+    
+    <!-- SECTION ACCUEIL -->
+    <div *ngIf="currentView === 'home'" class="view-home">
+
+      <div class="filters-wrapper" *ngIf="showFilters">
+        <cm-movie-filters 
+          (genreChange)="onGenreChange($event)"
+          (durationChange)="onDurationChange($event)"
+          (providerChange)="onProviderChange($event)"
+          (certificationChange)="onCertificationChange($event)">
+        </cm-movie-filters>
+      </div>
+
+      <div class="error-banner" *ngIf="errorMessage">
+        <p>{{ errorMessage }}</p>
+      </div>
+
+      <!-- CAS A : Aucun filtre actif (Mises en avant) -->
+      <div class="highlight-sections" *ngIf="!hasActiveFilters">
+        <!-- Historique (Conditionnel) -->
+        <cm-movie-row 
+          *ngIf="historyMovies.length > 0"
+          title="Récemment consultés" 
+          [movies]="historyMovies" 
+          [loading]="false"
+          (movieClick)="openMovieDetails($event)">
+        </cm-movie-row>
+
+        <cm-movie-row 
+          title="Populaires sur CineMatch" 
+          [movies]="popularMovies" 
+          [loading]="loadingPopular"
+          (movieClick)="openMovieDetails($event)">
+        </cm-movie-row>
+
+        <cm-movie-row 
+          title="Films d'Action" 
+          [movies]="actionMovies" 
+          [loading]="loadingAction"
+          (movieClick)="openMovieDetails($event)">
+        </cm-movie-row>
+
+        <cm-movie-row 
+          title="À voir absolument" 
+          [movies]="trendingMovies" 
+          [loading]="loadingTrending"
+          (movieClick)="openMovieDetails($event)">
+        </cm-movie-row>
+      </div>
+
+      <!-- CAS B : Filtres actifs (Résultats de recherche) -->
+      <div class="discovery-section" *ngIf="hasActiveFilters">
+        <cm-movie-row 
+          title="Résultats de votre recherche" 
+          [movies]="discoveryMovies" 
+          [loading]="loadingDiscovery"
+          (movieClick)="openMovieDetails($event)">
+        </cm-movie-row>
+
+        <cm-movie-pagination 
+          *ngIf="discoveryMovies.length > 0 && hasMoreResults"
+          [isLoading]="loadingDiscovery"
+          (loadMore)="onLoadMore()">
+        </cm-movie-pagination>
+      </div>
     </div>
 
-    <!-- CAS A : Aucun filtre actif (Mises en avant) -->
-    <div class="highlight-sections" *ngIf="!hasActiveFilters">
-      
-      <!-- Historique (Conditionnel) -->
-      <cm-movie-row 
-        *ngIf="historyMovies.length > 0"
-        title="Récemment consultés" 
-        [movies]="historyMovies" 
-        [loading]="false"
-        (movieClick)="openMovieDetails($event)">
-      </cm-movie-row>
+    <!-- SECTION MA LISTE -->
+    <div *ngIf="currentView === 'watchlist'" class="view-watchlist">
+      <div class="watchlist-page">
+        <header class="page-header">
+          <h1>Ma Liste</h1>
+          <p>{{ watchlistMovies.length }} films sauvegardés</p>
+        </header>
 
-      <cm-movie-row 
-        title="Populaires sur CineMatch" 
-        [movies]="popularMovies" 
-        [loading]="loadingPopular"
-        (movieClick)="openMovieDetails($event)">
-      </cm-movie-row>
-      
-      <cm-movie-row 
-        title="Action & Aventure" 
-        [movies]="actionMovies" 
-        [loading]="loadingAction"
-        (movieClick)="openMovieDetails($event)">
-      </cm-movie-row>
-      
-      <cm-movie-row 
-        title="Tendances : Moins de 2h" 
-        [movies]="trendingMovies" 
-        [loading]="loadingTrending"
-        (movieClick)="openMovieDetails($event)">
-      </cm-movie-row>
+        <div class="watchlist-grid" *ngIf="watchlistMovies.length > 0">
+          @for (movie of watchlistMovies; track movie.id) {
+            <div class="movie-card-wrapper" (click)="openMovieDetails(movie)">
+              <div class="movie-card">
+                <img [src]="movie.poster" [alt]="movie.title">
+                <div class="card-overlay">
+                  <span class="rating">★ {{ movie.rating }}</span>
+                  <span class="title">{{ movie.title }}</span>
+                </div>
+              </div>
+            </div>
+          }
+        </div>
+
+        <div class="empty-watchlist" *ngIf="watchlistMovies.length === 0">
+          <div class="empty-content">
+            <span class="empty-icon">📂</span>
+            <h2>Votre liste est vide</h2>
+            <p>Ajoutez des films pour les retrouver facilement ici.</p>
+            <button class="primary-btn" (click)="goToHome()">Explorer les films</button>
+          </div>
+        </div>
+      </div>
     </div>
 
-    <!-- CAS B : Filtres actifs (Résultats de recherche) -->
-    <div class="search-results" *ngIf="hasActiveFilters">
-      <cm-movie-row 
-        [movies]="discoveryMovies" 
-        [loading]="loadingDiscovery" 
-        [isGrid]="true"
-        (movieClick)="openMovieDetails($event)">
-      </cm-movie-row>
+  </main>
 
-      <cm-movie-pagination 
-        *ngIf="hasMoreResults && !loadingDiscovery"
-        (loadMore)="onLoadMore()">
-      </cm-movie-pagination>
-    </div>
-  </div>
-</main>
-
-<!-- Modale de détails -->
-<cm-movie-detail-modal 
-  *ngIf="selectedMovieForDetails" 
-  [movie]="selectedMovieForDetails"
-  (close)="closeMovieDetails()">
-</cm-movie-detail-modal>
-
-<style>
-  main {
-    padding-top: 80px; /* Compense la hauteur du header fixe */
-  }
-
-  .content-container {
-    position: relative;
-    z-index: 20;
-    padding-bottom: 50px;
-  }
-
-  .pagination-footer {
-    margin-top: 40px;
-    display: flex;
-    justify-content: center;
-  }
-
-  .search-results-section {
-    animation: fadeIn 0.5s ease-out;
-  }
-
-  @keyframes fadeIn {
-    from { opacity: 0; transform: translateY(10px); }
-    to { opacity: 1; transform: translateY(0); }
-  }
-</style>
+  <cm-movie-detail-modal 
+    *ngIf="selectedMovieForDetails"
+    [movie]="selectedMovieForDetails"
+    (close)="closeMovieDetails()">
+  </cm-movie-detail-modal>
+</div>

@@ -6,7 +6,8 @@ import { MovieFiltersComponent, Certification } from './features/movies/filters/
 import { MoviePaginationComponent } from './features/movies/pagination/movie-pagination';
 import { MovieDetailModalComponent } from './features/movies/detail-modal/movie-detail-modal';
 import { MoviesService, Movie } from './core/services/movies';
-import { HistoryService } from './core/services/history'; // Nouveau
+import { HistoryService } from './core/services/history';
+import { WatchlistService } from './core/services/watchlist';
 
 @Component({
   selector: 'app-root',
@@ -29,7 +30,8 @@ export class AppComponent implements OnInit {
   actionMovies: MovieItem[] = [];
   trendingMovies: MovieItem[] = [];
   discoveryMovies: MovieItem[] = [];
-  historyMovies: MovieItem[] = []; // Nouveau
+  historyMovies: MovieItem[] = [];
+  watchlistMovies: MovieItem[] = [];
 
   loadingPopular = true;
   loadingAction = true;
@@ -47,6 +49,7 @@ export class AppComponent implements OnInit {
 
   showFilters: boolean = false;
   selectedMovieForDetails: MovieItem | null = null;
+  currentView: 'home' | 'watchlist' = 'home';
 
   get hasActiveFilters(): boolean {
     return !!this.selectedGenre || !!this.selectedProviders || this.maxDuration < 240;
@@ -56,16 +59,21 @@ export class AppComponent implements OnInit {
 
   constructor(
     private moviesService: MoviesService,
-    private historyService: HistoryService, // Injection
+    private historyService: HistoryService,
+    private watchlistService: WatchlistService,
     private cdr: ChangeDetectorRef
   ) {}
 
   ngOnInit(): void {
     this.loadAllMovies();
     
-    // Suivre l'évolution de l'historique
     this.historyService.history$.subscribe(history => {
       this.historyMovies = history;
+      this.cdr.detectChanges();
+    });
+
+    this.watchlistService.watchlist$.subscribe(watchlist => {
+      this.watchlistMovies = watchlist;
       this.cdr.detectChanges();
     });
   }
@@ -77,13 +85,7 @@ export class AppComponent implements OnInit {
     this.errorMessage = null;
 
     const errorHandler = (error: any) => {
-      if (error.status === 502) {
-        this.errorMessage = 'Le service TMDB est temporairement indisponible.';
-      } else if (error.status === 401) {
-        this.errorMessage = 'Erreur de configuration serveur (Clé API).';
-      } else {
-        this.errorMessage = 'Une erreur est survenue lors de la récupération des films. Veuillez réessayer.';
-      }
+      this.errorMessage = 'Une erreur est survenue lors de la récupération des films.';
       this.loadingPopular = false;
       this.loadingAction = false;
       this.loadingTrending = false;
@@ -118,17 +120,41 @@ export class AppComponent implements OnInit {
     });
   }
 
-  toggleFilters(): void {
-    this.showFilters = !this.showFilters;
-    if (this.showFilters) {
-      window.scrollTo({ top: 0, behavior: 'smooth' });
-    }
+  goToHome(): void {
+    console.log('Navigation vers HOME');
+    this.currentView = 'home';
+    this.showFilters = false;
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+    this.cdr.markForCheck();
     this.cdr.detectChanges();
+  }
+
+  goToWatchlist(): void {
+    console.log('Navigation vers WATCHLIST');
+    this.currentView = 'watchlist';
+    this.showFilters = false;
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+    this.cdr.markForCheck();
+    this.cdr.detectChanges();
+  }
+
+  toggleFilters(): void {
+    if (this.currentView !== 'home') {
+      this.goToHome();
+      setTimeout(() => {
+        this.showFilters = true;
+        this.cdr.detectChanges();
+      }, 300);
+    } else {
+      this.showFilters = !this.showFilters;
+      if (this.showFilters) window.scrollTo({ top: 0, behavior: 'smooth' });
+      this.cdr.detectChanges();
+    }
   }
 
   openMovieDetails(movie: MovieItem): void {
     this.selectedMovieForDetails = movie;
-    this.historyService.addToHistory(movie); // Ajout à l'historique
+    this.historyService.addToHistory(movie);
     this.cdr.detectChanges();
   }
 
@@ -180,15 +206,9 @@ export class AppComponent implements OnInit {
     ).subscribe({
       next: (movies: Movie[]) => {
         const newItems = this.mapToMovieItems(movies);
-        
-        if (append) {
-          this.discoveryMovies = [...this.discoveryMovies, ...newItems];
-        } else {
-          this.discoveryMovies = [...newItems];
-        }
-
+        if (append) this.discoveryMovies = [...this.discoveryMovies, ...newItems];
+        else this.discoveryMovies = [...newItems];
         this.hasMoreResults = movies.length >= 20;
-        
         this.loadingDiscovery = false;
         this.cdr.detectChanges();
       },

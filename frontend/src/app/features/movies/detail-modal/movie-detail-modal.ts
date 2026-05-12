@@ -2,6 +2,7 @@ import { Component, Input, Output, EventEmitter, HostListener, OnInit, inject, C
 import { CommonModule } from '@angular/common';
 import { MovieItem } from '../../home/movie-row/movie-row';
 import { MoviesService, WatchProvider } from '../../../core/services/movies';
+import { WatchlistService } from '../../../core/services/watchlist';
 
 @Component({
   selector: 'cm-movie-detail-modal',
@@ -54,10 +55,12 @@ import { MoviesService, WatchProvider } from '../../../core/services/movies';
             </div>
 
             <div class="actions">
-              <button class="play-btn">
-                <span class="play-icon">▶</span> Lecture
+              <button 
+                class="list-btn" 
+                [class.active]="isInWatchlist"
+                (click)="onToggleWatchlist()">
+                {{ isInWatchlist ? '✓ Dans ma liste' : '+ Ma Liste' }}
               </button>
-              <button class="list-btn">+ Ma Liste</button>
               <button class="share-btn" (click)="onShare()">
                 <span class="share-icon">{{ shareStatus === 'copied' ? '✅' : '🔗' }}</span>
                 {{ shareStatus === 'copied' ? 'Copié !' : 'Partager' }}
@@ -163,7 +166,6 @@ import { MoviesService, WatchProvider } from '../../../core/services/movies';
       justify-content: center;
       cursor: pointer;
       font-size: 0.9rem;
-      transition: all 0.2s;
     }
 
     .vote-feedback {
@@ -223,33 +225,35 @@ import { MoviesService, WatchProvider } from '../../../core/services/movies';
       flex-wrap: wrap;
     }
 
-    .play-btn {
-      background: white;
-      color: black;
-      padding: 10px 25px;
-      border-radius: 4px;
-      font-weight: 700;
-      cursor: pointer;
-      border: none;
-    }
-
-    .list-btn, .share-btn {
+    .list-btn {
       background: rgba(255, 255, 255, 0.1);
       color: white;
-      padding: 10px 20px;
+      padding: 12px 30px;
       border-radius: 4px;
       border: 1px solid rgba(255, 255, 255, 0.3);
+      cursor: pointer;
+      font-weight: 700;
+      font-size: 1.1rem;
+      transition: all 0.2s;
+    }
+
+    .list-btn.active {
+      background: white;
+      color: black;
+      border-color: white;
+    }
+
+    .share-btn {
+      background: rgba(255, 255, 255, 0.05);
+      color: white;
+      padding: 12px 25px;
+      border-radius: 4px;
+      border: 1px solid rgba(255, 255, 255, 0.2);
       cursor: pointer;
       font-weight: 700;
       display: flex;
       align-items: center;
       gap: 8px;
-      transition: all 0.2s;
-    }
-
-    .share-btn:hover {
-      background: rgba(255, 255, 255, 0.2);
-      border-color: white;
     }
 
     .loader-small {
@@ -270,12 +274,12 @@ import { MoviesService, WatchProvider } from '../../../core/services/movies';
       .modal-content { flex-direction: column; }
       .poster-side { flex: 0 0 200px; }
       .info-side { padding: 25px; }
-      .actions { gap: 8px; }
     }
   `]
 })
 export class MovieDetailModalComponent implements OnInit {
   private moviesService = inject(MoviesService);
+  private watchlistService = inject(WatchlistService);
   private cdr = inject(ChangeDetectorRef);
 
   @Input() movie: MovieItem | null = null;
@@ -285,10 +289,12 @@ export class MovieDetailModalComponent implements OnInit {
   loadingProviders = true;
   hasVoted = false;
   shareStatus: 'idle' | 'copied' = 'idle';
+  isInWatchlist = false;
 
   ngOnInit(): void {
     if (this.movie) {
       this.fetchProviders(this.movie.id);
+      this.isInWatchlist = this.watchlistService.isInWatchlist(this.movie.id);
     }
   }
 
@@ -308,7 +314,6 @@ export class MovieDetailModalComponent implements OnInit {
   }
 
   onVote(isLike: boolean): void {
-    console.log(`Vote ${isLike ? 'positif' : 'négatif'} pour ${this.movie?.title}`);
     this.hasVoted = true;
     this.cdr.detectChanges();
     setTimeout(() => {
@@ -316,46 +321,38 @@ export class MovieDetailModalComponent implements OnInit {
     }, 1500);
   }
 
-  /**
-   * Partage du film via Web Share API ou Copier le lien
-   */
+  onToggleWatchlist(): void {
+    if (this.movie) {
+      this.watchlistService.toggleWatchlist(this.movie);
+      this.isInWatchlist = !this.isInWatchlist;
+      this.cdr.detectChanges();
+    }
+  }
+
   async onShare(): Promise<void> {
     if (!this.movie) return;
-
     const shareData = {
       title: `CineMatch - ${this.movie.title}`,
-      text: `J'ai trouvé ce film sur CineMatch : "${this.movie.title}". Ça te tente pour ce soir ?`,
+      text: `J'ai trouvé ce film sur CineMatch : "${this.movie.title}".`,
       url: `https://www.themoviedb.org/movie/${this.movie.id}`
     };
 
     try {
-      // Tentative Web Share API (Mobile / Safari)
       if (navigator.share) {
         await navigator.share(shareData);
       } else {
-        // Fallback : Copie dans le presse-papier
         await navigator.clipboard.writeText(`${shareData.text} ${shareData.url}`);
         this.shareStatus = 'copied';
         this.cdr.detectChanges();
-        
-        setTimeout(() => {
-          this.shareStatus = 'idle';
-          this.cdr.detectChanges();
-        }, 2000);
+        setTimeout(() => { this.shareStatus = 'idle'; this.cdr.detectChanges(); }, 2000);
       }
-    } catch (err) {
-      console.error('Erreur lors du partage:', err);
-    }
+    } catch (err) {}
   }
 
   @HostListener('window:keydown.escape')
-  onEscape() {
-    this.onClose();
-  }
+  onEscape() { this.onClose(); }
 
-  onClose(): void {
-    this.close.emit();
-  }
+  onClose(): void { this.close.emit(); }
 
   formatRating(rating: string | undefined): string {
     if (!rating) return '0.0';
