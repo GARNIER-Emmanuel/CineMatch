@@ -319,6 +319,12 @@ export class AppComponent implements OnInit, OnDestroy {
         this.hasMoreResults = movies.length > 0;
         this.loadingDiscovery = false;
         this.cdr.detectChanges();
+
+        if (append) {
+          setTimeout(() => {
+            window.scrollBy({ top: 500, behavior: 'smooth' });
+          }, 100);
+        }
       },
       error: () => {
         this.loadingDiscovery = false;
