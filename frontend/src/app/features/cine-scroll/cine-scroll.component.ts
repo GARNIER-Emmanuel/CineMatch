@@ -129,14 +129,17 @@ export class CineScrollComponent implements OnInit {
   }
 
   loadMovies(): void {
+    console.log('[CineScroll-FE] Chargement des films pour les genres:', this.selectedGenres);
     this.state = 'LOADING';
     this.moviesService.getCineScrollMovies(this.selectedGenres)
       .subscribe({
         next: (movies) => {
+          console.log('[CineScroll-FE] Réception de', movies.length, 'films');
           this.movies = movies;
           this.state = 'SCROLLING';
         },
-        error: () => {
+        error: (err) => {
+          console.error('[CineScroll-FE] Erreur lors du chargement:', err);
           this.state = 'ERROR';
         }
       });

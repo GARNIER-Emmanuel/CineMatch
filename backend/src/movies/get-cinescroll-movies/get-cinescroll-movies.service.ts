@@ -24,6 +24,7 @@ export class GetCineScrollMoviesService {
   }
 
   async execute(dto: GetCineScrollMoviesDto): Promise<CineScrollMovie[]> {
+    console.log('[CineScroll] Requête reçue pour les genres:', dto.genres);
     try {
       const response = await axios.get(`${this.baseUrl}/discover/movie`, {
         params: {
@@ -36,6 +37,7 @@ export class GetCineScrollMoviesService {
           'vote_count.gte': 100, // Pour éviter les films obscurs dans CineScroll
         },
       });
+      console.log('[CineScroll] TMDB a répondu avec', response.data.results.length, 'films');
 
       return response.data.results.map((movie: any) => ({
         id: movie.id,
