@@ -7,4 +7,6 @@ export class DiscoverMoviesDto {
   maxDuration?: number; // Durée maximale en minutes
   minRating?: number; // Note minimale souhaitée
   page?: number; // Numéro de la page de résultats
+  certificationCountry?: string; // Code pays pour la certification (ex: "FR")
+  certificationLte?: string; // Certification maximale (ex: "12")
 }
