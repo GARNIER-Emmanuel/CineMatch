@@ -47,9 +47,9 @@
 
           <!-- Cas Personne (Réalisateur) -->
           @if (item.media_type === 'person') {
-            <div class="result-card person">
+            <div class="result-card person" (click)="onDirectorClick(item)">
               <div class="card-image circular">
-                <img [src]="item.profilePath || 'assets/person-placeholder.jpg'" alt="">
+                <img [src]="item.profilePath || 'https://api.dicebear.com/7.x/initials/svg?seed=' + item.name" alt="">
                 <div class="card-badge person">Bio</div>
               </div>
               <div class="card-info">
@@ -151,21 +151,19 @@
     </div>
 
     <!-- SECTION WATCHLIST -->
-    <div *ngIf="currentView === 'watchlist' && !searchQuery.trim()" class="view-watchlist">
-      <header class="section-header">
+    <div *ngIf="currentView === 'watchlist' && !searchQuery.trim()" class="watchlist-page">
+      <header class="page-header">
         <h1>Ma Liste</h1>
         <p>Retrouvez ici tous les films que vous avez sauvegardés.</p>
       </header>
 
-      <div class="results-grid" *ngIf="watchlistMovies.length > 0">
+      <div class="watchlist-grid" *ngIf="watchlistMovies.length > 0">
         @for (movie of watchlistMovies; track movie.id) {
-          <div class="result-card movie" (click)="openMovieDetails(movie)">
-            <div class="card-image">
-              <img [src]="movie.poster" alt="">
-            </div>
-            <div class="card-info">
-              <h3>{{ movie.title }}</h3>
-              <span class="meta">{{ movie.releaseYear }} • ★ {{ movie.rating }}</span>
+          <div class="movie-card" (click)="openMovieDetails(movie)">
+            <img [src]="movie.poster" alt="">
+            <div class="card-overlay">
+              <span class="rating">★ {{ movie.rating }}</span>
+              <span class="title">{{ movie.title }}</span>
             </div>
           </div>
         }

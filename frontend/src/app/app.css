@@ -286,7 +286,7 @@
    PAGE MA LISTE
    ============================================= */
 .watchlist-page {
-  padding: 40px 4% 50px;
+  padding: 20px 4% 50px;
   min-height: 100vh;
   animation: fadeIn 0.8s ease-out;
 }

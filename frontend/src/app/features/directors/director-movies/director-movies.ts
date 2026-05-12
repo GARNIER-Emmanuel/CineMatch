@@ -1,4 +1,4 @@
-import { Component, Input, OnInit, Output, EventEmitter } from '@angular/core';
+import { Component, Input, OnInit, Output, EventEmitter, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { MoviesService } from '../../../core/services/movies';
 
@@ -25,7 +25,7 @@ import { MoviesService } from '../../../core/services/movies';
         @for (movie of movies; track movie.id) {
           <div class="movie-card" (click)="onMovieClick(movie)">
             <div class="card-image">
-              <img [src]="movie.poster || 'assets/movie-placeholder.jpg'" [alt]="movie.title">
+              <img [src]="movie.poster || 'https://api.dicebear.com/7.x/shapes/svg?seed=' + movie.title" [alt]="movie.title">
               <div class="card-overlay">
                 <span class="rating">★ {{ movie.rating }}</span>
               </div>
@@ -165,7 +165,10 @@ export class DirectorMoviesComponent implements OnInit {
   movies: any[] = [];
   loading = true;
 
-  constructor(private moviesService: MoviesService) {}
+  constructor(
+    private moviesService: MoviesService,
+    private cdr: ChangeDetectorRef
+  ) {}
 
   ngOnInit() {
     if (this.directorId) {
@@ -173,9 +176,11 @@ export class DirectorMoviesComponent implements OnInit {
         next: (data) => {
           this.movies = data;
           this.loading = false;
+          this.cdr.detectChanges();
         },
         error: () => {
           this.loading = false;
+          this.cdr.detectChanges();
         }
       });
     }

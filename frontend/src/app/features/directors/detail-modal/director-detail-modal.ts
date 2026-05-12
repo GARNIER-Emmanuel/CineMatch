@@ -13,7 +13,7 @@ import { CommonModule } from '@angular/common';
         <div class="modal-body">
           <div class="director-header">
             <div class="director-image">
-              <img [src]="director.image || 'assets/person-placeholder.jpg'" [alt]="director.name">
+              <img [src]="director.image || 'https://api.dicebear.com/7.x/initials/svg?seed=' + director.name" [alt]="director.name">
             </div>
             <div class="director-info">
               <h1>{{ director.name }}</h1>

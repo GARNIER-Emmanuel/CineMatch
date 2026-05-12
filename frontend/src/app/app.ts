@@ -202,6 +202,8 @@ export class AppComponent implements OnInit, OnDestroy {
     if (director) {
       this.selectedDirectorForMovies = { id: director.id, name: director.name };
       this.currentView = 'director-movies';
+      this.searchQuery = '';
+      this.searchResults = [];
     }
     this.closeDirectorDetails();
     window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -264,7 +266,12 @@ export class AppComponent implements OnInit, OnDestroy {
   private performSearch(query: string): void {
     this.moviesService.search(query).subscribe({
       next: (results) => {
-        this.searchResults = results;
+        // Trier pour mettre les personnes en premier (priorité réalisateurs)
+        this.searchResults = results.sort((a, b) => {
+          if (a.media_type === 'person' && b.media_type !== 'person') return -1;
+          if (a.media_type !== 'person' && b.media_type === 'person') return 1;
+          return 0;
+        });
         this.isSearching = false;
         this.cdr.detectChanges();
       },

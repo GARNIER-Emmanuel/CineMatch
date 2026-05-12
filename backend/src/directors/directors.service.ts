@@ -6,95 +6,138 @@ import axios from 'axios';
 export class DirectorsService {
   private readonly apiKey: string;
   private readonly baseUrl = 'https://api.themoviedb.org/3';
+  private directorsCache: any[] | null = null;
 
-  private readonly epochs = [
-    {
-      title: "Âge d'Or d'Hollywood",
-      directors: [
-        { id: 2636, name: 'Alfred Hitchcock' },
-        { id: 1032, name: 'John Ford' },
-        { id: 2038, name: 'Orson Welles' },
-        { id: 1564, name: 'Howard Hawks' },
-        { id: 1774, name: 'Billy Wilder' },
-        { id: 1111, name: 'Frank Capra' }
-      ]
-    },
-    {
-      title: "Nouvelle Vague & Cinéma Européen",
-      directors: [
-        { id: 1339, name: 'Jean-Luc Godard' },
-        { id: 1121, name: 'François Truffaut' },
-        { id: 4415, name: 'Federico Fellini' },
-        { id: 38, name: 'Akira Kurosawa' },
-        { id: 1686, name: 'Ingmar Bergman' },
-        { id: 1177, name: 'Michelangelo Antonioni' }
-      ]
-    },
-    {
-      title: "Blockbusters & Nouvel Hollywood",
-      directors: [
-        { id: 488, name: 'Steven Spielberg' },
-        { id: 1032, name: 'Martin Scorsese' },
-        { id: 1776, name: 'Francis Ford Coppola' },
-        { id: 240, name: 'George Lucas' },
-        { id: 138, name: 'Stanley Kubrick' },
-        { id: 578, name: 'Ridley Scott' }
-      ]
-    },
-    {
-      title: "Cinéma Contemporain",
-      directors: [
-        { id: 525, name: 'Christopher Nolan' },
-        { id: 45388, name: 'Denis Villeneuve' },
-        { id: 138, name: 'Quentin Tarantino' },
-        { id: 138248, name: 'Greta Gerwig' },
-        { id: 5655, name: 'Wes Anderson' },
-        { id: 7467, name: 'David Fincher' }
-      ]
-    }
-  ];
-
-  constructor(private configService: ConfigService) {
-    this.apiKey = this.configService.get<string>('TMDB_API_KEY') || '';
+  constructor(private config: ConfigService) {
+    this.apiKey = this.config.get<string>('TMDB_API_KEY') || '';
   }
 
+  /**
+   * Récupère une liste ultra-exhaustive et dynamique de réalisateurs importants.
+   * Scanne les films cultes (Top Voted + Top Rated) et les personnalités populaires.
+   */
   async getDirectorsByEpochs(): Promise<any[]> {
+    if (this.directorsCache) return this.directorsCache;
+
     try {
-      const results: any[] = [];
+      // 1. Scanner une large base de films (100 films les plus votés + 100 mieux notés)
+      const movieIds = await this.getExtensiveMoviePool();
+      
+      // 2. Extraire les réalisateurs de ces films
+      const directorIdsFromMovies = await this.getExtensiveDirectorIds(movieIds);
+      
+      // 3. Ajouter les 100 personnalités les plus populaires du moment (filtrées sur Directing)
+      const popularDirectorIds = await this.getPopularDirectorIds();
+      
+      // Union des IDs pour éviter les doublons
+      const allUniqueIds = Array.from(new Set([...directorIdsFromMovies, ...popularDirectorIds])).slice(0, 200);
 
-      for (const epoch of this.epochs) {
-        const directorsDetails = await Promise.all(
-          epoch.directors.map(async (d) => {
-            try {
-              const res = await axios.get(`${this.baseUrl}/person/${d.id}`, {
-                params: { api_key: this.apiKey, language: 'fr-FR' }
-              });
-              const data = res.data;
-              return {
-                id: data.id,
-                name: data.name,
-                image: data.profile_path ? `https://image.tmdb.org/t/p/w500${data.profile_path}` : null,
-                biography: data.biography,
-                birthday: data.birthday,
-                deathday: data.deathday,
-                placeOfBirth: data.place_of_birth
-              };
-            } catch (e) {
-              return { ...d, image: null };
-            }
-          })
-        );
+      // 4. Récupérer les détails complets pour chaque réalisateur
+      const directors = await this.fetchDirectorsDetails(allUniqueIds);
 
-        results.push({
-          title: epoch.title,
-          directors: directorsDetails
-        });
-      }
-
-      return results;
+      // 5. Classer par époques basées sur l'année de naissance
+      this.directorsCache = this.groupByEpochs(directors);
+      return this.directorsCache;
     } catch (error) {
-      throw new HttpException('TMDB API unavailable', HttpStatus.BAD_GATEWAY);
+      console.error('[DirectorsService] Error:', error);
+      throw new HttpException('Failed to fetch extensive directors', HttpStatus.INTERNAL_SERVER_ERROR);
     }
+  }
+
+  private async getExtensiveMoviePool(): Promise<number[]> {
+    const pages = [1, 2, 3, 4, 5]; 
+    const topRatedPages = [1, 2, 3, 4, 5]; 
+    
+    const requests = [
+      ...pages.map(p => axios.get(`${this.baseUrl}/discover/movie`, {
+        params: { api_key: this.apiKey, sort_by: 'vote_count.desc', page: p, language: 'fr-FR' }
+      })),
+      ...topRatedPages.map(p => axios.get(`${this.baseUrl}/movie/top_rated`, {
+        params: { api_key: this.apiKey, page: p, language: 'fr-FR' }
+      }))
+    ];
+
+    const responses = await Promise.all(requests);
+    return responses.flatMap(res => res.data.results.map((m: any) => m.id));
+  }
+
+  private async getPopularDirectorIds(): Promise<number[]> {
+    const pages = [1, 2, 3, 4, 5]; 
+    const requests = pages.map(p => axios.get(`${this.baseUrl}/person/popular`, {
+      params: { api_key: this.apiKey, page: p, language: 'fr-FR' }
+    }));
+
+    const responses = await Promise.all(requests);
+    return responses.flatMap(res => 
+      res.data.results
+        .filter((p: any) => p.known_for_department === 'Directing')
+        .map((p: any) => p.id)
+    );
+  }
+
+  private async getExtensiveDirectorIds(movieIds: number[]): Promise<number[]> {
+    const directorIds = new Set<number>();
+    
+    // On limite à 120 films pour rester raisonnable sur les quotas API
+    const limitedIds = movieIds.slice(0, 120);
+    const creditsRequests = limitedIds.map(id => 
+      axios.get(`${this.baseUrl}/movie/${id}/credits`, {
+        params: { api_key: this.apiKey }
+      }).catch(() => null)
+    );
+
+    const responses = await Promise.all(creditsRequests);
+    responses.forEach(res => {
+      if (res?.data?.crew) {
+        const director = res.data.crew.find((m: any) => m.job === 'Director');
+        if (director) directorIds.add(director.id);
+      }
+    });
+
+    return Array.from(directorIds);
+  }
+
+  private async fetchDirectorsDetails(ids: number[]): Promise<any[]> {
+    const requests = ids.map(id => 
+      axios.get(`${this.baseUrl}/person/${id}`, {
+        params: { api_key: this.apiKey, language: 'fr-FR' }
+      }).catch(() => null)
+    );
+
+    const responses = await Promise.all(requests);
+    return responses
+      .filter(res => res !== null)
+      .map(res => ({
+        id: res.data.id,
+        name: res.data.name,
+        biography: res.data.biography,
+        birthday: res.data.birthday,
+        deathday: res.data.deathday,
+        placeOfBirth: res.data.place_of_birth,
+        image: res.data.profile_path ? `https://image.tmdb.org/t/p/w500${res.data.profile_path}` : null,
+        birthYear: res.data.birthday ? parseInt(res.data.birthday.split('-')[0], 10) : null
+      }))
+      .filter(d => d.birthYear !== null); 
+  }
+
+  private groupByEpochs(directors: any[]): any[] {
+    const epochs = [
+      { title: 'Légendes de l\'Âge d\'Or (Nés < 1920)', min: 0, max: 1920, directors: [] as any[] },
+      { title: 'Nouvel Hollywood & Europe (1920-1945)', min: 1920, max: 1945, directors: [] as any[] },
+      { title: 'Grands Visionnaires (1945-1970)', min: 1945, max: 1970, directors: [] as any[] },
+      { title: 'Maîtres Contemporains (Nés > 1970)', min: 1970, max: 3000, directors: [] as any[] }
+    ];
+
+    directors.forEach(d => {
+      const epoch = epochs.find(e => d.birthYear >= e.min && d.birthYear < e.max);
+      if (epoch) epoch.directors.push(d);
+    });
+
+    epochs.forEach(e => {
+      e.directors.sort((a, b) => a.name.localeCompare(b.name));
+    });
+
+    return epochs.filter(e => e.directors.length > 0);
   }
 
   async getDirectorMovies(directorId: number): Promise<any[]> {
@@ -103,7 +146,6 @@ export class DirectorsService {
         params: { api_key: this.apiKey, language: 'fr-FR' }
       });
 
-      // On filtre pour ne garder que les films où il est "Director"
       const movies = res.data.crew
         .filter((m: any) => m.job === 'Director')
         .map((m: any) => ({
@@ -116,7 +158,6 @@ export class DirectorsService {
           backdrop: m.backdrop_path ? `https://image.tmdb.org/t/p/original${m.backdrop_path}` : null
         }));
 
-      // Trier par date de sortie (plus récent au plus ancien)
       return movies.sort((a: any, b: any) => b.releaseYear.localeCompare(a.releaseYear));
     } catch (error) {
       throw new HttpException('TMDB API unavailable', HttpStatus.BAD_GATEWAY);
