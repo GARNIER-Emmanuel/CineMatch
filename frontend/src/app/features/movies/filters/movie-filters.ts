@@ -12,109 +12,213 @@ export interface Genre {
   standalone: true,
   imports: [CommonModule, FormsModule],
   template: `
-    <div class="filters-container">
-      <div class="filter-section">
-        <h3 class="filter-label">Genres</h3>
-        <div class="genres-list">
-          @for (genre of genres; track genre.id) {
-            <button 
-              class="genre-btn" 
-              [class.active]="selectedGenreId === genre.id"
-              [attr.data-test]="'genre-' + genre.id"
-              (click)="selectGenre(genre.id)">
-              {{ genre.name }}
-            </button>
-          }
+    <div class="filters-card glass">
+      <div class="filters-header">
+        <h2 class="title">Filtres Dynamiques</h2>
+        <button class="reset-link" (click)="resetFilters()" *ngIf="hasActiveFilters()">
+          Réinitialiser
+        </button>
+      </div>
+
+      <div class="filters-grid">
+        <!-- Section Genres -->
+        <div class="filter-group genres-group">
+          <label class="group-label">Genres</label>
+          <div class="genres-chips">
+            @for (genre of genres; track genre.id) {
+              <button 
+                class="chip" 
+                [class.active]="selectedGenreId === genre.id"
+                [attr.data-test]="'genre-' + genre.id"
+                (click)="selectGenre(genre.id)">
+                {{ genre.name }}
+              </button>
+            }
+          </div>
         </div>
-      </div>
 
-      <div class="filter-section">
-        <h3 class="filter-label">Durée maximale : {{ maxDuration }} min</h3>
-        <input 
-          type="range" 
-          min="30" 
-          max="240" 
-          step="15" 
-          [(ngModel)]="maxDuration"
-          (input)="onDurationChange($event)"
-          class="slider"
-          data-test="duration-slider">
-      </div>
+        <!-- Section Sliders -->
+        <div class="filter-group sliders-group">
+          <div class="slider-control">
+            <div class="slider-header">
+              <label class="group-label">Durée max</label>
+              <span class="value-badge">{{ maxDuration }} min</span>
+            </div>
+            <input 
+              type="range" 
+              min="30" 
+              max="240" 
+              step="15" 
+              [(ngModel)]="maxDuration"
+              (input)="onDurationChange($event)"
+              class="modern-slider"
+              data-test="duration-slider">
+          </div>
 
-      <div class="filter-section">
-        <h3 class="filter-label">Note minimale : {{ minRating }} / 10</h3>
-        <input 
-          type="range" 
-          min="0" 
-          max="10" 
-          step="1" 
-          [(ngModel)]="minRating"
-          (input)="onRatingChange($event)"
-          class="slider"
-          data-test="rating-input">
+          <div class="slider-control">
+            <div class="slider-header">
+              <label class="group-label">Note min</label>
+              <span class="value-badge">{{ minRating }}/10</span>
+            </div>
+            <input 
+              type="range" 
+              min="0" 
+              max="10" 
+              step="1" 
+              [(ngModel)]="minRating"
+              (input)="onRatingChange($event)"
+              class="modern-slider"
+              data-test="rating-input">
+          </div>
+        </div>
       </div>
     </div>
   `,
   styles: [`
-    .filters-container {
-      margin: 20px 0;
-      padding: 0 var(--container-padding);
+    :host {
+      display: block;
+      margin: 20px var(--container-padding);
+    }
+
+    .filters-card {
+      padding: 25px;
+      border-radius: 16px;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      background: rgba(20, 20, 20, 0.6);
+      backdrop-filter: blur(10px);
+    }
+
+    .filters-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 25px;
+    }
+
+    .title {
+      font-size: 1.2rem;
+      font-weight: 700;
+      color: white;
+      margin: 0;
+    }
+
+    .reset-link {
+      background: none;
+      border: none;
+      color: var(--primary-color);
+      font-size: 0.9rem;
+      font-weight: 600;
+      cursor: pointer;
+      padding: 0;
+      text-decoration: underline;
+      opacity: 0.8;
+      transition: opacity 0.3s;
+    }
+
+    .reset-link:hover {
+      opacity: 1;
+    }
+
+    .filters-grid {
+      display: grid;
+      grid-template-columns: 1.5fr 1fr;
+      gap: 40px;
+    }
+
+    @media (max-width: 900px) {
+      .filters-grid {
+        grid-template-columns: 1fr;
+        gap: 25px;
+      }
+    }
+
+    .filter-group {
       display: flex;
       flex-direction: column;
-      gap: 30px;
     }
 
-    .filter-label {
-      font-size: 1rem;
-      color: var(--text-secondary);
+    .group-label {
+      font-size: 0.85rem;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      color: rgba(255, 255, 255, 0.5);
       margin-bottom: 15px;
+      font-weight: 600;
     }
 
-    .genres-list {
+    .genres-chips {
       display: flex;
       flex-wrap: wrap;
-      gap: 10px;
+      gap: 8px;
     }
 
-    .genre-btn {
-      padding: 8px 16px;
-      border-radius: 20px;
-      border: 1px solid rgba(255, 255, 255, 0.2);
+    .chip {
+      padding: 6px 14px;
+      border-radius: 6px;
+      border: 1px solid rgba(255, 255, 255, 0.1);
       background: rgba(255, 255, 255, 0.05);
-      color: white;
+      color: rgba(255, 255, 255, 0.8);
       cursor: pointer;
-      font-size: 0.9rem;
-      transition: all 0.3s ease;
+      font-size: 0.85rem;
+      transition: all 0.2s ease;
     }
 
-    .genre-btn:hover {
+    .chip:hover {
       background: rgba(255, 255, 255, 0.1);
-      border-color: rgba(255, 255, 255, 0.4);
+      color: white;
     }
 
-    .genre-btn.active {
+    .chip.active {
       background: var(--primary-color);
       border-color: var(--primary-color);
+      color: white;
+      font-weight: 600;
+      box-shadow: 0 4px 12px rgba(229, 9, 20, 0.3);
+    }
+
+    .sliders-group {
+      gap: 25px;
+    }
+
+    .slider-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 8px;
+    }
+
+    .value-badge {
+      font-size: 0.9rem;
+      color: white;
       font-weight: 700;
+      background: rgba(255, 255, 255, 0.1);
+      padding: 2px 8px;
+      border-radius: 4px;
     }
 
-    .slider {
+    .modern-slider {
       width: 100%;
-      max-width: 300px;
-      height: 4px;
-      background: #333;
-      border-radius: 2px;
-      outline: none;
+      height: 6px;
       -webkit-appearance: none;
+      background: rgba(255, 255, 255, 0.1);
+      border-radius: 3px;
+      outline: none;
     }
 
-    .slider::-webkit-slider-thumb {
+    .modern-slider::-webkit-slider-thumb {
       -webkit-appearance: none;
-      width: 20px;
-      height: 20px;
+      width: 18px;
+      height: 18px;
+      background: white;
+      border: 3px solid var(--primary-color);
       border-radius: 50%;
-      background: var(--primary-color);
       cursor: pointer;
+      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
+      transition: transform 0.2s;
+    }
+
+    .modern-slider::-webkit-slider-thumb:hover {
+      transform: scale(1.2);
     }
   `]
 })
@@ -153,11 +257,27 @@ export class MovieFiltersComponent {
 
   onDurationChange(event: Event): void {
     const value = (event.target as HTMLInputElement).value;
-    this.durationChange.emit(parseInt(value, 10));
+    this.maxDuration = parseInt(value, 10);
+    this.durationChange.emit(this.maxDuration);
   }
 
   onRatingChange(event: Event): void {
     const value = (event.target as HTMLInputElement).value;
-    this.ratingChange.emit(parseInt(value, 10));
+    this.minRating = parseInt(value, 10);
+    this.ratingChange.emit(this.minRating);
+  }
+
+  resetFilters(): void {
+    this.selectedGenreId = null;
+    this.maxDuration = 240;
+    this.minRating = 6;
+    
+    this.genreChange.emit(null);
+    this.durationChange.emit(240);
+    this.ratingChange.emit(6);
+  }
+
+  hasActiveFilters(): boolean {
+    return this.selectedGenreId !== null || this.maxDuration !== 240 || this.minRating !== 6;
   }
 }

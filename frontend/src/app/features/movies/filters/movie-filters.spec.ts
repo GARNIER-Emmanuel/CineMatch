@@ -81,4 +81,16 @@ describe('MovieFiltersComponent', () => {
 
     expect(emittedRating).toBe(rating);
   });
+
+  it('should reset all filters to default values', () => {
+    component.selectedGenreId = '28';
+    component.maxDuration = 90;
+    component.minRating = 8;
+    
+    component.resetFilters();
+    
+    expect(component.selectedGenreId).toBeNull();
+    expect(component.maxDuration).toBe(240);
+    expect(component.minRating).toBe(6);
+  });
 });
