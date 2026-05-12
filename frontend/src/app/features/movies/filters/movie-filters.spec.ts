@@ -36,7 +36,6 @@ describe('MovieFiltersComponent', () => {
 
     component.genreChange.subscribe((id: string | null) => selectedGenreId = id);
     
-    // On simule une sélection initiale avant toute détection
     component.selectedGenreId = genreId;
     fixture.detectChanges();
     
@@ -48,7 +47,7 @@ describe('MovieFiltersComponent', () => {
     expect(component.selectedGenreId).toBeNull();
   });
 
-  it('should emit max duration when slider changes', () => {
+  it('should update value on input but emit only on change (Duration)', () => {
     fixture.detectChanges();
     const duration = 120;
     let emittedDuration: number | undefined;
@@ -56,16 +55,19 @@ describe('MovieFiltersComponent', () => {
     component.durationChange.subscribe((val: number) => emittedDuration = val);
     
     const slider = fixture.nativeElement.querySelector('[data-test="duration-slider"]');
-    if (!slider) {
-      throw new Error('Duration slider not found');
-    }
     slider.value = duration.toString();
+    
+    // Test input : la valeur change mais n'émet pas encore
     slider.dispatchEvent(new Event('input'));
+    expect(component.maxDuration).toBe(duration);
+    expect(emittedDuration).toBeUndefined();
 
+    // Test change : l'événement est émis
+    slider.dispatchEvent(new Event('change'));
     expect(emittedDuration).toBe(duration);
   });
 
-  it('should emit min rating when rating selector changes', () => {
+  it('should update value on input but emit only on change (Rating)', () => {
     fixture.detectChanges();
     const rating = 7;
     let emittedRating: number | undefined;
@@ -73,12 +75,15 @@ describe('MovieFiltersComponent', () => {
     component.ratingChange.subscribe((val: number) => emittedRating = val);
     
     const ratingInput = fixture.nativeElement.querySelector('[data-test="rating-input"]');
-    if (!ratingInput) {
-      throw new Error('Rating input not found');
-    }
     ratingInput.value = rating.toString();
+    
+    // Test input : la valeur change mais n'émet pas encore
     ratingInput.dispatchEvent(new Event('input'));
+    expect(component.minRating).toBe(rating);
+    expect(emittedRating).toBeUndefined();
 
+    // Test change : l'événement est émis
+    ratingInput.dispatchEvent(new Event('change'));
     expect(emittedRating).toBe(rating);
   });
 

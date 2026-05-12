@@ -50,7 +50,8 @@ export interface Genre {
               max="240" 
               step="15" 
               [(ngModel)]="maxDuration"
-              (input)="onDurationChange($event)"
+              (input)="onDurationInput($event)"
+              (change)="emitDurationChange()"
               class="modern-slider"
               data-test="duration-slider">
           </div>
@@ -66,7 +67,8 @@ export interface Genre {
               max="10" 
               step="1" 
               [(ngModel)]="minRating"
-              (input)="onRatingChange($event)"
+              (input)="onRatingInput($event)"
+              (change)="emitRatingChange()"
               class="modern-slider"
               data-test="rating-input">
           </div>
@@ -255,15 +257,19 @@ export class MovieFiltersComponent {
     this.genreChange.emit(this.selectedGenreId);
   }
 
-  onDurationChange(event: Event): void {
-    const value = (event.target as HTMLInputElement).value;
-    this.maxDuration = parseInt(value, 10);
+  onDurationInput(event: Event): void {
+    this.maxDuration = parseInt((event.target as HTMLInputElement).value, 10);
+  }
+
+  emitDurationChange(): void {
     this.durationChange.emit(this.maxDuration);
   }
 
-  onRatingChange(event: Event): void {
-    const value = (event.target as HTMLInputElement).value;
-    this.minRating = parseInt(value, 10);
+  onRatingInput(event: Event): void {
+    this.minRating = parseInt((event.target as HTMLInputElement).value, 10);
+  }
+
+  emitRatingChange(): void {
     this.ratingChange.emit(this.minRating);
   }
 
