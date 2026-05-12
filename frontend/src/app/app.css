@@ -75,9 +75,32 @@
 }
 
 .search-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
   margin-bottom: 40px;
   border-bottom: 1px solid rgba(255, 255, 255, 0.1);
   padding-bottom: 20px;
+}
+
+.clear-search {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: white;
+  padding: 8px 15px;
+  border-radius: 8px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 0.8rem;
+  transition: all 0.3s;
+}
+
+.clear-search:hover {
+  background: rgba(255, 255, 255, 0.1);
+  border-color: #ffb400;
+  color: #ffb400;
 }
 
 .search-header h2 {

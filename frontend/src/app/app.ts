@@ -33,6 +33,7 @@ export class AppComponent implements OnInit, OnDestroy {
   searchResults: any[] = [];
   isSearching = false;
   searchQuery = '';
+  popularMovies: MovieItem[] = [];
   auteurMovies: MovieItem[] = [];
   classicMovies: MovieItem[] = [];
   discoveryMovies: MovieItem[] = [];
@@ -116,7 +117,7 @@ export class AppComponent implements OnInit, OnDestroy {
         this.loadingPopular = false;
         // Sélectionner le premier film avec un backdrop pour le Hero
         if (!this.heroMovie) {
-          this.heroMovie = this.popularMovies.find(m => m.backdrop) || this.popularMovies[0] || null;
+          this.heroMovie = this.popularMovies.find((m: MovieItem) => m.backdrop) || this.popularMovies[0] || null;
         }
         this.cdr.detectChanges();
       },
@@ -206,7 +207,7 @@ export class AppComponent implements OnInit, OnDestroy {
     this.loadDiscoveryMovies(false);
   }
 
-  onSearch(query: string): void {
+  onSearch(query: string, immediate: boolean = false): void {
     this.searchQuery = query;
     if (!query.trim()) {
       this.isSearching = false;
@@ -215,7 +216,11 @@ export class AppComponent implements OnInit, OnDestroy {
       return;
     }
     this.isSearching = true;
-    this.searchSubject.next(query);
+    if (immediate) {
+      this.performSearch(query);
+    } else {
+      this.searchSubject.next(query);
+    }
   }
 
   private performSearch(query: string): void {

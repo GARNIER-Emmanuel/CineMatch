@@ -28,6 +28,7 @@ import { CommonModule } from '@angular/common';
             type="text" 
             placeholder="Rechercher un film, un réalisateur..." 
             (input)="onSearchInput($event)"
+            (keyup.enter)="onSearchEnter($event)"
             #searchInput>
         </div>
         <button class="filter-toggle" (click)="onToggleFilters()">
@@ -202,7 +203,7 @@ export class NavbarComponent {
   @Output() navigateWatchlist = new EventEmitter<void>();
   @Output() navigateCineScroll = new EventEmitter<void>();
   @Output() navigateDirectors = new EventEmitter<void>();
-  @Output() search = new EventEmitter<string>();
+  @Output() search = new EventEmitter<{ query: string; immediate: boolean }>();
 
   isScrolled = false;
 
@@ -236,6 +237,11 @@ export class NavbarComponent {
 
   onSearchInput(event: any) {
     const query = event.target.value;
-    this.search.emit(query);
+    this.search.emit({ query, immediate: false });
+  }
+
+  onSearchEnter(event: any) {
+    const query = event.target.value;
+    this.search.emit({ query, immediate: true });
   }
 }

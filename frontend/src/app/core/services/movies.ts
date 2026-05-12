@@ -90,6 +90,6 @@ export class MoviesService {
   }
 
   search(query: string): Observable<any[]> {
-    return this.http.get<any[]>(`http://localhost:3000/search?q=${query}`);
+    return this.http.get<any[]>(`http://localhost:3000/search?q=${encodeURIComponent(query)}`);
   }
 }

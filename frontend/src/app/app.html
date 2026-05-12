@@ -6,7 +6,7 @@
     (navigateHome)="goToHome()"
     (navigateWatchlist)="goToWatchlist()"
     (navigateCineScroll)="goToCineScroll()"
-    (search)="onSearch($event)">
+    (search)="onSearch($event.query, $event.immediate)">
   </cm-navbar>
 
   <main class="main-content" [class.full-screen-view]="currentView === 'cinescroll'">
@@ -14,8 +14,14 @@
     <!-- SECTION RECHERCHE -->
     <div *ngIf="searchQuery.trim()" class="search-results-overlay">
       <div class="search-header">
-        <h2>Résultats pour "{{ searchQuery }}"</h2>
-        <span class="results-count" *ngIf="!isSearching">{{ searchResults.length }} résultats trouvés</span>
+        <div class="header-content">
+          <h2>Résultats pour "{{ searchQuery }}"</h2>
+          <span class="results-count" *ngIf="!isSearching">{{ searchResults.length }} résultats trouvés</span>
+        </div>
+        <button class="clear-search" (click)="onSearch('', true)">
+          <span>Fermer</span>
+          <span class="icon">✕</span>
+        </button>
       </div>
 
       <div class="loader-container" *ngIf="isSearching">
