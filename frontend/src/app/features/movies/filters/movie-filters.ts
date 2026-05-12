@@ -28,7 +28,7 @@ export interface Genre {
             @for (genre of genres; track genre.id) {
               <button 
                 class="chip" 
-                [class.active]="selectedGenreId === genre.id"
+                [class.active]="selectedGenreIds.includes(genre.id)"
                 [attr.data-test]="'genre-' + genre.id"
                 (click)="selectGenre(genre.id)">
                 {{ genre.name }}
@@ -208,7 +208,7 @@ export class MovieFiltersComponent {
   @Output() genreChange = new EventEmitter<string | null>();
   @Output() durationChange = new EventEmitter<number>();
 
-  selectedGenreId: string | null = null;
+  selectedGenreIds: string[] = [];
   maxDuration: number = 240;
 
   genres: Genre[] = [
@@ -227,12 +227,19 @@ export class MovieFiltersComponent {
   ];
 
   selectGenre(id: string): void {
-    if (this.selectedGenreId === id) {
-      this.selectedGenreId = null;
+    const index = this.selectedGenreIds.indexOf(id);
+    
+    if (index > -1) {
+      this.selectedGenreIds.splice(index, 1);
     } else {
-      this.selectedGenreId = id;
+      this.selectedGenreIds.push(id);
     }
-    this.genreChange.emit(this.selectedGenreId);
+    
+    const genresParam = this.selectedGenreIds.length > 0 
+      ? this.selectedGenreIds.join(',') 
+      : null;
+      
+    this.genreChange.emit(genresParam);
   }
 
   onDurationInput(event: Event): void {
@@ -244,7 +251,7 @@ export class MovieFiltersComponent {
   }
 
   resetFilters(): void {
-    this.selectedGenreId = null;
+    this.selectedGenreIds = [];
     this.maxDuration = 240;
     
     this.genreChange.emit(null);
@@ -252,6 +259,6 @@ export class MovieFiltersComponent {
   }
 
   hasActiveFilters(): boolean {
-    return this.selectedGenreId !== null || this.maxDuration !== 240;
+    return this.selectedGenreIds.length > 0 || this.maxDuration !== 240;
   }
 }

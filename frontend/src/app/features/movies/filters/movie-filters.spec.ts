@@ -14,37 +14,34 @@ describe('MovieFiltersComponent', () => {
     component = fixture.componentInstance;
   });
 
-  it('should emit genre id when a genre is selected', () => {
+  it('should accumulate genre ids when multiple genres are selected', () => {
     fixture.detectChanges();
-    const genreId = '28'; // Action
-    let selectedGenreId: string | null | undefined;
+    let emittedGenres: string | null | undefined;
 
-    component.genreChange.subscribe((id: string | null) => selectedGenreId = id);
+    component.genreChange.subscribe((val: string | null) => emittedGenres = val);
     
     const actionBtn = fixture.nativeElement.querySelector('[data-test="genre-28"]');
-    if (!actionBtn) {
-      throw new Error('Action button not found');
-    }
+    const adventureBtn = fixture.nativeElement.querySelector('[data-test="genre-12"]');
+    
     actionBtn.click();
+    adventureBtn.click();
 
-    expect(selectedGenreId).toBe(genreId);
+    expect(emittedGenres).toBe('28,12');
+    expect(component.selectedGenreIds).toEqual(['28', '12']);
   });
 
-  it('should deselect genre when clicking the same genre again', async () => {
-    const genreId = '28';
-    let selectedGenreId: string | null | undefined = genreId;
-
-    component.genreChange.subscribe((id: string | null) => selectedGenreId = id);
-    
-    component.selectedGenreId = genreId;
+  it('should remove genre id when clicking a selected genre', () => {
     fixture.detectChanges();
+    let emittedGenres: string | null | undefined;
+    component.selectedGenreIds = ['28', '12'];
+    
+    component.genreChange.subscribe((val: string | null) => emittedGenres = val);
     
     const actionBtn = fixture.nativeElement.querySelector('[data-test="genre-28"]');
     actionBtn.click();
-    fixture.detectChanges();
 
-    expect(selectedGenreId).toBeNull();
-    expect(component.selectedGenreId).toBeNull();
+    expect(emittedGenres).toBe('12');
+    expect(component.selectedGenreIds).toEqual(['12']);
   });
 
   it('should update value on input but emit only on change (Duration)', () => {
@@ -57,23 +54,20 @@ describe('MovieFiltersComponent', () => {
     const slider = fixture.nativeElement.querySelector('[data-test="duration-slider"]');
     slider.value = duration.toString();
     
-    // Test input : la valeur change mais n'émet pas encore
     slider.dispatchEvent(new Event('input'));
-    expect(component.maxDuration).toBe(duration);
-    expect(emittedDuration).toBeUndefined();
-
-    // Test change : l'événement est émis
     slider.dispatchEvent(new Event('change'));
+    
+    expect(component.maxDuration).toBe(duration);
     expect(emittedDuration).toBe(duration);
   });
 
-  it('should reset all filters to default values', () => {
-    component.selectedGenreId = '28';
+  it('should reset all filters', () => {
+    component.selectedGenreIds = ['28', '12'];
     component.maxDuration = 90;
     
     component.resetFilters();
     
-    expect(component.selectedGenreId).toBeNull();
+    expect(component.selectedGenreIds.length).toBe(0);
     expect(component.maxDuration).toBe(240);
   });
 });
