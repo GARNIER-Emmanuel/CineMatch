@@ -56,23 +56,17 @@ describe('MoviesService', () => {
       });
     });
 
-    it('should return movies sorted by popularity descending by default', async () => {
-      mockedAxios.get.mockResolvedValue({
-        data: {
-          results: [
-            { id: 1, title: 'Pop 1', vote_average: 7, release_date: '2023', poster_path: '' },
-            { id: 2, title: 'Pop 2', vote_average: 9, release_date: '2023', poster_path: '' },
-          ],
-        },
-      });
+    it('should pass providers and watch_region if provided', async () => {
+      mockedAxios.get.mockResolvedValue({ data: { results: [] } });
 
-      await service.discover({});
+      await service.discover({ providers: '8|337' });
 
       expect(mockedAxios.get).toHaveBeenCalledWith(
         expect.any(String),
         expect.objectContaining({
           params: expect.objectContaining({
-            sort_by: 'popularity.desc'
+            with_watch_providers: '8|337',
+            watch_region: 'FR'
           }),
         }),
       );

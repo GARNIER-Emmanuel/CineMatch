@@ -20,16 +20,18 @@ export class MoviesService {
           api_key: this.apiKey,
           with_genres: filters.genres,
           'with_runtime.lte': filters.maxDuration,
-          'vote_average.gte': filters.minRating || 0, // Ajusté à 0 car le front envoie 0 maintenant
+          'vote_average.gte': filters.minRating || 0,
           page: filters.page || 1,
           certification_country: filters.certificationCountry,
           'certification.lte': filters.certificationLte,
+          with_watch_providers: filters.providers,
+          watch_region: 'FR',
           sort_by: 'popularity.desc',
           language: 'fr-FR',
         },
       });
 
-      const movies = response.data.results.slice(0, 20).map((movie: any) => ({
+      return response.data.results.slice(0, 20).map((movie: any) => ({
         id: movie.id,
         title: movie.title,
         overview: movie.overview,
@@ -39,13 +41,41 @@ export class MoviesService {
           ? `https://image.tmdb.org/t/p/w500${movie.poster_path}`
           : null,
       }));
-
-      return movies;
     } catch (error: any) {
-      if (error.response?.status === 401) {
-        throw new HttpException('Invalid TMDB API key', HttpStatus.UNAUTHORIZED);
-      }
-      throw new HttpException('TMDB API unavailable', HttpStatus.BAD_GATEWAY);
+      this.handleError(error);
     }
+  }
+
+  /**
+   * Récupère les plateformes de streaming disponibles pour un film spécifique en France.
+   */
+  async getWatchProviders(movieId: number): Promise<any[]> {
+    try {
+      const response = await axios.get(`${this.baseUrl}/movie/${movieId}/watch/providers`, {
+        params: { api_key: this.apiKey },
+      });
+
+      const frResults = response.data.results?.FR;
+      
+      // On ne prend que les plateformes avec abonnement (flatrate)
+      if (frResults && frResults.flatrate) {
+        return frResults.flatrate.map((provider: any) => ({
+          id: provider.provider_id,
+          name: provider.provider_name,
+          logo: `https://image.tmdb.org/t/p/original${provider.logo_path}`,
+        }));
+      }
+
+      return [];
+    } catch (error: any) {
+      this.handleError(error);
+    }
+  }
+
+  private handleError(error: any) {
+    if (error.response?.status === 401) {
+      throw new HttpException('Invalid TMDB API key', HttpStatus.UNAUTHORIZED);
+    }
+    throw new HttpException('TMDB API unavailable', HttpStatus.BAD_GATEWAY);
   }
 }
