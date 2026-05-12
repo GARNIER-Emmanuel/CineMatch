@@ -1,6 +1,6 @@
 import { Component, OnInit, Output, EventEmitter } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { MoviesService } from '../../../core/services/movies';
+import { MoviesService, Movie } from '../../core/services/movies';
 
 @Component({
   selector: 'cm-directors',
@@ -185,7 +185,7 @@ export class DirectorsComponent implements OnInit {
 
   ngOnInit() {
     this.moviesService.getPopularDirectors().subscribe({
-      next: (data) => {
+      next: (data: any[]) => {
         this.epochs = data;
         this.loading = false;
       },

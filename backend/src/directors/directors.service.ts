@@ -60,9 +60,7 @@ export class DirectorsService {
 
   async getDirectorsByEpochs(): Promise<any[]> {
     try {
-      // Pour chaque époque, on récupère les détails des réalisateurs
-      // Note: On pourrait optimiser avec des appels parallèles
-      const results = [];
+      const results: any[] = [];
 
       for (const epoch of this.epochs) {
         const directorsDetails = await Promise.all(
