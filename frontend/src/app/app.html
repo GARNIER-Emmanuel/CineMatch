@@ -18,6 +18,16 @@
 
     <!-- CAS A : Aucun filtre actif (Mises en avant) -->
     <div class="highlight-sections" *ngIf="!hasActiveFilters">
+      
+      <!-- Historique (Conditionnel) -->
+      <cm-movie-row 
+        *ngIf="historyMovies.length > 0"
+        title="Récemment consultés" 
+        [movies]="historyMovies" 
+        [loading]="false"
+        (movieClick)="openMovieDetails($event)">
+      </cm-movie-row>
+
       <cm-movie-row 
         title="Populaires sur CineMatch" 
         [movies]="popularMovies" 

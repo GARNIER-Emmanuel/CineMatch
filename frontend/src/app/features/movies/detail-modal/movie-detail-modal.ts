@@ -1,4 +1,4 @@
-import { Component, Input, Output, EventEmitter, HostListener, OnInit, inject } from '@angular/core';
+import { Component, Input, Output, EventEmitter, HostListener, OnInit, inject, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { MovieItem } from '../../home/movie-row/movie-row';
 import { MoviesService, WatchProvider } from '../../../core/services/movies';
@@ -19,7 +19,14 @@ import { MoviesService, WatchProvider } from '../../../core/services/movies';
           
           <div class="info-side">
             <div class="header-info">
-              <span class="rating-badge">★ {{ formatRating(movie?.rating) }}</span>
+              <div class="meta-row">
+                <span class="rating-badge">★ {{ formatRating(movie?.rating) }}</span>
+                <div class="vote-actions" *ngIf="!hasVoted">
+                  <button class="vote-btn like" (click)="onVote(true)" title="J'aime">👍</button>
+                  <button class="vote-btn dislike" (click)="onVote(false)" title="Pas pour moi">👎</button>
+                </div>
+                <span class="vote-feedback" *ngIf="hasVoted">Merci pour votre avis !</span>
+              </div>
               <h2 class="title">{{ movie?.title }}</h2>
             </div>
 
@@ -51,6 +58,10 @@ import { MoviesService, WatchProvider } from '../../../core/services/movies';
                 <span class="play-icon">▶</span> Lecture
               </button>
               <button class="list-btn">+ Ma Liste</button>
+              <button class="share-btn" (click)="onShare()">
+                <span class="share-icon">{{ shareStatus === 'copied' ? '✅' : '🔗' }}</span>
+                {{ shareStatus === 'copied' ? 'Copié !' : 'Partager' }}
+              </button>
             </div>
           </div>
         </div>
@@ -129,6 +140,39 @@ import { MoviesService, WatchProvider } from '../../../core/services/movies';
       gap: 20px;
     }
 
+    .meta-row {
+      display: flex;
+      align-items: center;
+      gap: 20px;
+      margin-bottom: 10px;
+    }
+
+    .vote-actions {
+      display: flex;
+      gap: 8px;
+    }
+
+    .vote-btn {
+      background: rgba(255, 255, 255, 0.1);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      border-radius: 50%;
+      width: 32px;
+      height: 32px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      font-size: 0.9rem;
+      transition: all 0.2s;
+    }
+
+    .vote-feedback {
+      font-size: 0.85rem;
+      color: #46d369;
+      font-weight: 600;
+      animation: slideInRight 0.3s ease-out;
+    }
+
     .title {
       font-size: 2.2rem;
       font-weight: 800;
@@ -140,7 +184,6 @@ import { MoviesService, WatchProvider } from '../../../core/services/movies';
       font-weight: 800;
     }
 
-    /* Styles Plateformes */
     .providers-container h3, .synopsis-container h3 {
       font-size: 0.85rem;
       text-transform: uppercase;
@@ -162,18 +205,6 @@ import { MoviesService, WatchProvider } from '../../../core/services/movies';
       width: 45px;
       height: 45px;
       border-radius: 8px;
-      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
-      transition: transform 0.2s;
-    }
-
-    .provider-item:hover img {
-      transform: scale(1.1);
-    }
-
-    .no-providers {
-      font-size: 0.9rem;
-      color: rgba(255, 255, 255, 0.4);
-      font-style: italic;
     }
 
     .synopsis {
@@ -187,8 +218,9 @@ import { MoviesService, WatchProvider } from '../../../core/services/movies';
     .actions {
       margin-top: auto;
       display: flex;
-      gap: 15px;
+      gap: 12px;
       padding-top: 20px;
+      flex-wrap: wrap;
     }
 
     .play-btn {
@@ -201,13 +233,23 @@ import { MoviesService, WatchProvider } from '../../../core/services/movies';
       border: none;
     }
 
-    .list-btn {
+    .list-btn, .share-btn {
       background: rgba(255, 255, 255, 0.1);
       color: white;
       padding: 10px 20px;
       border-radius: 4px;
       border: 1px solid rgba(255, 255, 255, 0.3);
       cursor: pointer;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      transition: all 0.2s;
+    }
+
+    .share-btn:hover {
+      background: rgba(255, 255, 255, 0.2);
+      border-color: white;
     }
 
     .loader-small {
@@ -222,22 +264,27 @@ import { MoviesService, WatchProvider } from '../../../core/services/movies';
     @keyframes spin { 100% { transform: rotate(360deg); } }
     @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
     @keyframes zoomIn { from { opacity: 0; transform: scale(0.9); } to { opacity: 1; transform: scale(1); } }
+    @keyframes slideInRight { from { opacity: 0; transform: translateX(10px); } to { opacity: 1; transform: translateX(0); } }
 
     @media (max-width: 800px) {
       .modal-content { flex-direction: column; }
       .poster-side { flex: 0 0 200px; }
       .info-side { padding: 25px; }
+      .actions { gap: 8px; }
     }
   `]
 })
 export class MovieDetailModalComponent implements OnInit {
   private moviesService = inject(MoviesService);
+  private cdr = inject(ChangeDetectorRef);
 
   @Input() movie: MovieItem | null = null;
   @Output() close = new EventEmitter<void>();
 
   providers: WatchProvider[] = [];
   loadingProviders = true;
+  hasVoted = false;
+  shareStatus: 'idle' | 'copied' = 'idle';
 
   ngOnInit(): void {
     if (this.movie) {
@@ -251,11 +298,54 @@ export class MovieDetailModalComponent implements OnInit {
       next: (data) => {
         this.providers = data;
         this.loadingProviders = false;
+        this.cdr.detectChanges();
       },
       error: () => {
         this.loadingProviders = false;
+        this.cdr.detectChanges();
       }
     });
+  }
+
+  onVote(isLike: boolean): void {
+    console.log(`Vote ${isLike ? 'positif' : 'négatif'} pour ${this.movie?.title}`);
+    this.hasVoted = true;
+    this.cdr.detectChanges();
+    setTimeout(() => {
+      this.onClose();
+    }, 1500);
+  }
+
+  /**
+   * Partage du film via Web Share API ou Copier le lien
+   */
+  async onShare(): Promise<void> {
+    if (!this.movie) return;
+
+    const shareData = {
+      title: `CineMatch - ${this.movie.title}`,
+      text: `J'ai trouvé ce film sur CineMatch : "${this.movie.title}". Ça te tente pour ce soir ?`,
+      url: `https://www.themoviedb.org/movie/${this.movie.id}`
+    };
+
+    try {
+      // Tentative Web Share API (Mobile / Safari)
+      if (navigator.share) {
+        await navigator.share(shareData);
+      } else {
+        // Fallback : Copie dans le presse-papier
+        await navigator.clipboard.writeText(`${shareData.text} ${shareData.url}`);
+        this.shareStatus = 'copied';
+        this.cdr.detectChanges();
+        
+        setTimeout(() => {
+          this.shareStatus = 'idle';
+          this.cdr.detectChanges();
+        }, 2000);
+      }
+    } catch (err) {
+      console.error('Erreur lors du partage:', err);
+    }
   }
 
   @HostListener('window:keydown.escape')

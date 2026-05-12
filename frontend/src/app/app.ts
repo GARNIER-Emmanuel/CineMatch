@@ -4,8 +4,9 @@ import { NavbarComponent } from './layout/navbar/navbar';
 import { MovieRowComponent, MovieItem } from './features/home/movie-row/movie-row';
 import { MovieFiltersComponent, Certification } from './features/movies/filters/movie-filters';
 import { MoviePaginationComponent } from './features/movies/pagination/movie-pagination';
-import { MovieDetailModalComponent } from './features/movies/detail-modal/movie-detail-modal'; // Nouveau
+import { MovieDetailModalComponent } from './features/movies/detail-modal/movie-detail-modal';
 import { MoviesService, Movie } from './core/services/movies';
+import { HistoryService } from './core/services/history'; // Nouveau
 
 @Component({
   selector: 'app-root',
@@ -16,7 +17,7 @@ import { MoviesService, Movie } from './core/services/movies';
     MovieRowComponent, 
     MovieFiltersComponent, 
     MoviePaginationComponent,
-    MovieDetailModalComponent // Nouveau
+    MovieDetailModalComponent
   ],
   templateUrl: './app.html',
   styleUrl: './app.css',
@@ -28,6 +29,7 @@ export class AppComponent implements OnInit {
   actionMovies: MovieItem[] = [];
   trendingMovies: MovieItem[] = [];
   discoveryMovies: MovieItem[] = [];
+  historyMovies: MovieItem[] = []; // Nouveau
 
   loadingPopular = true;
   loadingAction = true;
@@ -44,7 +46,7 @@ export class AppComponent implements OnInit {
   certLte: string | null = null;
 
   showFilters: boolean = false;
-  selectedMovieForDetails: MovieItem | null = null; // État pour la modale
+  selectedMovieForDetails: MovieItem | null = null;
 
   get hasActiveFilters(): boolean {
     return !!this.selectedGenre || !!this.selectedProviders || this.maxDuration < 240;
@@ -54,11 +56,18 @@ export class AppComponent implements OnInit {
 
   constructor(
     private moviesService: MoviesService,
+    private historyService: HistoryService, // Injection
     private cdr: ChangeDetectorRef
   ) {}
 
   ngOnInit(): void {
     this.loadAllMovies();
+    
+    // Suivre l'évolution de l'historique
+    this.historyService.history$.subscribe(history => {
+      this.historyMovies = history;
+      this.cdr.detectChanges();
+    });
   }
 
   loadAllMovies(): void {
@@ -117,13 +126,12 @@ export class AppComponent implements OnInit {
     this.cdr.detectChanges();
   }
 
-  // Ouvrir la modale
   openMovieDetails(movie: MovieItem): void {
     this.selectedMovieForDetails = movie;
+    this.historyService.addToHistory(movie); // Ajout à l'historique
     this.cdr.detectChanges();
   }
 
-  // Fermer la modale
   closeMovieDetails(): void {
     this.selectedMovieForDetails = null;
     this.cdr.detectChanges();
@@ -195,7 +203,7 @@ export class AppComponent implements OnInit {
     return movies.map(m => ({
       id: m.id,
       title: m.title,
-      overview: m.overview, // Transmission du synopsis
+      overview: m.overview,
       poster: m.poster || 'assets/placeholder.jpg',
       rating: m.rating
     }));
