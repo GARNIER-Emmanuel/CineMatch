@@ -96,4 +96,30 @@ export class DirectorsService {
       throw new HttpException('TMDB API unavailable', HttpStatus.BAD_GATEWAY);
     }
   }
+
+  async getDirectorMovies(directorId: number): Promise<any[]> {
+    try {
+      const res = await axios.get(`${this.baseUrl}/person/${directorId}/movie_credits`, {
+        params: { api_key: this.apiKey, language: 'fr-FR' }
+      });
+
+      // On filtre pour ne garder que les films où il est "Director"
+      const movies = res.data.crew
+        .filter((m: any) => m.job === 'Director')
+        .map((m: any) => ({
+          id: m.id,
+          title: m.title,
+          overview: m.overview,
+          releaseYear: m.release_date ? m.release_date.split('-')[0] : 'N/A',
+          rating: m.vote_average ? m.vote_average.toFixed(1) : '0.0',
+          poster: m.poster_path ? `https://image.tmdb.org/t/p/w500${m.poster_path}` : null,
+          backdrop: m.backdrop_path ? `https://image.tmdb.org/t/p/original${m.backdrop_path}` : null
+        }));
+
+      // Trier par date de sortie (plus récent au plus ancien)
+      return movies.sort((a: any, b: any) => b.releaseYear.localeCompare(a.releaseYear));
+    } catch (error) {
+      throw new HttpException('TMDB API unavailable', HttpStatus.BAD_GATEWAY);
+    }
+  }
 }
