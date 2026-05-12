@@ -14,7 +14,7 @@ import { CommonModule } from '@angular/common';
         <ul class="nav-links">
           <li [class.active]="currentView === 'home'" (click)="onHomeClick()">Accueil</li>
           <li class="cinescroll-link" [class.active]="currentView === 'cinescroll'" (click)="onCineScrollClick()">
-            CineScroll <span class="badge">🎞️</span>
+            CineScroll
           </li>
           <li [class.active]="currentView === 'watchlist'" (click)="onWatchlistClick()">Ma Liste</li>
         </ul>
@@ -107,16 +107,6 @@ import { CommonModule } from '@angular/common';
       background: #ffb400;
       border-radius: 50%;
       box-shadow: 0 0 10px #ffb400;
-    }
-
-    .cinescroll-link {
-      color: #ffb400 !important;
-      font-weight: 800 !important;
-    }
-
-    .cinescroll-link .badge {
-      font-size: 1.1rem;
-      vertical-align: middle;
     }
 
     .nav-right {
