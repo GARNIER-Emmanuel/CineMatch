@@ -139,11 +139,11 @@
           <h2>Résultats de votre recherche</h2>
         </header>
 
-        <div class="loader-container" *ngIf="loadingDiscovery">
+        <div class="loader-container" *ngIf="loadingDiscovery && discoveryMovies.length === 0">
           <div class="cinema-loader"></div>
         </div>
 
-        <div class="watchlist-grid" *ngIf="!loadingDiscovery && discoveryMovies.length > 0">
+        <div class="watchlist-grid" *ngIf="discoveryMovies.length > 0">
           @for (movie of discoveryMovies; track movie.id) {
             <div class="movie-card" (click)="openMovieDetails(movie)">
               <img [src]="movie.poster || 'assets/placeholder.jpg'" alt="">
@@ -160,6 +160,7 @@
         </div>
 
         <cm-movie-pagination 
+          id="load-more-pagination"
           *ngIf="discoveryMovies.length > 0 && hasMoreResults"
           [isLoading]="loadingDiscovery"
           (loadMore)="onLoadMore()"

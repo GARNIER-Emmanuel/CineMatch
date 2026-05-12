@@ -302,6 +302,9 @@ export class AppComponent implements OnInit, OnDestroy {
 
   loadDiscoveryMovies(append: boolean = false): void {
     this.loadingDiscovery = true;
+    if (!append) {
+      this.discoveryMovies = [];
+    }
     this.moviesService.getMovies(
       this.selectedGenre, 
       this.maxDuration, 
@@ -322,7 +325,7 @@ export class AppComponent implements OnInit, OnDestroy {
 
         if (append) {
           setTimeout(() => {
-            window.scrollBy({ top: 500, behavior: 'smooth' });
+            document.getElementById('load-more-pagination')?.scrollIntoView({ behavior: 'smooth', block: 'end' });
           }, 100);
         }
       },
