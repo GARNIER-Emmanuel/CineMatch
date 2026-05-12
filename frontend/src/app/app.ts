@@ -34,6 +34,8 @@ export class AppComponent implements OnInit {
   certCountry: string | null = null;
   certLte: string | null = null;
 
+  showFilters: boolean = false; // État de visibilité des filtres
+
   get hasActiveFilters(): boolean {
     return !!this.selectedGenre || this.maxDuration < 240;
   }
@@ -95,6 +97,11 @@ export class AppComponent implements OnInit {
       },
       error: errorHandler
     });
+  }
+
+  toggleFilters(): void {
+    this.showFilters = !this.showFilters;
+    this.cdr.detectChanges();
   }
 
   onGenreChange(genreId: string | null): void {

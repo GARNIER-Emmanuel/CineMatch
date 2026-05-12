@@ -1,4 +1,4 @@
-<cm-navbar></cm-navbar>
+<cm-navbar (toggleFilters)="toggleFilters()"></cm-navbar>
 
 <main>
   <div class="error-container" *ngIf="errorMessage">
@@ -7,11 +7,13 @@
   </div>
   
   <div class="content-container" *ngIf="!errorMessage">
-    <cm-movie-filters 
-      (genreChange)="onGenreChange($event)"
-      (durationChange)="onDurationChange($event)"
-      (certificationChange)="onCertificationChange($event)">
-    </cm-movie-filters>
+    <div class="filters-wrapper" *ngIf="showFilters">
+      <cm-movie-filters 
+        (genreChange)="onGenreChange($event)"
+        (durationChange)="onDurationChange($event)"
+        (certificationChange)="onCertificationChange($event)">
+      </cm-movie-filters>
+    </div>
 
     <!-- CAS A : Aucun filtre actif (Mises en avant) -->
     <div class="highlight-sections" *ngIf="!hasActiveFilters">

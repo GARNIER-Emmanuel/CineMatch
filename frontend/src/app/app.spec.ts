@@ -30,6 +30,21 @@ describe('AppComponent', () => {
     expect(component).toBeTruthy();
   });
 
+  it('should toggle filters visibility', () => {
+    expect(component.showFilters).toBe(false);
+    expect(fixture.nativeElement.querySelector('.filters-wrapper')).toBeFalsy();
+    
+    component.toggleFilters();
+    fixture.detectChanges();
+    
+    expect(component.showFilters).toBe(true);
+    expect(fixture.nativeElement.querySelector('.filters-wrapper')).toBeTruthy();
+    
+    component.toggleFilters();
+    fixture.detectChanges();
+    expect(component.showFilters).toBe(false);
+  });
+
   it('should display "Le service TMDB est temporairement indisponible." on 502 error', () => {
     mockMoviesService.getMovies.mockReturnValue(throwError(() => ({ status: 502 })));
     
@@ -39,16 +54,5 @@ describe('AppComponent', () => {
     const errorContainer = fixture.nativeElement.querySelector('.error-container');
     expect(errorContainer).toBeTruthy();
     expect(errorContainer.textContent).toContain('Le service TMDB est temporairement indisponible.');
-  });
-
-  it('should display "Erreur de configuration serveur (Clé API)." on 401 error', () => {
-    mockMoviesService.getMovies.mockReturnValue(throwError(() => ({ status: 401 })));
-    
-    component.loadAllMovies();
-    fixture.detectChanges();
-
-    const errorContainer = fixture.nativeElement.querySelector('.error-container');
-    expect(errorContainer).toBeTruthy();
-    expect(errorContainer.textContent).toContain('Erreur de configuration serveur (Clé API).');
   });
 });

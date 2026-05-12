@@ -1,4 +1,4 @@
-import { Component, HostListener } from '@angular/core';
+import { Component, EventEmitter, Output } from '@angular/core';
 import { CommonModule } from '@angular/common';
 
 @Component({
@@ -6,55 +6,45 @@ import { CommonModule } from '@angular/common';
   standalone: true,
   imports: [CommonModule],
   template: `
-    <nav [class.scrolled]="isScrolled" class="navbar">
-      <div class="navbar-container">
-        <div class="navbar-left">
-          <span class="logo">CINEMATCH</span>
-          <ul class="nav-links">
-            <li class="active">Accueil</li>
-            <li>Séries</li>
-            <li>Films</li>
-            <li>Nouveautés les plus regardées</li>
-            <li>Ma liste</li>
-          </ul>
+    <nav class="navbar">
+      <div class="nav-left">
+        <h1 class="logo">Cine<span>Match</span></h1>
+        <div class="nav-links">
+          <a href="#" class="active">Accueil</a>
+          <a href="#">Films</a>
+          <a href="#">Séries</a>
+          <a href="#">Ma Liste</a>
         </div>
-        <div class="navbar-right">
-          <button class="icon-btn" aria-label="Rechercher">
-            <svg viewBox="0 0 24 24" fill="white" width="24" height="24">
-              <path d="M15.5 14h-.79l-.28-.27A6.471 6.471 0 0 0 16 9.5 6.5 6.5 0 1 0 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/>
-            </svg>
-          </button>
-          <div class="user-avatar">
-            <img src="https://upload.wikimedia.org/wikipedia/commons/0/0b/Netflix-avatar.png" alt="Profil">
-          </div>
+      </div>
+      
+      <div class="nav-right">
+        <button class="filter-toggle-btn" (click)="onToggleFilters()">
+          <span class="icon">🔍</span>
+          <span class="text">Recherche & Filtres</span>
+        </button>
+        <div class="user-profile">
+          <img src="https://api.dicebear.com/7.x/avataaars/svg?seed=Felix" alt="Profile">
         </div>
       </div>
     </nav>
   `,
   styles: [`
     .navbar {
+      height: 68px;
+      padding: 0 var(--container-padding);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: linear-gradient(to bottom, rgba(0,0,0,0.8) 0%, rgba(0,0,0,0) 100%);
       position: fixed;
       top: 0;
-      width: 100%;
-      height: var(--nav-height);
+      left: 0;
+      right: 0;
       z-index: 1000;
-      transition: background-color 0.4s ease;
-      background: linear-gradient(to bottom, rgba(0,0,0,0.7) 0%, transparent 100%);
-      padding: 0 var(--container-padding);
+      transition: background 0.3s ease;
     }
 
-    .navbar.scrolled {
-      background-color: var(--bg-color);
-    }
-
-    .navbar-container {
-      height: 100%;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-    }
-
-    .navbar-left {
+    .nav-left {
       display: flex;
       align-items: center;
       gap: 40px;
@@ -62,72 +52,92 @@ import { CommonModule } from '@angular/common';
 
     .logo {
       color: var(--primary-color);
-      font-size: 25px;
+      font-size: 1.8rem;
+      font-weight: 800;
       letter-spacing: -1px;
+      margin: 0;
       cursor: pointer;
+    }
+
+    .logo span {
+      color: white;
     }
 
     .nav-links {
       display: flex;
-      list-style: none;
       gap: 20px;
     }
 
-    .nav-links li {
+    .nav-links a {
       color: #e5e5e5;
+      text-decoration: none;
       font-size: 0.85rem;
-      cursor: pointer;
       transition: color 0.3s;
     }
 
-    .nav-links li:hover {
-      color: #b3b3b3;
+    .nav-links a:hover, .nav-links a.active {
+      color: white;
     }
 
-    .nav-links li.active {
-      color: #fff;
-      font-weight: 700;
-    }
-
-    .navbar-right {
+    .nav-right {
       display: flex;
       align-items: center;
       gap: 20px;
     }
 
-    .icon-btn {
-      background: none;
-      border: none;
+    .filter-toggle-btn {
+      background: rgba(255, 255, 255, 0.1);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      color: white;
+      padding: 8px 16px;
+      border-radius: 20px;
       cursor: pointer;
-      padding: 5px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 0.85rem;
+      font-weight: 600;
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      backdrop-filter: blur(5px);
     }
 
-    .user-avatar {
+    .filter-toggle-btn:hover {
+      background: rgba(255, 255, 255, 0.2);
+      transform: translateY(-1px);
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+    }
+
+    .filter-toggle-btn:active {
+      transform: translateY(0);
+    }
+
+    .filter-toggle-btn .icon {
+      font-size: 1rem;
+    }
+
+    .user-profile img {
       width: 32px;
       height: 32px;
       border-radius: 4px;
-      overflow: hidden;
       cursor: pointer;
     }
 
-    .user-avatar img {
-      width: 100%;
-      height: 100%;
-      object-fit: cover;
-    }
-
-    @media (max-width: 950px) {
-      .nav-links {
+    @media (max-width: 768px) {
+      .nav-links, .filter-toggle-btn .text {
         display: none;
+      }
+      
+      .filter-toggle-btn {
+        padding: 8px;
+        border-radius: 50%;
       }
     }
   `]
 })
 export class NavbarComponent {
-  isScrolled = false;
+  @Output() toggleFilters = new EventEmitter<void>();
 
-  @HostListener('window:scroll', [])
-  onWindowScroll() {
-    this.isScrolled = window.scrollY > 0;
+  onToggleFilters(): void {
+    this.toggleFilters.emit();
   }
 }
