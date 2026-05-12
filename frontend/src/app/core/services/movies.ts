@@ -52,11 +52,13 @@ export class MoviesService {
   /**
    * Récupère les films pour le mode CineScroll
    */
-  getCineScrollMovies(genres?: string, excludeGenres?: string, page?: number): Observable<Movie[]> {
+  getCineScrollMovies(genres?: string, excludeGenres?: string, page?: number, releaseYearMin?: number, releaseYearMax?: number): Observable<Movie[]> {
     let params = new HttpParams();
     if (genres) params = params.set('genres', genres);
     if (excludeGenres) params = params.set('excludeGenres', excludeGenres);
     if (page) params = params.set('page', page.toString());
+    if (releaseYearMin) params = params.set('releaseYearMin', releaseYearMin.toString());
+    if (releaseYearMax) params = params.set('releaseYearMax', releaseYearMax.toString());
 
     return this.http.get<Movie[]>(`${this.apiUrl}/cinescroll`, { params });
   }

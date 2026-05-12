@@ -6,7 +6,9 @@ export interface Mood {
   id: string;
   label: string;
   emoji: string;
-  genres: string; // IDs TMDB séparés par virgule
+  genres: string;
+  releaseYearMin?: number;
+  releaseYearMax?: number;
 }
 
 @Component({
@@ -165,7 +167,9 @@ export class MoodSelectorComponent {
     { id: 'thrills', label: 'Frissons', emoji: '😱', genres: '27,53' },
     { id: 'adventure', label: 'Dépaysement', emoji: '🤯', genres: '878,12' },
     { id: 'romantic', label: 'Romantique', emoji: '❤️', genres: '10749,18' },
-    { id: 'thinking', label: 'Réflexion', emoji: '🧠', genres: '18,878' }
+    { id: 'thinking', label: 'Réflexion', emoji: '🧠', genres: '18,878' },
+    { id: 'auteur', label: "Cinéma d'auteur", emoji: '🎥', genres: '18,36' },
+    { id: 'classic', label: 'Classique', emoji: '🎞️', genres: '', releaseYearMax: 1985 }
   ];
 
   onMoodSelect(mood: Mood): void {

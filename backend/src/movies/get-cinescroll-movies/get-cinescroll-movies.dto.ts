@@ -14,4 +14,14 @@ export class GetCineScrollMoviesDto {
   @Type(() => Number)
   @IsNumber()
   page?: number;
+
+  @IsOptional()
+  @Type(() => Number)
+  @IsNumber()
+  releaseYearMax?: number;
+
+  @IsOptional()
+  @Type(() => Number)
+  @IsNumber()
+  releaseYearMin?: number;
 }

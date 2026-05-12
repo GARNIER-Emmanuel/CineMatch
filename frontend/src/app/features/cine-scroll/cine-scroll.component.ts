@@ -182,6 +182,8 @@ export class CineScrollComponent implements OnInit {
   movies: Movie[] = [];
   currentPage = 1;
   selectedGenres: string = '';
+  releaseYearMin?: number;
+  releaseYearMax?: number;
   activeIndex = 0;
   loadingMore = false;
   isMuted = true; // Par défaut muet pour l'autolpay navigateur
@@ -229,11 +231,15 @@ export class CineScrollComponent implements OnInit {
 
   onMoodSelected(mood: Mood): void {
     this.selectedGenres = mood.genres;
+    this.releaseYearMin = mood.releaseYearMin;
+    this.releaseYearMax = mood.releaseYearMax;
     this.loadMovies();
   }
 
   onSkip(): void {
     this.selectedGenres = '';
+    this.releaseYearMin = undefined;
+    this.releaseYearMax = undefined;
     this.loadMovies();
   }
 
@@ -267,7 +273,7 @@ export class CineScrollComponent implements OnInit {
     // On combine les genres du mood et les genres préférés
     const combinedGenres = [this.selectedGenres, preferred].filter(g => !!g).join(',');
 
-    this.moviesService.getCineScrollMovies(combinedGenres, excluded)
+    this.moviesService.getCineScrollMovies(combinedGenres, excluded, 1, this.releaseYearMin, this.releaseYearMax)
       .subscribe({
         next: (movies) => {
           console.log('[CineScroll-FE] Réception de', movies.length, 'films');
@@ -292,7 +298,7 @@ export class CineScrollComponent implements OnInit {
     const excluded = this.profileService.getExcludedGenres().join(',');
     const combinedGenres = [this.selectedGenres, preferred].filter(g => !!g).join(',');
 
-    this.moviesService.getCineScrollMovies(combinedGenres, excluded, this.currentPage)
+    this.moviesService.getCineScrollMovies(combinedGenres, excluded, this.currentPage, this.releaseYearMin, this.releaseYearMax)
       .subscribe({
         next: (newMovies) => {
           this.movies = [...this.movies, ...newMovies];

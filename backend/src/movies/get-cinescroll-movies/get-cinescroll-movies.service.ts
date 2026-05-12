@@ -32,6 +32,8 @@ export class GetCineScrollMoviesService {
           with_genres: dto.genres,
           without_genres: dto.excludeGenres,
           page: dto.page || 1,
+          'primary_release_date.gte': dto.releaseYearMin ? `${dto.releaseYearMin}-01-01` : undefined,
+          'primary_release_date.lte': dto.releaseYearMax ? `${dto.releaseYearMax}-12-31` : undefined,
           sort_by: 'popularity.desc',
           language: 'fr-FR',
           'vote_count.gte': 100, // Pour éviter les films obscurs dans CineScroll
