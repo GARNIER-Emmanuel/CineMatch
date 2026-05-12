@@ -61,23 +61,43 @@ export class DirectorsService {
 
   async getDirectorMovies(directorId: number): Promise<any[]> {
     try {
+      // 1. Récupérer le département principal de la personne (Acteur ou Réalisateur)
+      const personRes = await axios.get(`${this.baseUrl}/person/${directorId}`, {
+        params: { api_key: this.apiKey, language: 'fr-FR' }
+      });
+      const department = personRes.data.known_for_department;
+
+      // 2. Récupérer tous les crédits de films
       const res = await axios.get(`${this.baseUrl}/person/${directorId}/movie_credits`, {
         params: { api_key: this.apiKey, language: 'fr-FR' }
       });
 
-      const movies = res.data.crew
-        .filter((m: any) => m.job === 'Director')
-        .map((m: any) => ({
-          id: m.id,
-          title: m.title,
-          overview: m.overview,
-          releaseYear: m.release_date ? m.release_date.split('-')[0] : 'N/A',
-          rating: m.vote_average ? m.vote_average.toFixed(1) : '0.0',
-          poster: m.poster_path ? `https://image.tmdb.org/t/p/w500${m.poster_path}` : null,
-          backdrop: m.backdrop_path ? `https://image.tmdb.org/t/p/original${m.backdrop_path}` : null
-        }));
+      // 3. Sélectionner les bons films selon le métier
+      let rawMovies = [];
+      if (department === 'Acting') {
+        rawMovies = res.data.cast || [];
+      } else {
+        rawMovies = res.data.crew?.filter((m: any) => m.job === 'Director') || [];
+        // Fallback si la personne n'a rien réalisé mais a joué
+        if (rawMovies.length === 0 && res.data.cast?.length > 0) {
+          rawMovies = res.data.cast;
+        }
+      }
 
-      return movies.sort((a: any, b: any) => b.releaseYear.localeCompare(a.releaseYear));
+      // 4. Formater les résultats
+      const movies = rawMovies.map((m: any) => ({
+        id: m.id,
+        title: m.title,
+        overview: m.overview,
+        releaseYear: m.release_date ? m.release_date.split('-')[0] : 'N/A',
+        rating: m.vote_average ? m.vote_average.toFixed(1) : '0.0',
+        poster: m.poster_path ? `https://image.tmdb.org/t/p/w500${m.poster_path}` : null,
+        backdrop: m.backdrop_path ? `https://image.tmdb.org/t/p/original${m.backdrop_path}` : null
+      }));
+
+      // 5. Dédoublonner (parfois un acteur est crédité deux fois) et trier par année
+      const uniqueMovies = Array.from(new Map(movies.map((m: any) => [m.id, m])).values());
+      return (uniqueMovies as any[]).sort((a: any, b: any) => b.releaseYear.localeCompare(a.releaseYear));
     } catch (error) {
       throw new HttpException('TMDB API unavailable', HttpStatus.BAD_GATEWAY);
     }

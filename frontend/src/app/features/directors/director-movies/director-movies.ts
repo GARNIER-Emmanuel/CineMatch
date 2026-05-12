@@ -11,10 +11,10 @@ import { MoviesService } from '../../../core/services/movies';
       <header class="page-header">
         <button class="back-btn" (click)="onBack()">
           <span class="icon">←</span>
-          Retour aux réalisateurs
+          Retour
         </button>
         <h1>Filmographie de {{ directorName }}</h1>
-        <p>{{ movies.length }} films réalisés trouvés sur TMDB.</p>
+        <p>{{ movies.length }} films trouvés sur TMDB.</p>
       </header>
 
       <div class="loader-container" *ngIf="loading">
@@ -45,7 +45,7 @@ import { MoviesService } from '../../../core/services/movies';
   `,
   styles: [`
     .director-movies-page {
-      padding: 100px 4% 40px;
+      padding: 20px 4% 40px;
       min-height: 100vh;
       background: #05080f;
     }
