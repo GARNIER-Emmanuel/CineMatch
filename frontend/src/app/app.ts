@@ -51,7 +51,7 @@ export class AppComponent implements OnInit {
 
   showFilters: boolean = false;
   selectedMovieForDetails: MovieItem | null = null;
-  currentView: 'home' | 'watchlist' = 'home';
+  currentView: 'home' | 'watchlist' | 'cinescroll' = 'home';
   heroMovie: MovieItem | null = null;
 
   get hasActiveFilters(): boolean {
