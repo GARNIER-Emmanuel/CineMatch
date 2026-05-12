@@ -6,6 +6,7 @@
     (navigateHome)="goToHome()"
     (navigateWatchlist)="goToWatchlist()"
     (navigateCineScroll)="goToCineScroll()"
+    (navigateDirectors)="goToDirectors()"
     (search)="onSearch($event.query, $event.immediate)">
   </cm-navbar>
 
@@ -149,37 +150,35 @@
       </div>
     </div>
 
-    <!-- SECTION MA LISTE -->
-    <div *ngIf="currentView === 'watchlist'" class="view-watchlist">
-      <div class="watchlist-page">
-        <header class="page-header">
-          <h1>Ma Liste</h1>
-          <p>{{ watchlistMovies.length }} films sauvegardés</p>
-        </header>
+    <!-- SECTION WATCHLIST -->
+    <div *ngIf="currentView === 'watchlist' && !searchQuery.trim()" class="view-watchlist">
+      <header class="section-header">
+        <h1>Ma Liste</h1>
+        <p>Retrouvez ici tous les films que vous avez sauvegardés.</p>
+      </header>
 
-        <div class="watchlist-grid" *ngIf="watchlistMovies.length > 0">
-          @for (movie of watchlistMovies; track movie.id) {
-            <div class="movie-card-wrapper" (click)="openMovieDetails(movie)">
-              <div class="movie-card">
-                <img [src]="movie.poster" [alt]="movie.title" title="">
-                <div class="card-overlay">
-                  <span class="rating">★ {{ movie.rating }}</span>
-                  <span class="title">{{ movie.title }}</span>
-                </div>
-              </div>
+      <div class="results-grid" *ngIf="watchlistMovies.length > 0">
+        @for (movie of watchlistMovies; track movie.id) {
+          <div class="result-card movie" (click)="openMovieDetails(movie)">
+            <div class="card-image">
+              <img [src]="movie.poster" alt="">
             </div>
-          }
-        </div>
-
-        <div class="empty-watchlist" *ngIf="watchlistMovies.length === 0">
-          <div class="empty-content">
-            <span class="empty-icon">🎬</span>
-            <h2>Votre liste est vide</h2>
-            <p>Ajoutez des films pour les retrouver facilement ici.</p>
-            <button class="primary-btn" (click)="goToHome()">Explorer les films</button>
+            <div class="card-info">
+              <h3>{{ movie.title }}</h3>
+              <span class="meta">{{ movie.releaseYear }} • ★ {{ movie.rating }}</span>
+            </div>
           </div>
-        </div>
+        }
       </div>
+
+      <div class="no-results" *ngIf="watchlistMovies.length === 0">
+        <p>Votre liste est vide pour le moment.</p>
+      </div>
+    </div>
+
+    <!-- SECTION RÉALISATEURS -->
+    <div *ngIf="currentView === 'directors' && !searchQuery.trim()" class="view-directors">
+      <cm-directors (directorClick)="onDirectorClick($event)"></cm-directors>
     </div>
     
     <!-- SECTION CINESCROLL -->

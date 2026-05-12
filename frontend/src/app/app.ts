@@ -4,6 +4,7 @@ import { Subject, debounceTime, distinctUntilChanged } from 'rxjs';
 import { NavbarComponent } from './layout/navbar/navbar';
 import { MovieRowComponent, MovieItem } from './features/home/movie-row/movie-row';
 import { MovieFiltersComponent, Certification } from './features/movies/filters/movie-filters';
+import { DirectorsComponent } from './features/directors/directors';
 import { MoviePaginationComponent } from './features/movies/pagination/movie-pagination';
 import { MovieDetailModalComponent } from './features/movies/detail-modal/movie-detail-modal';
 import { MoviesService, Movie } from './core/services/movies';
@@ -21,7 +22,8 @@ import { CineScrollComponent } from './features/cine-scroll/cine-scroll.componen
     MovieFiltersComponent, 
     MoviePaginationComponent,
     MovieDetailModalComponent,
-    CineScrollComponent
+    CineScrollComponent,
+    DirectorsComponent
   ],
   templateUrl: './app.html',
   styleUrl: './app.css',
@@ -56,7 +58,7 @@ export class AppComponent implements OnInit, OnDestroy {
 
   showFilters: boolean = false;
   selectedMovieForDetails: MovieItem | null = null;
-  currentView: 'home' | 'watchlist' | 'cinescroll' = 'home';
+  currentView: 'home' | 'watchlist' | 'cinescroll' | 'directors' = 'home';
   heroMovie: MovieItem | null = null;
 
   get hasActiveFilters(): boolean {
@@ -164,6 +166,15 @@ export class AppComponent implements OnInit, OnDestroy {
   goToCineScroll(): void {
     console.log('Navigation vers CINESCROLL');
     this.currentView = 'cinescroll';
+    this.showFilters = false;
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+    this.cdr.markForCheck();
+    this.cdr.detectChanges();
+  }
+
+  goToDirectors(): void {
+    console.log('Navigation vers DIRECTORS');
+    this.currentView = 'directors';
     this.showFilters = false;
     window.scrollTo({ top: 0, behavior: 'smooth' });
     this.cdr.markForCheck();

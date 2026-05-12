@@ -92,4 +92,8 @@ export class MoviesService {
   search(query: string): Observable<any[]> {
     return this.http.get<any[]>(`http://localhost:3000/search?q=${encodeURIComponent(query)}`);
   }
+
+  getPopularDirectors(): Observable<any[]> {
+    return this.http.get<any[]>(`http://localhost:3000/directors/popular`);
+  }
 }
