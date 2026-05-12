@@ -224,7 +224,7 @@ export class CineScrollComponent implements OnInit {
   ) {}
 
   ngOnInit(): void {
-    this.profileService.reset();
+    // Le profil est chargé depuis le localStorage automatiquement par le service
   }
 
   onMoodSelected(mood: Mood): void {
@@ -260,7 +260,14 @@ export class CineScrollComponent implements OnInit {
     console.log('[CineScroll-FE] Chargement des films pour les genres:', this.selectedGenres);
     this.state = 'LOADING';
     this.cdr.detectChanges();
-    this.moviesService.getCineScrollMovies(this.selectedGenres)
+
+    const preferred = this.profileService.getPreferredGenres().join(',');
+    const excluded = this.profileService.getExcludedGenres().join(',');
+    
+    // On combine les genres du mood et les genres préférés
+    const combinedGenres = [this.selectedGenres, preferred].filter(g => !!g).join(',');
+
+    this.moviesService.getCineScrollMovies(combinedGenres, excluded)
       .subscribe({
         next: (movies) => {
           console.log('[CineScroll-FE] Réception de', movies.length, 'films');
@@ -281,7 +288,11 @@ export class CineScrollComponent implements OnInit {
     this.currentPage++;
     console.log('[CineScroll-FE] Chargement de la page', this.currentPage);
 
-    this.moviesService.getCineScrollMovies(this.selectedGenres, '', this.currentPage)
+    const preferred = this.profileService.getPreferredGenres().join(',');
+    const excluded = this.profileService.getExcludedGenres().join(',');
+    const combinedGenres = [this.selectedGenres, preferred].filter(g => !!g).join(',');
+
+    this.moviesService.getCineScrollMovies(combinedGenres, excluded, this.currentPage)
       .subscribe({
         next: (newMovies) => {
           this.movies = [...this.movies, ...newMovies];

@@ -2,6 +2,9 @@ import { Component, Input, OnInit, Pipe, PipeTransform } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
 import { Movie, MoviesService } from '../../../../core/services/movies';
+import { WatchlistService } from '../../../../core/services/watchlist';
+import { CineScrollProfileService } from '../../../../core/services/cine-scroll-profile';
+import { MovieItem } from '../../../home/movie-row/movie-row';
 
 @Pipe({
   name: 'safe',
@@ -49,8 +52,12 @@ export class SafePipe implements PipeTransform {
 
       <!-- Content : Droite (Actions) -->
       <div class="actions-container">
-        <button class="circle-btn like" (click)="onToggleWatchlist()" title="Ajouter à ma liste">
-          <span class="icon">♥</span>
+        <button 
+          class="circle-btn like" 
+          [class.active]="isInWatchlist()"
+          (click)="onToggleWatchlist()" 
+          [title]="isInWatchlist() ? 'Retirer de ma liste' : 'Ajouter à ma liste'">
+          <span class="icon">{{ isInWatchlist() ? '★' : '♥' }}</span>
         </button>
         <button class="circle-btn dislike" (click)="onNotInterested()" title="Pas intéressé">
           <span class="icon">✕</span>
@@ -187,10 +194,15 @@ export class SafePipe implements PipeTransform {
       transform: scale(1.15);
     }
 
-    .like:hover {
+    .like:hover, .like.active {
       background: rgba(255, 180, 0, 0.1);
       border-color: #ffb400;
       color: #ffb400;
+    }
+
+    .like.active {
+      background: rgba(255, 180, 0, 0.2);
+      box-shadow: 0 0 15px rgba(255, 180, 0, 0.3);
     }
 
     .dislike:hover {
@@ -237,8 +249,17 @@ export class FilmSlideComponent implements OnInit {
   youtubeKey: string | null = null;
   cachedTrailerKey: string | null = null;
   loadingTrailer = false;
+  private watchlistService: WatchlistService;
+  private profileService: CineScrollProfileService;
 
-  constructor(private moviesService: MoviesService) {}
+  constructor(
+    private moviesService: MoviesService,
+    watchlistService: WatchlistService,
+    profileService: CineScrollProfileService
+  ) {
+    this.watchlistService = watchlistService;
+    this.profileService = profileService;
+  }
 
   ngOnInit(): void {
     // On ne charge rien au init, on attend que le composant soit "actif"
@@ -262,12 +283,30 @@ export class FilmSlideComponent implements OnInit {
   }
 
   onToggleWatchlist(): void {
-    // Sera implémenté dans l'US8
-    console.log('Ajout à la liste:', this.movie.title);
+    const movieItem: MovieItem = {
+      id: this.movie.id,
+      title: this.movie.title,
+      poster: this.movie.poster || '',
+      backdrop: this.movie.backdrop || '',
+      rating: this.movie.rating,
+      overview: this.movie.overview,
+      releaseYear: this.movie.releaseYear
+    };
+
+    this.watchlistService.toggleWatchlist(movieItem);
+    
+    if (this.watchlistService.isInWatchlist(this.movie.id)) {
+      this.profileService.like(this.movie.genreIds || []);
+    }
   }
 
   onNotInterested(): void {
-    // Sera implémenté dans l'US8
-    console.log('Pas intéressé:', this.movie.title);
+    this.profileService.dislike(this.movie.genreIds || []);
+    // Optionnel : on pourrait passer au film suivant automatiquement ici
+    console.log('Ignoré, profil mis à jour');
+  }
+
+  isInWatchlist(): boolean {
+    return this.watchlistService.isInWatchlist(this.movie.id);
   }
 }

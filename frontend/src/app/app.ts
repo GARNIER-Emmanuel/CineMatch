@@ -242,7 +242,8 @@ export class AppComponent implements OnInit {
       overview: m.overview,
       poster: m.poster || 'assets/placeholder.jpg',
       rating: m.rating ? parseFloat(m.rating).toFixed(1) : '0.0',
-      backdrop: m.backdrop || null
+      backdrop: m.backdrop || null,
+      releaseYear: m.releaseYear
     }));
   }
 

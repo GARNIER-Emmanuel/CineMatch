@@ -23,7 +23,7 @@ import { WatchlistService } from '../../../core/services/watchlist';
             <h1 class="movie-title">{{ movie.title }}</h1>
             <div class="movie-meta">
               <span class="rating">★ {{ movie.rating }}</span>
-              <span class="year">Cinéma Excellence</span>
+              <span class="year">{{ movie.releaseYear }}</span>
             </div>
             
             <p class="overview">{{ movie.overview }}</p>

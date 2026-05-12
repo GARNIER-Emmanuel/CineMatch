@@ -43,6 +43,7 @@ export class MoviesService {
         backdrop: movie.backdrop_path
           ? `https://image.tmdb.org/t/p/w1280${movie.backdrop_path}`
           : null,
+        genreIds: movie.genre_ids,
       }));
     } catch (error: any) {
       return this.handleError(error);

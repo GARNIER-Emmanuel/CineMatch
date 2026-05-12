@@ -9,7 +9,8 @@ export interface SessionProfile {
   providedIn: 'root',
 })
 export class CineScrollProfileService {
-  private profile: SessionProfile = this.getInitialProfile();
+  private readonly STORAGE_KEY = 'cinematch_cinescroll_profile';
+  private profile: SessionProfile = this.loadFromStorage();
 
   constructor() {}
 
@@ -20,6 +21,7 @@ export class CineScrollProfileService {
     genreIds.forEach(id => {
       this.profile.likedGenres[id] = (this.profile.likedGenres[id] || 0) + 1;
     });
+    this.saveToStorage();
   }
 
   /**
@@ -29,6 +31,7 @@ export class CineScrollProfileService {
     genreIds.forEach(id => {
       this.profile.dislikedGenres[id] = (this.profile.dislikedGenres[id] || 0) + 1;
     });
+    this.saveToStorage();
   }
 
   /**
@@ -54,6 +57,18 @@ export class CineScrollProfileService {
    */
   reset(): void {
     this.profile = this.getInitialProfile();
+    this.saveToStorage();
+  }
+
+  private loadFromStorage(): SessionProfile {
+    if (typeof localStorage === 'undefined') return this.getInitialProfile();
+    const data = localStorage.getItem(this.STORAGE_KEY);
+    return data ? JSON.parse(data) : this.getInitialProfile();
+  }
+
+  private saveToStorage(): void {
+    if (typeof localStorage === 'undefined') return;
+    localStorage.setItem(this.STORAGE_KEY, JSON.stringify(this.profile));
   }
 
   private getInitialProfile(): SessionProfile {

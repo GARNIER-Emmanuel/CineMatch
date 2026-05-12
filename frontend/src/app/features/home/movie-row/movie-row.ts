@@ -8,6 +8,7 @@ export interface MovieItem {
   poster: string;
   rating: string;
   backdrop?: string | null;
+  releaseYear: string;
 }
 
 @Component({
