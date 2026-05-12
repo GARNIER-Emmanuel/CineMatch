@@ -1,7 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { NavbarComponent } from './layout/navbar/navbar';
-import { HeroComponent } from './features/home/hero/hero';
 import { MovieRowComponent, MovieItem } from './features/home/movie-row/movie-row';
 import { MovieFiltersComponent } from './features/movies/filters/movie-filters';
 import { MoviePaginationComponent } from './features/movies/pagination/movie-pagination';
@@ -10,7 +9,7 @@ import { MoviesService, Movie } from './core/services/movies';
 @Component({
   selector: 'app-root',
   standalone: true,
-  imports: [CommonModule, NavbarComponent, HeroComponent, MovieRowComponent, MovieFiltersComponent, MoviePaginationComponent],
+  imports: [CommonModule, NavbarComponent, MovieRowComponent, MovieFiltersComponent, MoviePaginationComponent],
   templateUrl: './app.html',
   styleUrl: './app.css',
 })

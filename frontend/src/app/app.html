@@ -1,8 +1,6 @@
 <cm-navbar></cm-navbar>
 
 <main>
-  <cm-hero></cm-hero>
-
   <div class="error-container" *ngIf="errorMessage">
     <p>{{ errorMessage }}</p>
     <button (click)="loadAllMovies()" class="btn-retry glass">Réessayer</button>
@@ -35,7 +33,7 @@
 
 <style>
   .rows-container {
-    margin-top: -150px;
+    margin-top: 20px;
     position: relative;
     z-index: 20;
     padding-bottom: 50px;
