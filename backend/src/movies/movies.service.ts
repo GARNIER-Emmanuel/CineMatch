@@ -1,6 +1,8 @@
 import { Injectable, HttpException, HttpStatus } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import axios from 'axios';
+import { Movie } from './interfaces/movie.interface';
+import { DiscoverMoviesDto } from './dto/discover-movies.dto';
 
 @Injectable()
 export class MoviesService {
@@ -11,28 +13,36 @@ export class MoviesService {
     this.apiKey = this.configService.get<string>('TMDB_API_KEY') || '';
   }
 
-  async getMovies(genres?: string, maxDuration?: number, minRating?: number, page?: number): Promise<any[]> {
+  async discover(filters: DiscoverMoviesDto): Promise<Movie[]> {
     try {
       const response = await axios.get(`${this.baseUrl}/discover/movie`, {
         params: {
           api_key: this.apiKey,
-          with_genres: genres,
-          'with_runtime.lte': maxDuration,
-          'vote_average.gte': minRating || 6,
-          page: page || 1,
+          with_genres: filters.genres,
+          'with_runtime.lte': filters.maxDuration,
+          'vote_average.gte': filters.minRating || 0,
+          page: filters.page || 1,
+          certification_country: filters.certificationCountry,
+          'certification.lte': filters.certificationLte,
+          with_watch_providers: filters.providers,
+          watch_region: 'FR',
           sort_by: 'popularity.desc',
           language: 'fr-FR',
         },
       });
 
-      return response.data.results.map((movie: any) => ({
+      return response.data.results.slice(0, 20).map((movie: any) => ({
         id: movie.id,
         title: movie.title,
         overview: movie.overview,
         releaseYear: movie.release_date ? movie.release_date.split('-')[0] : '',
         rating: movie.vote_average.toFixed(1),
-        poster: movie.poster_path ? `https://image.tmdb.org/t/p/w500${movie.poster_path}` : null,
-        backdrop: movie.backdrop_path ? `https://image.tmdb.org/t/p/w1280${movie.backdrop_path}` : null,
+        poster: movie.poster_path
+          ? `https://image.tmdb.org/t/p/w500${movie.poster_path}`
+          : null,
+        backdrop: movie.backdrop_path
+          ? `https://image.tmdb.org/t/p/w1280${movie.backdrop_path}`
+          : null,
         genreIds: movie.genre_ids,
       }));
     } catch (error: any) {
@@ -46,28 +56,17 @@ export class MoviesService {
         params: { api_key: this.apiKey },
       });
 
-      const providers = response.data.results?.FR?.flatrate || [];
-      return providers.map((p: any) => ({
-        id: p.provider_id,
-        name: p.provider_name,
-        logo: `https://image.tmdb.org/t/p/original${p.logo_path}`,
-      }));
-    } catch (error: any) {
-      return this.handleError(error);
-    }
-  }
+      const frResults = response.data.results?.FR;
+      
+      if (frResults && frResults.flatrate) {
+        return frResults.flatrate.map((provider: any) => ({
+          id: provider.provider_id,
+          name: provider.provider_name,
+          logo: `https://image.tmdb.org/t/p/original${provider.logo_path}`,
+        }));
+      }
 
-  async getMovieTrailer(movieId: number): Promise<{ youtubeKey: string } | null> {
-    try {
-      const response = await axios.get(`${this.baseUrl}/movie/${movieId}/videos`, {
-        params: { api_key: this.apiKey },
-      });
-
-      const trailer = response.data.results.find(
-        (v: any) => v.site === 'YouTube' && v.type === 'Trailer'
-      );
-
-      return trailer ? { youtubeKey: trailer.key } : null;
+      return [];
     } catch (error: any) {
       return this.handleError(error);
     }
@@ -87,21 +86,24 @@ export class MoviesService {
     }
   }
 
-  async getMovieCredits(movieId: number): Promise<{ director: string, cast: string[] }> {
+  async getCredits(movieId: number): Promise<{ director: string; cast: string[] }> {
     try {
       const response = await axios.get(`${this.baseUrl}/movie/${movieId}/credits`, {
-        params: { api_key: this.apiKey },
+        params: { api_key: this.apiKey, language: 'fr-FR' },
       });
 
       const director = response.data.crew.find((member: any) => member.job === 'Director')?.name || 'Inconnu';
-      const cast = response.data.cast.slice(0, 3).map((member: any) => member.name);
+      const cast = response.data.cast.slice(0, 5).map((actor: any) => actor.name);
 
       return { director, cast };
     } catch (error: any) {
-      return this.handleError(error);
+      return { director: 'Inconnu', cast: [] };
     }
   }
 
+  /**
+   * Type never indique que la fonction lève toujours une erreur.
+   */
   private handleError(error: any): never {
     if (error.response?.status === 401) {
       throw new HttpException('Invalid TMDB API key', HttpStatus.UNAUTHORIZED);

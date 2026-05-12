@@ -23,7 +23,7 @@ export class MoviesController {
   }
 
   @Get(':id/credits')
-  async getCredits(@Param('id') id: string): Promise<any> {
-    return this.moviesService.getMovieCredits(parseInt(id, 10));
+  async getCredits(@Param('id') id: string): Promise<{ director: string; cast: string[] }> {
+    return this.moviesService.getCredits(parseInt(id, 10));
   }
 }

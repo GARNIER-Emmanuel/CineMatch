@@ -25,21 +25,13 @@ import { WatchlistService } from '../../../core/services/watchlist';
               <span class="rating">★ {{ movie.rating }}</span>
               <span class="year">{{ movie.releaseYear }}</span>
             </div>
+
+            <div class="credits" *ngIf="credits">
+              <p><strong>Réalisation :</strong> {{ credits.director }}</p>
+              <p><strong>Casting :</strong> {{ credits.cast.join(', ') }}</p>
+            </div>
             
             <p class="overview">{{ movie.overview }}</p>
-            
-            @if (credits) {
-              <div class="credits-section">
-                <div class="credit-item">
-                  <span class="credit-label">Réalisation</span>
-                  <span class="credit-value">{{ credits.director }}</span>
-                </div>
-                <div class="credit-item">
-                  <span class="credit-label">Distribution</span>
-                  <span class="credit-value">{{ credits.cast.join(', ') }}</span>
-                </div>
-              </div>
-            }
 
             <!-- Plateformes -->
             <div class="providers-section">
@@ -181,35 +173,17 @@ import { WatchlistService } from '../../../core/services/watchlist';
       font-size: 1.1rem;
       line-height: 1.6;
       color: rgba(255, 255, 255, 0.8);
-      margin-bottom: 25px;
-    }
-
-    .credits-section {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 20px;
       margin-bottom: 30px;
-      padding-top: 20px;
-      border-top: 1px solid rgba(255, 255, 255, 0.05);
     }
 
-    .credit-item {
-      display: flex;
-      flex-direction: column;
-      gap: 5px;
+    .credits {
+      margin-bottom: 25px;
+      font-size: 0.95rem;
+      color: rgba(255, 255, 255, 0.7);
     }
 
-    .credit-label {
-      font-size: 0.8rem;
-      text-transform: uppercase;
-      letter-spacing: 1px;
-      color: rgba(255, 255, 255, 0.4);
-    }
-
-    .credit-value {
-      font-weight: 600;
-      color: white;
-    }
+    .credits p { margin: 5px 0; }
+    .credits strong { color: var(--primary-color); font-weight: 700; }
 
     .providers-section h3 {
       font-size: 0.9rem;
@@ -309,10 +283,10 @@ export class MovieDetailModalComponent implements OnInit {
   @Output() close = new EventEmitter<void>();
 
   providers: WatchProvider[] = [];
+  credits: { director: string; cast: string[] } | null = null;
   loadingProviders = true;
   feedbackSent = false;
   isInWatchlist = false;
-  credits: { director: string, cast: string[] } | null = null;
 
   constructor(
     private moviesService: MoviesService,
