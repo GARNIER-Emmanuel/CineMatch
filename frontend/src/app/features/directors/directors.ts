@@ -19,9 +19,12 @@ import { MoviesService, Movie } from '../../core/services/movies';
 
        <div class="epochs-list" *ngIf="!loading">
          @for (epoch of epochs; track epoch.title) {
-           <section class="epoch-section">
-             <h2 class="epoch-title">{{ epoch.title }}</h2>
-             <div class="directors-grid">
+           <section class="epoch-section" [class.collapsed]="!epoch.expanded">
+             <h2 class="epoch-title" (click)="toggleEpoch(epoch)">
+               {{ epoch.title }}
+               <span class="toggle-icon">{{ epoch.expanded ? '▼' : '►' }}</span>
+             </h2>
+             <div class="directors-grid" *ngIf="epoch.expanded">
                @for (director of epoch.directors; track director.id) {
                  <div class="director-card" (click)="onDirectorClick(director)">
                    <div class="card-image">
@@ -75,9 +78,30 @@ import { MoviesService, Movie } from '../../core/services/movies';
         font-size: 1.5rem;
         font-weight: 700;
         margin-bottom: 25px;
-        padding-left: 10px;
+        padding: 10px;
         border-left: 3px solid #ffb400;
         color: white;
+        cursor: pointer;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        transition: all 0.3s;
+        border-radius: 0 8px 8px 0;
+      }
+
+      .epoch-title:hover {
+        background: rgba(255, 180, 0, 0.08);
+      }
+
+      .toggle-icon {
+        font-size: 1.2rem;
+        color: rgba(255, 255, 255, 0.5);
+        transition: transform 0.3s ease;
+      }
+
+      .epoch-section.collapsed .epoch-title {
+        margin-bottom: 10px;
+        background: rgba(255, 255, 255, 0.02);
       }
 
       .directors-grid {
@@ -200,7 +224,7 @@ export class DirectorsComponent implements OnInit {
   ngOnInit() {
     this.moviesService.getPopularDirectors().subscribe({
       next: (data: any[]) => {
-        this.epochs = data;
+        this.epochs = data.map(epoch => ({ ...epoch, expanded: true }));
         this.loading = false;
         this.cdr.detectChanges();
       },
@@ -213,5 +237,10 @@ export class DirectorsComponent implements OnInit {
 
   onDirectorClick(director: any) {
     this.directorClick.emit(director);
+  }
+
+  toggleEpoch(epoch: any) {
+    epoch.expanded = !epoch.expanded;
+    this.cdr.detectChanges();
   }
 }
