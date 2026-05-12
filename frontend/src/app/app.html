@@ -6,36 +6,62 @@
     <button (click)="loadAllMovies()" class="btn-retry glass">Réessayer</button>
   </div>
   
-  <div class="rows-container" *ngIf="!errorMessage">
+  <div class="content-container" *ngIf="!errorMessage">
     <cm-movie-filters 
       (genreChange)="onGenreChange($event)"
       (durationChange)="onDurationChange($event)"
       (ratingChange)="onRatingChange($event)">
     </cm-movie-filters>
 
-    @if (selectedGenre || maxDuration < 240 || minRating > 0) {
+    <!-- CAS A : Aucun filtre actif (Mises en avant) -->
+    <div class="highlight-sections" *ngIf="!hasActiveFilters">
+      <cm-movie-row title="Populaires sur CineMatch" [movies]="popularMovies" [loading]="loadingPopular"></cm-movie-row>
+      <cm-movie-row title="Action & Aventure" [movies]="actionMovies" [loading]="loadingAction"></cm-movie-row>
+      <cm-movie-row title="Tendances actuelles" [movies]="trendingMovies" [loading]="loadingTrending"></cm-movie-row>
+    </div>
+
+    <!-- CAS B : Filtres actifs (Grille de résultats de recherche) -->
+    <div class="search-results-section" *ngIf="hasActiveFilters">
       <cm-movie-row 
         title="Résultats de votre recherche" 
         [movies]="discoveryMovies" 
-        [loading]="loadingDiscovery">
+        [loading]="loadingDiscovery"
+        [isGrid]="true">
       </cm-movie-row>
-      <cm-movie-pagination
-        [currentPage]="currentPage"
-        (pageChange)="onPageChange($event)">
-      </cm-movie-pagination>
-    }
-
-    <cm-movie-row title="Populaires sur CineMatch" [movies]="popularMovies" [loading]="loadingPopular"></cm-movie-row>
-    <cm-movie-row title="Action & Aventure" [movies]="actionMovies" [loading]="loadingAction"></cm-movie-row>
-    <cm-movie-row title="Tendances actuelles" [movies]="trendingMovies" [loading]="loadingTrending"></cm-movie-row>
+      
+      <div class="pagination-footer">
+        <cm-movie-pagination
+          [currentPage]="currentPage"
+          (pageChange)="onPageChange($event)">
+        </cm-movie-pagination>
+      </div>
+    </div>
   </div>
 </main>
 
 <style>
-  .rows-container {
-    margin-top: 20px;
+  main {
+    padding-top: 80px; /* Compense la hauteur du header fixe */
+  }
+
+  .content-container {
     position: relative;
     z-index: 20;
     padding-bottom: 50px;
+  }
+
+  .pagination-footer {
+    margin-top: 40px;
+    display: flex;
+    justify-content: center;
+  }
+
+  .search-results-section {
+    animation: fadeIn 0.5s ease-out;
+  }
+
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
   }
 </style>

@@ -14,11 +14,11 @@ export interface MovieItem {
   standalone: true,
   imports: [CommonModule, MovieSkeletonComponent],
   template: `
-    <div class="row">
-      <h2 class="row-title">{{ title }}</h2>
+    <div class="row" [class.grid-mode]="isGrid">
+      <h2 class="row-title" *ngIf="title">{{ title }}</h2>
       <div class="row-posters">
         @if (loading) {
-          @for (i of [1,2,3,4,5,6]; track i) {
+          @for (i of [1,2,3,4,5,6,7,8,9,10,11,12]; track i) {
             <cm-movie-skeleton></cm-movie-skeleton>
           }
         } @else {
@@ -54,11 +54,23 @@ export interface MovieItem {
 
     .row-posters {
       display: flex;
-      gap: 10px;
+      gap: 15px;
       overflow-x: auto;
       overflow-y: hidden;
       padding: 20px 0;
       scrollbar-width: none; /* Firefox */
+    }
+
+    /* Mode Grille */
+    .row.grid-mode {
+      padding-right: var(--container-padding);
+    }
+
+    .row.grid-mode .row-posters {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+      overflow-x: visible;
+      gap: 25px;
     }
 
     .row-posters::-webkit-scrollbar {
@@ -73,6 +85,10 @@ export interface MovieItem {
       transition: transform 0.4s ease;
       border-radius: 4px;
       overflow: hidden;
+    }
+
+    .row.grid-mode .movie-card {
+      width: 100%; /* S'adapte à la cellule de la grille */
     }
 
     .movie-card:hover {
@@ -110,13 +126,17 @@ export interface MovieItem {
 
     .rating {
       font-size: 0.8rem;
-      color: #46d369; /* Vert Netflix pour les notes/matchs */
+      color: #46d369;
       font-weight: 700;
     }
 
     @media (max-width: 600px) {
       .movie-card {
         width: 150px;
+      }
+      .row.grid-mode .row-posters {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 15px;
       }
       .movie-card img {
         height: 225px;
@@ -128,4 +148,5 @@ export class MovieRowComponent {
   @Input() title: string = '';
   @Input() movies: MovieItem[] = [];
   @Input() loading: boolean = false;
+  @Input() isGrid: boolean = false;
 }

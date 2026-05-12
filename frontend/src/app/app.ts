@@ -31,6 +31,10 @@ export class AppComponent implements OnInit {
   minRating: number = 6;
   currentPage: number = 1;
 
+  get hasActiveFilters(): boolean {
+    return !!this.selectedGenre || this.maxDuration < 240 || this.minRating > 6;
+  }
+
   errorMessage: string | null = null;
 
   constructor(private moviesService: MoviesService) {}
