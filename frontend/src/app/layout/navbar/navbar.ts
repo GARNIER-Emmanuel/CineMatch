@@ -13,8 +13,9 @@ import { CommonModule } from '@angular/common';
         </div>
         <ul class="nav-links">
           <li [class.active]="currentView === 'home'" (click)="onHomeClick()">Accueil</li>
-          <li>Séries</li>
-          <li>Films</li>
+          <li class="cinescroll-link" [class.active]="currentView === 'cinescroll'" (click)="onCineScrollClick()">
+            CineScroll <span class="badge">🎞️</span>
+          </li>
           <li [class.active]="currentView === 'watchlist'" (click)="onWatchlistClick()">Ma Liste</li>
         </ul>
       </div>
@@ -108,6 +109,16 @@ import { CommonModule } from '@angular/common';
       box-shadow: 0 0 10px #ffb400;
     }
 
+    .cinescroll-link {
+      color: #ffb400 !important;
+      font-weight: 800 !important;
+    }
+
+    .cinescroll-link .badge {
+      font-size: 1.1rem;
+      vertical-align: middle;
+    }
+
     .nav-right {
       display: flex;
       align-items: center;
@@ -157,6 +168,7 @@ export class NavbarComponent {
   @Output() toggleFilters = new EventEmitter<void>();
   @Output() navigateHome = new EventEmitter<void>();
   @Output() navigateWatchlist = new EventEmitter<void>();
+  @Output() navigateCineScroll = new EventEmitter<void>();
 
   isScrolled = false;
 
@@ -178,5 +190,9 @@ export class NavbarComponent {
 
   onWatchlistClick() {
     this.navigateWatchlist.emit();
+  }
+
+  onCineScrollClick() {
+    this.navigateCineScroll.emit();
   }
 }

@@ -10,6 +10,7 @@ export interface Movie {
   rating: string;
   poster: string | null;
   backdrop: string | null;
+  genreIds?: number[];
 }
 
 export interface WatchProvider {
@@ -46,6 +47,18 @@ export class MoviesService {
     if (providers) params = params.set('providers', providers);
 
     return this.http.get<Movie[]>(`${this.apiUrl}/discover`, { params });
+  }
+
+  /**
+   * Récupère les films pour le mode CineScroll
+   */
+  getCineScrollMovies(genres?: string, excludeGenres?: string, page?: number): Observable<Movie[]> {
+    let params = new HttpParams();
+    if (genres) params = params.set('genres', genres);
+    if (excludeGenres) params = params.set('excludeGenres', excludeGenres);
+    if (page) params = params.set('page', page.toString());
+
+    return this.http.get<Movie[]>(`${this.apiUrl}/cinescroll`, { params });
   }
 
   /**

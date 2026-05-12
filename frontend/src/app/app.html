@@ -3,7 +3,8 @@
     [currentView]="currentView"
     (toggleFilters)="toggleFilters()"
     (navigateHome)="goToHome()"
-    (navigateWatchlist)="goToWatchlist()">
+    (navigateWatchlist)="goToWatchlist()"
+    (navigateCineScroll)="goToCineScroll()">
   </cm-navbar>
 
   <main class="main-content">
@@ -124,6 +125,9 @@
         </div>
       </div>
     </div>
+    
+    <!-- SECTION CINESCROLL -->
+    <cm-cine-scroll *ngIf="currentView === 'cinescroll'"></cm-cine-scroll>
 
   </main>
 

@@ -8,6 +8,7 @@ import { MovieDetailModalComponent } from './features/movies/detail-modal/movie-
 import { MoviesService, Movie } from './core/services/movies';
 import { HistoryService } from './core/services/history';
 import { WatchlistService } from './core/services/watchlist';
+import { CineScrollComponent } from './features/cine-scroll/cine-scroll.component';
 
 @Component({
   selector: 'app-root',
@@ -18,7 +19,8 @@ import { WatchlistService } from './core/services/watchlist';
     MovieRowComponent, 
     MovieFiltersComponent, 
     MoviePaginationComponent,
-    MovieDetailModalComponent
+    MovieDetailModalComponent,
+    CineScrollComponent
   ],
   templateUrl: './app.html',
   styleUrl: './app.css',
@@ -137,6 +139,15 @@ export class AppComponent implements OnInit {
   goToWatchlist(): void {
     console.log('Navigation vers WATCHLIST');
     this.currentView = 'watchlist';
+    this.showFilters = false;
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+    this.cdr.markForCheck();
+    this.cdr.detectChanges();
+  }
+
+  goToCineScroll(): void {
+    console.log('Navigation vers CINESCROLL');
+    this.currentView = 'cinescroll';
     this.showFilters = false;
     window.scrollTo({ top: 0, behavior: 'smooth' });
     this.cdr.markForCheck();
