@@ -232,8 +232,8 @@ export class AppComponent implements OnInit, OnDestroy {
         this.cdr.detectChanges();
       }, 300);
     } else {
-      this.showFilters = !this.showFilters;
-      if (this.showFilters) window.scrollTo({ top: 0, behavior: 'smooth' });
+      this.showFilters = true;
+      window.scrollTo({ top: 0, behavior: 'smooth' });
       this.cdr.detectChanges();
     }
   }
