@@ -1,5 +1,6 @@
 import { Component, EventEmitter, Output } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { CineScrollProfileService } from '../../../../core/services/cine-scroll-profile';
 
 export interface Mood {
   id: string;
@@ -29,6 +30,10 @@ export interface Mood {
 
       <button class="skip-btn" (click)="onSkip()">
         Ou laissez le destin choisir...
+      </button>
+
+      <button class="reset-profile-btn" (click)="onResetProfile()" *ngIf="hasProfile">
+        Réinitialiser mes préférences de session
       </button>
     </div>
   `,
@@ -114,6 +119,24 @@ export interface Mood {
       opacity: 1;
     }
 
+    .reset-profile-btn {
+      margin-top: 20px;
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      color: rgba(255, 255, 255, 0.4);
+      padding: 8px 16px;
+      border-radius: 20px;
+      font-size: 0.8rem;
+      cursor: pointer;
+      transition: all 0.3s;
+    }
+
+    .reset-profile-btn:hover {
+      background: rgba(255, 59, 48, 0.1);
+      color: #ff3b30;
+      border-color: rgba(255, 59, 48, 0.3);
+    }
+
     @keyframes fadeIn {
       from { opacity: 0; transform: translateY(20px); }
       to { opacity: 1; transform: translateY(0); }
@@ -128,6 +151,13 @@ export interface Mood {
 export class MoodSelectorComponent {
   @Output() moodSelect = new EventEmitter<Mood>();
   @Output() skip = new EventEmitter<void>();
+
+  constructor(private profileService: CineScrollProfileService) {}
+
+  get hasProfile(): boolean {
+    return this.profileService.getPreferredGenres().length > 0 || 
+           this.profileService.getExcludedGenres().length > 0;
+  }
 
   moods: Mood[] = [
     { id: 'happy', label: 'Bonne humeur', emoji: '😂', genres: '35,16' },
@@ -144,5 +174,11 @@ export class MoodSelectorComponent {
 
   onSkip(): void {
     this.skip.emit();
+  }
+
+  onResetProfile(): void {
+    if (confirm('Voulez-vous vraiment réinitialiser vos préférences de recommandation ?')) {
+      this.profileService.reset();
+    }
   }
 }

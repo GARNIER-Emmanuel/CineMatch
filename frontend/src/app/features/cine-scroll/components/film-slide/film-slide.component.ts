@@ -1,4 +1,4 @@
-import { Component, Input, OnInit, Pipe, PipeTransform } from '@angular/core';
+import { Component, Input, OnInit, OnDestroy, Pipe, PipeTransform } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
 import { Movie, MoviesService } from '../../../../core/services/movies';
@@ -32,6 +32,16 @@ export class SafePipe implements PipeTransform {
             allow="autoplay; encrypted-media"
             class="video-bg">
           </iframe>
+        } @else if (backdrops.length > 0) {
+          <div class="slideshow-container">
+            @for (img of backdrops; track $index) {
+              <div 
+                class="slide-img" 
+                [class.active]="currentSlideIndex === $index"
+                [style.backgroundImage]="'url(' + img + ')'">
+              </div>
+            }
+          </div>
         } @else {
           <div class="backdrop-fallback" [style.backgroundImage]="'url(' + movie.backdrop + ')'"></div>
         }
@@ -94,6 +104,28 @@ export class SafePipe implements PipeTransform {
       left: 50%;
       transform: translate(-50%, -50%);
       pointer-events: none;
+    }
+
+    .slideshow-container {
+      width: 100%;
+      height: 100%;
+      position: relative;
+    }
+
+    .slide-img {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background-size: cover;
+      background-position: center;
+      opacity: 0;
+      transition: opacity 1.5s ease-in-out;
+    }
+
+    .slide-img.active {
+      opacity: 1;
     }
 
     .backdrop-fallback {
@@ -249,6 +281,10 @@ export class FilmSlideComponent implements OnInit {
   youtubeKey: string | null = null;
   cachedTrailerKey: string | null = null;
   loadingTrailer = false;
+  
+  backdrops: string[] = [];
+  currentSlideIndex = 0;
+  private slideshowInterval: any;
   private watchlistService: WatchlistService;
   private profileService: CineScrollProfileService;
 
@@ -273,13 +309,47 @@ export class FilmSlideComponent implements OnInit {
         this.cachedTrailerKey = trailer?.youtubeKey || null;
         if (this._active) {
           this.youtubeKey = this.cachedTrailerKey;
+          if (!this.youtubeKey) {
+            this.loadImages();
+          }
         }
         this.loadingTrailer = false;
       },
       error: () => {
         this.loadingTrailer = false;
+        if (this._active) this.loadImages();
       }
     });
+  }
+
+  loadImages(): void {
+    if (this.backdrops.length > 0) {
+      this.startSlideshow();
+      return;
+    }
+
+    this.moviesService.getMovieImages(this.movie.id).subscribe(images => {
+      this.backdrops = images;
+      if (this.backdrops.length > 0) {
+        this.startSlideshow();
+      }
+    });
+  }
+
+  startSlideshow(): void {
+    this.stopSlideshow();
+    this.currentSlideIndex = 0;
+    if (this.backdrops.length > 1) {
+      this.slideshowInterval = setInterval(() => {
+        this.currentSlideIndex = (this.currentSlideIndex + 1) % this.backdrops.length;
+      }, 5000);
+    }
+  }
+
+  stopSlideshow(): void {
+    if (this.slideshowInterval) {
+      clearInterval(this.slideshowInterval);
+    }
   }
 
   onToggleWatchlist(): void {
@@ -308,5 +378,9 @@ export class FilmSlideComponent implements OnInit {
 
   isInWatchlist(): boolean {
     return this.watchlistService.isInWatchlist(this.movie.id);
+  }
+
+  ngOnDestroy(): void {
+    this.stopSlideshow();
   }
 }

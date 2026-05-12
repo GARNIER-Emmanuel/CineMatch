@@ -64,8 +64,8 @@ export class MoviesService {
   /**
    * Récupère la clé YouTube d'un trailer de film
    */
-  getMovieTrailer(movieId: number): Observable<{ youtubeKey: string, language: string, name: string } | null> {
-    return this.http.get<{ youtubeKey: string, language: string, name: string } | null>(`${this.apiUrl}/trailer/${movieId}`);
+  getMovieTrailer(movieId: number): Observable<{ youtubeKey: string } | null> {
+    return this.http.get<{ youtubeKey: string } | null>(`${this.apiUrl}/${movieId}/trailer`);
   }
 
   /**
@@ -73,5 +73,9 @@ export class MoviesService {
    */
   getMovieProviders(movieId: number): Observable<WatchProvider[]> {
     return this.http.get<WatchProvider[]>(`${this.apiUrl}/${movieId}/providers`);
+  }
+
+  getMovieImages(movieId: number): Observable<string[]> {
+    return this.http.get<string[]>(`${this.apiUrl}/${movieId}/images`);
   }
 }

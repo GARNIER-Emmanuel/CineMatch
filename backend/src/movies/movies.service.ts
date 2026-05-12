@@ -72,6 +72,20 @@ export class MoviesService {
     }
   }
 
+  async getMovieImages(movieId: number): Promise<string[]> {
+    try {
+      const response = await axios.get(`${this.baseUrl}/movie/${movieId}/images`, {
+        params: { api_key: this.apiKey },
+      });
+
+      return response.data.backdrops
+        .slice(0, 5)
+        .map((img: any) => `https://image.tmdb.org/t/p/w1280${img.file_path}`);
+    } catch (error: any) {
+      return this.handleError(error);
+    }
+  }
+
   /**
    * Type never indique que la fonction lève toujours une erreur.
    */

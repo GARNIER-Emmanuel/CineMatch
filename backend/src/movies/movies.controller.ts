@@ -16,4 +16,9 @@ export class MoviesController {
   async getProviders(@Param('id') id: string): Promise<any[]> {
     return this.moviesService.getWatchProviders(parseInt(id, 10));
   }
+
+  @Get(':id/images')
+  async getImages(@Param('id') id: string): Promise<string[]> {
+    return this.moviesService.getMovieImages(parseInt(id, 10));
+  }
 }
