@@ -95,8 +95,10 @@ export class DirectorsService {
         backdrop: m.backdrop_path ? `https://image.tmdb.org/t/p/original${m.backdrop_path}` : null
       }));
 
-      // 5. Dédoublonner (parfois un acteur est crédité deux fois) et trier par année
-      const uniqueMovies = Array.from(new Map(movies.map((m: any) => [m.id, m])).values());
+      // 5. Dédoublonner, filtrer les films inutiles (sans poster ou sans note) et trier par année
+      const uniqueMovies = Array.from(new Map(movies.map((m: any) => [m.id, m])).values())
+        .filter((m: any) => m.poster !== null && m.rating !== '0.0');
+
       return (uniqueMovies as any[]).sort((a: any, b: any) => b.releaseYear.localeCompare(a.releaseYear));
     } catch (error) {
       throw new HttpException('TMDB API unavailable', HttpStatus.BAD_GATEWAY);
