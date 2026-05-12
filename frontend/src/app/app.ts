@@ -4,12 +4,13 @@ import { NavbarComponent } from './layout/navbar/navbar';
 import { HeroComponent } from './features/home/hero/hero';
 import { MovieRowComponent, MovieItem } from './features/home/movie-row/movie-row';
 import { MovieFiltersComponent } from './features/movies/filters/movie-filters';
+import { MoviePaginationComponent } from './features/movies/pagination/movie-pagination';
 import { MoviesService, Movie } from './core/services/movies';
 
 @Component({
   selector: 'app-root',
   standalone: true,
-  imports: [CommonModule, NavbarComponent, HeroComponent, MovieRowComponent, MovieFiltersComponent],
+  imports: [CommonModule, NavbarComponent, HeroComponent, MovieRowComponent, MovieFiltersComponent, MoviePaginationComponent],
   templateUrl: './app.html',
   styleUrl: './app.css',
 })
@@ -29,6 +30,7 @@ export class AppComponent implements OnInit {
   selectedGenre: string | null = null;
   maxDuration: number = 240;
   minRating: number = 6;
+  currentPage: number = 1;
 
   errorMessage: string | null = null;
 
@@ -83,22 +85,32 @@ export class AppComponent implements OnInit {
 
   onGenreChange(genreId: string | null): void {
     this.selectedGenre = genreId;
+    this.currentPage = 1;
     this.loadDiscoveryMovies();
   }
 
   onDurationChange(duration: number): void {
     this.maxDuration = duration;
+    this.currentPage = 1;
     this.loadDiscoveryMovies();
   }
 
   onRatingChange(rating: number): void {
     this.minRating = rating;
+    this.currentPage = 1;
     this.loadDiscoveryMovies();
+  }
+
+  onPageChange(page: number): void {
+    this.currentPage = page;
+    this.loadDiscoveryMovies();
+    // Scroll to top of discovery row if needed
+    window.scrollTo({ top: 400, behavior: 'smooth' });
   }
 
   loadDiscoveryMovies(): void {
     this.loadingDiscovery = true;
-    this.moviesService.getMovies(this.selectedGenre, this.maxDuration, this.minRating).subscribe({
+    this.moviesService.getMovies(this.selectedGenre, this.maxDuration, this.minRating, this.currentPage).subscribe({
       next: (movies: Movie[]) => {
         this.discoveryMovies = this.mapToMovieItems(movies);
         this.loadingDiscovery = false;

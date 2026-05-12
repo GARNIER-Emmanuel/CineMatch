@@ -21,6 +21,10 @@
         [movies]="discoveryMovies" 
         [loading]="loadingDiscovery">
       </cm-movie-row>
+      <cm-movie-pagination
+        [currentPage]="currentPage"
+        (pageChange)="onPageChange($event)">
+      </cm-movie-pagination>
     }
 
     <cm-movie-row title="Populaires sur CineMatch" [movies]="popularMovies" [loading]="loadingPopular"></cm-movie-row>
