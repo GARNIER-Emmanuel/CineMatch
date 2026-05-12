@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, Output } from '@angular/core';
+import { Component, EventEmitter, Output, Input } from '@angular/core';
 import { CommonModule } from '@angular/common';
 
 @Component({
@@ -6,73 +6,69 @@ import { CommonModule } from '@angular/common';
   standalone: true,
   imports: [CommonModule],
   template: `
-    <div class="pagination-container">
+    <div class="load-more-container">
       <button 
-        class="pagination-btn glass" 
-        [disabled]="currentPage === 1"
-        (click)="prevPage()"
-        data-test="prev-page">
-        Précédent
-      </button>
-      
-      <span class="page-indicator">Page {{ currentPage }}</span>
-
-      <button 
-        class="pagination-btn glass" 
-        (click)="nextPage()"
-        data-test="next-page">
-        Suivant
+        class="load-more-btn" 
+        (click)="onLoadMore()" 
+        [disabled]="isLoading"
+        [class.loading]="isLoading">
+        <span *ngIf="!isLoading">Afficher plus</span>
+        <span *ngIf="isLoading" class="loader"></span>
       </button>
     </div>
   `,
   styles: [`
-    .pagination-container {
+    .load-more-container {
       display: flex;
       justify-content: center;
-      align-items: center;
-      gap: 20px;
-      margin: 30px 0;
+      margin: 40px 0 60px;
     }
 
-    .pagination-btn {
-      padding: 10px 20px;
-      border-radius: 8px;
-      border: 1px solid rgba(255, 255, 255, 0.2);
-      background: rgba(255, 255, 255, 0.05);
-      color: white;
+    .load-more-btn {
+      padding: 12px 40px;
+      background: white;
+      color: black;
+      border: none;
+      border-radius: 4px;
+      font-weight: 700;
+      font-size: 1rem;
       cursor: pointer;
-      font-weight: 500;
-      transition: all 0.3s ease;
+      transition: all 0.2s ease;
+      min-width: 180px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
     }
 
-    .pagination-btn:hover:not(:disabled) {
-      background: rgba(255, 255, 255, 0.1);
-      border-color: var(--primary-color);
+    .load-more-btn:hover:not(:disabled) {
+      background: rgba(255, 255, 255, 0.8);
+      transform: scale(1.05);
     }
 
-    .pagination-btn:disabled {
-      opacity: 0.3;
+    .load-more-btn:disabled {
+      opacity: 0.5;
       cursor: not-allowed;
     }
 
-    .page-indicator {
-      font-size: 1rem;
-      color: var(--text-secondary);
-      font-weight: 600;
+    .loader {
+      width: 20px;
+      height: 20px;
+      border: 3px solid rgba(0, 0, 0, 0.1);
+      border-top-color: black;
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
     }
   `]
 })
 export class MoviePaginationComponent {
-  @Input() currentPage: number = 1;
-  @Output() pageChange = new EventEmitter<number>();
+  @Input() isLoading: boolean = false;
+  @Output() loadMore = new EventEmitter<void>();
 
-  nextPage(): void {
-    this.pageChange.emit(this.currentPage + 1);
-  }
-
-  prevPage(): void {
-    if (this.currentPage > 1) {
-      this.pageChange.emit(this.currentPage - 1);
-    }
+  onLoadMore(): void {
+    this.loadMore.emit();
   }
 }

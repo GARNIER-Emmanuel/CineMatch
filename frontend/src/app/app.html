@@ -28,10 +28,10 @@
         [isGrid]="true">
       </cm-movie-row>
       
-      <div class="pagination-footer">
+      <div class="pagination-footer" *ngIf="hasMoreResults">
         <cm-movie-pagination
-          [currentPage]="currentPage"
-          (pageChange)="onPageChange($event)">
+          [isLoading]="loadingDiscovery"
+          (loadMore)="onLoadMore()">
         </cm-movie-pagination>
       </div>
     </div>

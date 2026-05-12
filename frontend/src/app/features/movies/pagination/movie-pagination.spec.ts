@@ -1,6 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { MoviePaginationComponent } from './movie-pagination';
-import { describe, it, expect, beforeEach } from 'vitest';
 
 describe('MoviePaginationComponent', () => {
   let component: MoviePaginationComponent;
@@ -13,43 +12,28 @@ describe('MoviePaginationComponent', () => {
 
     fixture = TestBed.createComponent(MoviePaginationComponent);
     component = fixture.componentInstance;
+    // On ne fait pas de detectChanges ici pour éviter ExpressionChanged
   });
 
-  it('should emit page 2 when next is clicked and current is 1', () => {
-    component.currentPage = 1;
+  it('should emit loadMore event when button is clicked', () => {
     fixture.detectChanges();
+    let emitted = false;
+    component.loadMore.subscribe(() => emitted = true);
     
-    let emittedPage: number | undefined;
-    component.pageChange.subscribe((page: number) => emittedPage = page);
-
-    const nextBtn = fixture.nativeElement.querySelector('[data-test="next-page"]');
-    if (!nextBtn) throw new Error('Next button not found');
+    const button = fixture.nativeElement.querySelector('.load-more-btn');
+    button.click();
     
-    nextBtn.click();
-
-    expect(emittedPage).toBe(2);
+    expect(emitted).toBe(true);
   });
 
-  it('should emit page 1 when prev is clicked and current is 2', () => {
-    component.currentPage = 2;
+  it('should disable button and show loader when isLoading is true', () => {
+    component.isLoading = true;
     fixture.detectChanges();
     
-    let emittedPage: number | undefined;
-    component.pageChange.subscribe((page: number) => emittedPage = page);
-
-    const prevBtn = fixture.nativeElement.querySelector('[data-test="prev-page"]');
-    if (!prevBtn) throw new Error('Prev button not found');
+    const button = fixture.nativeElement.querySelector('.load-more-btn');
+    const loader = fixture.nativeElement.querySelector('.loader');
     
-    prevBtn.click();
-
-    expect(emittedPage).toBe(1);
-  });
-
-  it('should disable prev button when current page is 1', () => {
-    component.currentPage = 1;
-    fixture.detectChanges();
-    
-    const prevBtn = fixture.nativeElement.querySelector('[data-test="prev-page"]');
-    expect(prevBtn.disabled).toBe(true);
+    expect(button.disabled).toBe(true);
+    expect(loader).toBeTruthy();
   });
 });

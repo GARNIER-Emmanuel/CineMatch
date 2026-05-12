@@ -29,6 +29,7 @@ export class AppComponent implements OnInit {
   selectedGenre: string | null = null;
   maxDuration: number = 240;
   currentPage: number = 1;
+  hasMoreResults: boolean = true;
 
   get hasActiveFilters(): boolean {
     return !!this.selectedGenre || this.maxDuration < 240;
@@ -83,7 +84,7 @@ export class AppComponent implements OnInit {
       error: errorHandler
     });
 
-    this.moviesService.getMovies(null, 120, 0).subscribe({ // minRating à 0 par défaut
+    this.moviesService.getMovies(null, 120, 0).subscribe({
       next: (movies: Movie[]) => {
         this.trendingMovies = [...this.mapToMovieItems(movies)];
         this.loadingTrending = false;
@@ -96,27 +97,35 @@ export class AppComponent implements OnInit {
   onGenreChange(genreId: string | null): void {
     this.selectedGenre = genreId;
     this.currentPage = 1;
-    this.loadDiscoveryMovies();
+    this.loadDiscoveryMovies(false); // Reset liste
   }
 
   onDurationChange(duration: number): void {
     this.maxDuration = duration;
     this.currentPage = 1;
-    this.loadDiscoveryMovies();
+    this.loadDiscoveryMovies(false); // Reset liste
   }
 
-  onPageChange(page: number): void {
-    this.currentPage = page;
-    this.loadDiscoveryMovies();
-    window.scrollTo({ top: 400, behavior: 'smooth' });
+  onLoadMore(): void {
+    this.currentPage++;
+    this.loadDiscoveryMovies(true); // Accumuler les films
   }
 
-  loadDiscoveryMovies(): void {
+  loadDiscoveryMovies(append: boolean = false): void {
     this.loadingDiscovery = true;
-    // On envoie 0 pour le minRating afin de ne plus filtrer sur la note
     this.moviesService.getMovies(this.selectedGenre, this.maxDuration, 0, this.currentPage).subscribe({
       next: (movies: Movie[]) => {
-        this.discoveryMovies = [...this.mapToMovieItems(movies)];
+        const newItems = this.mapToMovieItems(movies);
+        
+        if (append) {
+          this.discoveryMovies = [...this.discoveryMovies, ...newItems];
+        } else {
+          this.discoveryMovies = [...newItems];
+        }
+
+        // TMDB renvoie normalement 20 résultats. Si on en a moins, c'est la fin.
+        this.hasMoreResults = movies.length >= 20;
+        
         this.loadingDiscovery = false;
         this.cdr.detectChanges();
       },
