@@ -65,7 +65,7 @@ export class MoviesService {
    * Récupère la clé YouTube d'un trailer de film
    */
   getMovieTrailer(movieId: number): Observable<{ youtubeKey: string } | null> {
-    return this.http.get<{ youtubeKey: string } | null>(`${this.apiUrl}/${movieId}/trailer`);
+    return this.http.get<{ youtubeKey: string } | null>(`${this.apiUrl}/trailer/${movieId}`);
   }
 
   /**
