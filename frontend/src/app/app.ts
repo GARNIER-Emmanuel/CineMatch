@@ -41,45 +41,46 @@ export class AppComponent implements OnInit {
   }
 
   loadAllMovies(): void {
-    this.errorMessage = null;
     this.loadingPopular = true;
     this.loadingAction = true;
     this.loadingTrending = true;
+    this.errorMessage = null;
 
-    // Récupération des films populaires
+    const errorHandler = (error: any) => {
+      if (error.status === 502) {
+        this.errorMessage = 'Le service TMDB est temporairement indisponible.';
+      } else if (error.status === 401) {
+        this.errorMessage = 'Erreur de configuration serveur (Clé API).';
+      } else {
+        this.errorMessage = 'Une erreur est survenue lors de la récupération des films. Veuillez réessayer.';
+      }
+      this.loadingPopular = false;
+      this.loadingAction = false;
+      this.loadingTrending = false;
+    };
+
     this.moviesService.getMovies().subscribe({
       next: (movies: Movie[]) => {
         this.popularMovies = this.mapToMovieItems(movies);
         this.loadingPopular = false;
       },
-      error: () => {
-        this.errorMessage = "Une erreur est survenue lors de la récupération des films. Veuillez réessayer.";
-        this.loadingPopular = false;
-        this.loadingAction = false;
-        this.loadingTrending = false;
-      }
+      error: errorHandler
     });
 
-    // Récupération des films d'action (28)
     this.moviesService.getMovies('28').subscribe({
       next: (movies: Movie[]) => {
         this.actionMovies = this.mapToMovieItems(movies);
         this.loadingAction = false;
       },
-      error: () => {
-        this.loadingAction = false;
-      }
+      error: errorHandler
     });
 
-    // Récupération des films d'aventure (12)
-    this.moviesService.getMovies('12').subscribe({
+    this.moviesService.getMovies(null, 120, 7).subscribe({
       next: (movies: Movie[]) => {
         this.trendingMovies = this.mapToMovieItems(movies);
         this.loadingTrending = false;
       },
-      error: () => {
-        this.loadingTrending = false;
-      }
+      error: errorHandler
     });
   }
 
