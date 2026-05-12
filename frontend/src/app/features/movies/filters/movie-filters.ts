@@ -144,6 +144,10 @@ export interface Provider {
       display: block;
     }
 
+    .providers-section {
+      margin-top: 30px;
+    }
+
     .genres-chips, .providers-chips {
       display: flex;
       flex-wrap: wrap;
