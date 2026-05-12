@@ -29,15 +29,15 @@ export class AppComponent implements OnInit {
   title = 'CineMatch';
 
   popularMovies: MovieItem[] = [];
-  actionMovies: MovieItem[] = [];
-  trendingMovies: MovieItem[] = [];
+  auteurMovies: MovieItem[] = [];
+  classicMovies: MovieItem[] = [];
   discoveryMovies: MovieItem[] = [];
   historyMovies: MovieItem[] = [];
   watchlistMovies: MovieItem[] = [];
 
   loadingPopular = true;
-  loadingAction = true;
-  loadingTrending = true;
+  loadingAuteur = true;
+  loadingClassic = true;
   loadingDiscovery = false;
 
   selectedGenre: string | null = null;
@@ -83,15 +83,15 @@ export class AppComponent implements OnInit {
 
   loadAllMovies(): void {
     this.loadingPopular = true;
-    this.loadingAction = true;
-    this.loadingTrending = true;
+    this.loadingAuteur = true;
+    this.loadingClassic = true;
     this.errorMessage = null;
 
     const errorHandler = (error: any) => {
       this.errorMessage = 'Une erreur est survenue lors de la récupération des films.';
       this.loadingPopular = false;
-      this.loadingAction = false;
-      this.loadingTrending = false;
+      this.loadingAuteur = false;
+      this.loadingClassic = false;
       this.cdr.detectChanges();
     };
 
@@ -108,19 +108,19 @@ export class AppComponent implements OnInit {
       error: errorHandler
     });
 
-    this.moviesService.getMovies('28').subscribe({
+    this.moviesService.getMovies('18,36').subscribe({
       next: (movies: Movie[]) => {
-        this.actionMovies = [...this.mapToMovieItems(movies)];
-        this.loadingAction = false;
+        this.auteurMovies = [...this.mapToMovieItems(movies)];
+        this.loadingAuteur = false;
         this.cdr.detectChanges();
       },
       error: errorHandler
     });
 
-    this.moviesService.getMovies(null, 120, 0).subscribe({
+    this.moviesService.getMovies(null, undefined, undefined, 1, null, null, null, undefined, 1985).subscribe({
       next: (movies: Movie[]) => {
-        this.trendingMovies = [...this.mapToMovieItems(movies)];
-        this.loadingTrending = false;
+        this.classicMovies = [...this.mapToMovieItems(movies)];
+        this.loadingClassic = false;
         this.cdr.detectChanges();
       },
       error: errorHandler

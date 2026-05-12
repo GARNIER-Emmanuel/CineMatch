@@ -10,4 +10,6 @@ export class DiscoverMoviesDto {
   certificationCountry?: string; // Code pays pour la certification (ex: "FR")
   certificationLte?: string; // Certification maximale (ex: "12")
   providers?: string; // Liste d'identifiants de plateformes (ex: "8|337")
+  releaseYearMin?: number;
+  releaseYearMax?: number;
 }

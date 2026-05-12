@@ -34,7 +34,9 @@ export class MoviesService {
     page?: number,
     certCountry?: string | null,
     certLte?: string | null,
-    providers?: string | null
+    providers?: string | null,
+    releaseYearMin?: number,
+    releaseYearMax?: number
   ): Observable<Movie[]> {
     let params = new HttpParams();
     
@@ -45,6 +47,8 @@ export class MoviesService {
     if (certCountry) params = params.set('certificationCountry', certCountry);
     if (certLte) params = params.set('certificationLte', certLte);
     if (providers) params = params.set('providers', providers);
+    if (releaseYearMin) params = params.set('releaseYearMin', releaseYearMin.toString());
+    if (releaseYearMax) params = params.set('releaseYearMax', releaseYearMax.toString());
 
     return this.http.get<Movie[]>(`${this.apiUrl}/discover`, { params });
   }

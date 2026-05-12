@@ -26,6 +26,8 @@ export class MoviesService {
           'certification.lte': filters.certificationLte,
           with_watch_providers: filters.providers,
           watch_region: 'FR',
+          'primary_release_date.gte': filters.releaseYearMin ? `${filters.releaseYearMin}-01-01` : undefined,
+          'primary_release_date.lte': filters.releaseYearMax ? `${filters.releaseYearMax}-12-31` : undefined,
           sort_by: 'popularity.desc',
           language: 'fr-FR',
         },

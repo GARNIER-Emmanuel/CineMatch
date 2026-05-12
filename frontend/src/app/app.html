@@ -63,16 +63,16 @@
         </cm-movie-row>
 
         <cm-movie-row 
-          title="Films d'Action" 
-          [movies]="actionMovies" 
-          [loading]="loadingAction"
+          title="Cinéma d'Auteur" 
+          [movies]="auteurMovies" 
+          [loading]="loadingAuteur"
           (movieClick)="openMovieDetails($event)">
         </cm-movie-row>
 
         <cm-movie-row 
-          title="À voir absolument" 
-          [movies]="trendingMovies" 
-          [loading]="loadingTrending"
+          title="Les Classiques" 
+          [movies]="classicMovies" 
+          [loading]="loadingClassic"
           (movieClick)="openMovieDetails($event)">
         </cm-movie-row>
       </div>
