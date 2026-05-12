@@ -81,7 +81,7 @@ export class MoviesService {
     return this.http.get<string[]>(`${this.apiUrl}/${movieId}/images`);
   }
 
-  getMovieCredits(movieId: number): Observable<{ director: string; cast: string[] }> {
-    return this.http.get<{ director: string; cast: string[] }>(`${this.apiUrl}/${movieId}/credits`);
+  getMovieCredits(movieId: number): Observable<{ director: string; cast: string[]; runtime: number }> {
+    return this.http.get<{ director: string; cast: string[]; runtime: number }>(`${this.apiUrl}/${movieId}/credits`);
   }
 }

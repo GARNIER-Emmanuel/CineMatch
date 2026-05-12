@@ -1,4 +1,4 @@
-import { Component, Input, OnInit, OnDestroy, Pipe, PipeTransform } from '@angular/core';
+import { Component, Input, OnInit, OnDestroy, Pipe, PipeTransform, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
 import { Movie, MoviesService } from '../../../../core/services/movies';
@@ -55,7 +55,10 @@ export class SafePipe implements PipeTransform {
 
       <!-- Content : Bas Gauche (Infos) -->
       <div class="info-container">
-        <span class="rating">★ {{ movie.rating }}</span>
+        <div class="meta-row">
+          <span class="rating">★ {{ movie.rating }}</span>
+          <span class="duration" *ngIf="credits?.runtime">{{ formatRuntime(credits!.runtime) }}</span>
+        </div>
         <h1 class="movie-title">{{ movie.title }} ({{ movie.releaseYear }})</h1>
         
         <div class="credits" *ngIf="credits">
@@ -176,12 +179,23 @@ export class SafePipe implements PipeTransform {
       animation: slideUp 0.8s ease-out;
     }
 
+    .meta-row {
+      display: flex;
+      align-items: center;
+      gap: 15px;
+      margin-bottom: 10px;
+    }
+
     .rating {
       color: #ffb400;
       font-weight: 800;
       font-size: 1.2rem;
-      display: block;
-      margin-bottom: 10px;
+    }
+
+    .duration {
+      color: rgba(255, 255, 255, 0.5);
+      font-size: 0.9rem;
+      font-weight: 600;
     }
 
     .movie-title {
@@ -193,9 +207,9 @@ export class SafePipe implements PipeTransform {
     }
 
     .overview {
-      font-size: 1rem;
+      font-size: 0.9rem;
       line-height: 1.5;
-      color: rgba(255,255,255,0.8);
+      color: rgba(255,255,255,0.7);
       display: -webkit-box;
       -webkit-line-clamp: 3;
       -webkit-box-orient: vertical;
@@ -203,9 +217,9 @@ export class SafePipe implements PipeTransform {
     }
 
     .credits {
-      margin-bottom: 15px;
-      font-size: 0.85rem;
-      color: rgba(255,255,255,0.6);
+      margin-bottom: 10px;
+      font-size: 0.7rem;
+      color: rgba(255,255,255,0.4);
     }
 
     .credits p { margin: 2px 0; }
@@ -300,7 +314,7 @@ export class FilmSlideComponent implements OnInit {
   
   backdrops: string[] = [];
   currentSlideIndex = 0;
-  credits: { director: string; cast: string[] } | null = null;
+  credits: { director: string; cast: string[]; runtime: number } | null = null;
   private slideshowInterval: any;
   private watchlistService: WatchlistService;
   private profileService: CineScrollProfileService;
@@ -308,14 +322,17 @@ export class FilmSlideComponent implements OnInit {
   constructor(
     private moviesService: MoviesService,
     watchlistService: WatchlistService,
-    profileService: CineScrollProfileService
+    profileService: CineScrollProfileService,
+    private cdr: ChangeDetectorRef
   ) {
     this.watchlistService = watchlistService;
     this.profileService = profileService;
   }
 
   ngOnInit(): void {
-    // On ne charge rien au init, on attend que le composant soit "actif"
+    if (this._active && this.movie) {
+      this.loadCredits();
+    }
   }
 
   loadTrailer(): void {
@@ -370,10 +387,18 @@ export class FilmSlideComponent implements OnInit {
   }
 
   loadCredits(): void {
-    if (this.credits) return;
+    if (this.credits || !this.movie?.id) return;
     this.moviesService.getMovieCredits(this.movie.id).subscribe(c => {
       this.credits = c;
+      this.cdr.detectChanges();
     });
+  }
+
+  formatRuntime(minutes: number): string {
+    if (!minutes) return '';
+    const h = Math.floor(minutes / 60);
+    const m = minutes % 60;
+    return `${h}h ${m}m`;
   }
 
   onToggleWatchlist(): void {

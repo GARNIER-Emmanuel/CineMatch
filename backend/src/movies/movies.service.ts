@@ -86,18 +86,23 @@ export class MoviesService {
     }
   }
 
-  async getCredits(movieId: number): Promise<{ director: string; cast: string[] }> {
+  async getCredits(movieId: number): Promise<{ director: string; cast: string[]; runtime: number }> {
     try {
-      const response = await axios.get(`${this.baseUrl}/movie/${movieId}/credits`, {
-        params: { api_key: this.apiKey, language: 'fr-FR' },
+      const response = await axios.get(`${this.baseUrl}/movie/${movieId}`, {
+        params: { 
+          api_key: this.apiKey, 
+          language: 'fr-FR',
+          append_to_response: 'credits'
+        },
       });
 
-      const director = response.data.crew.find((member: any) => member.job === 'Director')?.name || 'Inconnu';
-      const cast = response.data.cast.slice(0, 5).map((actor: any) => actor.name);
+      const director = response.data.credits.crew.find((member: any) => member.job === 'Director')?.name || 'Inconnu';
+      const cast = response.data.credits.cast.slice(0, 5).map((actor: any) => actor.name);
+      const runtime = response.data.runtime || 0;
 
-      return { director, cast };
+      return { director, cast, runtime };
     } catch (error: any) {
-      return { director: 'Inconnu', cast: [] };
+      return { director: 'Inconnu', cast: [], runtime: 0 };
     }
   }
 
