@@ -2,25 +2,30 @@
 
 <main>
   <cm-hero></cm-hero>
+
+  <div class="error-container" *ngIf="errorMessage">
+    <p>{{ errorMessage }}</p>
+    <button (click)="loadAllMovies()" class="btn-retry glass">Réessayer</button>
+  </div>
   
-  <div class="rows-container">
-    <cm-movie-row 
-      *ngIf="popularMovies.length > 0"
-      title="Populaires sur CineMatch" 
-      [movies]="popularMovies">
-    </cm-movie-row>
+  <div class="rows-container" *ngIf="!errorMessage">
+    <cm-movie-filters 
+      (genreChange)="onGenreChange($event)"
+      (durationChange)="onDurationChange($event)"
+      (ratingChange)="onRatingChange($event)">
+    </cm-movie-filters>
 
-    <cm-movie-row 
-      *ngIf="actionMovies.length > 0"
-      title="Action & Aventure" 
-      [movies]="actionMovies">
-    </cm-movie-row>
+    @if (selectedGenre || maxDuration < 240 || minRating > 0) {
+      <cm-movie-row 
+        title="Résultats de votre recherche" 
+        [movies]="discoveryMovies" 
+        [loading]="loadingDiscovery">
+      </cm-movie-row>
+    }
 
-    <cm-movie-row 
-      *ngIf="trendingMovies.length > 0"
-      title="Tendances actuelles" 
-      [movies]="trendingMovies">
-    </cm-movie-row>
+    <cm-movie-row title="Populaires sur CineMatch" [movies]="popularMovies" [loading]="loadingPopular"></cm-movie-row>
+    <cm-movie-row title="Action & Aventure" [movies]="actionMovies" [loading]="loadingAction"></cm-movie-row>
+    <cm-movie-row title="Tendances actuelles" [movies]="trendingMovies" [loading]="loadingTrending"></cm-movie-row>
   </div>
 </main>
 

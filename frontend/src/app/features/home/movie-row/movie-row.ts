@@ -1,5 +1,6 @@
 import { Component, Input } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { MovieSkeletonComponent } from '../movie-skeleton/movie-skeleton';
 
 export interface MovieItem {
   id: number;
@@ -11,19 +12,25 @@ export interface MovieItem {
 @Component({
   selector: 'cm-movie-row',
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, MovieSkeletonComponent],
   template: `
     <div class="row">
       <h2 class="row-title">{{ title }}</h2>
       <div class="row-posters">
-        @for (movie of movies; track movie.id) {
-          <div class="movie-card">
-            <img [src]="movie.poster" [alt]="movie.title">
-            <div class="movie-info">
-              <h3>{{ movie.title }}</h3>
-              <span class="rating" *ngIf="movie.rating">⭐ {{ movie.rating }}</span>
+        @if (loading) {
+          @for (i of [1,2,3,4,5,6]; track i) {
+            <cm-movie-skeleton></cm-movie-skeleton>
+          }
+        } @else {
+          @for (movie of movies; track movie.id) {
+            <div class="movie-card">
+              <img [src]="movie.poster" [alt]="movie.title">
+              <div class="movie-info">
+                <h3>{{ movie.title }}</h3>
+                <span class="rating" *ngIf="movie.rating">⭐ {{ movie.rating }}</span>
+              </div>
             </div>
-          </div>
+          }
         }
       </div>
     </div>
@@ -120,4 +127,5 @@ export interface MovieItem {
 export class MovieRowComponent {
   @Input() title: string = '';
   @Input() movies: MovieItem[] = [];
+  @Input() loading: boolean = false;
 }

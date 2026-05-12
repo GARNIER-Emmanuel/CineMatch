@@ -21,13 +21,14 @@ export class MoviesService {
 
   /**
    * Récupère une liste de films via l'API NestJS
-   * @param genres IDs des genres séparés par des virgules
    */
-  getMovies(genres?: string): Observable<Movie[]> {
+  getMovies(genres?: string | null, maxDuration?: number, minRating?: number, page?: number): Observable<Movie[]> {
     const params: any = {};
-    if (genres) {
-      params.genres = genres;
-    }
+    if (genres) params.genres = genres;
+    if (maxDuration) params.maxDuration = maxDuration;
+    if (minRating) params.minRating = minRating;
+    if (page) params.page = page;
+    
     return this.http.get<Movie[]>(this.apiUrl, { params });
   }
 }
