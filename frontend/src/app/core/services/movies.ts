@@ -96,4 +96,8 @@ export class MoviesService {
   getPopularDirectors(): Observable<any[]> {
     return this.http.get<any[]>(`http://localhost:3000/directors/popular`);
   }
+
+  getDirectorMovies(directorId: number): Observable<any[]> {
+    return this.http.get<any[]>(`http://localhost:3000/directors/${directorId}/movies`);
+  }
 }

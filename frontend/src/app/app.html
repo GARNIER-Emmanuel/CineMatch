@@ -180,6 +180,17 @@
     <div *ngIf="currentView === 'directors' && !searchQuery.trim()" class="view-directors">
       <cm-directors (directorClick)="onDirectorClick($event)"></cm-directors>
     </div>
+
+    <!-- SECTION FILMOGRAPHIE RÉALISATEUR -->
+    <div *ngIf="currentView === 'director-movies' && !searchQuery.trim()" class="view-director-movies">
+      <cm-director-movies 
+        *ngIf="selectedDirectorForMovies"
+        [directorId]="selectedDirectorForMovies.id" 
+        [directorName]="selectedDirectorForMovies.name"
+        (back)="goToDirectors()"
+        (movieClick)="openMovieDetails($event)">
+      </cm-director-movies>
+    </div>
     
     <!-- SECTION CINESCROLL -->
     <cm-cine-scroll 

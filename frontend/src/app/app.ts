@@ -8,6 +8,7 @@ import { MoviePaginationComponent } from './features/movies/pagination/movie-pag
 import { MovieDetailModalComponent } from './features/movies/detail-modal/movie-detail-modal';
 import { DirectorsComponent } from './features/directors/directors';
 import { DirectorDetailModalComponent } from './features/directors/detail-modal/director-detail-modal';
+import { DirectorMoviesComponent } from './features/directors/director-movies/director-movies';
 import { MoviesService, Movie } from './core/services/movies';
 import { HistoryService } from './core/services/history';
 import { WatchlistService } from './core/services/watchlist';
@@ -24,6 +25,7 @@ import { CineScrollComponent } from './features/cine-scroll/cine-scroll.componen
     MoviePaginationComponent,
     MovieDetailModalComponent,
     DirectorDetailModalComponent,
+    DirectorMoviesComponent,
     CineScrollComponent,
     DirectorsComponent
   ],
@@ -38,6 +40,7 @@ export class AppComponent implements OnInit, OnDestroy {
   isSearching = false;
   searchQuery = '';
   selectedDirectorForDetails: any = null;
+  selectedDirectorForMovies: { id: number, name: string } | null = null;
   popularMovies: MovieItem[] = [];
   auteurMovies: MovieItem[] = [];
   classicMovies: MovieItem[] = [];
@@ -61,7 +64,7 @@ export class AppComponent implements OnInit, OnDestroy {
 
   showFilters: boolean = false;
   selectedMovieForDetails: MovieItem | null = null;
-  currentView: 'home' | 'watchlist' | 'cinescroll' | 'directors' = 'home';
+  currentView: 'home' | 'watchlist' | 'cinescroll' | 'directors' | 'director-movies' = 'home';
   heroMovie: MovieItem | null = null;
 
   get hasActiveFilters(): boolean {
@@ -195,9 +198,14 @@ export class AppComponent implements OnInit, OnDestroy {
   }
 
   onViewDirectorMovies(directorId: number): void {
-    console.log('Voir les films du réalisateur:', directorId);
-    // Sera implémenté dans l'US13
+    const director = this.selectedDirectorForDetails;
+    if (director) {
+      this.selectedDirectorForMovies = { id: director.id, name: director.name };
+      this.currentView = 'director-movies';
+    }
     this.closeDirectorDetails();
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+    this.cdr.detectChanges();
   }
 
   toggleFilters(): void {
