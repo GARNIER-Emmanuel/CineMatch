@@ -13,9 +13,9 @@ export interface Genre {
   imports: [CommonModule, FormsModule],
   template: `
     <div class="filters-card glass">
-      <div class="filters-header">
-        <h2 class="title">Filtres Dynamiques</h2>
-        <button class="reset-link" (click)="resetFilters()" *ngIf="hasActiveFilters()">
+      <div class="filters-header" *ngIf="hasActiveFilters()">
+        <div class="spacer"></div>
+        <button class="reset-link" (click)="resetFilters()">
           Réinitialiser
         </button>
       </div>
@@ -77,14 +77,11 @@ export interface Genre {
       display: flex;
       justify-content: space-between;
       align-items: center;
-      margin-bottom: 25px;
+      margin-bottom: 15px;
     }
 
-    .title {
-      font-size: 1.2rem;
-      font-weight: 700;
-      color: white;
-      margin: 0;
+    .spacer {
+      flex: 1;
     }
 
     .reset-link {
