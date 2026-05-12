@@ -134,18 +134,36 @@
       </div>
 
       <!-- CAS B : Filtres actifs (Résultats de recherche) -->
-      <div class="discovery-section" *ngIf="hasActiveFilters">
-        <cm-movie-row 
-          title="Résultats de votre recherche" 
-          [movies]="discoveryMovies" 
-          [loading]="loadingDiscovery"
-          (movieClick)="openMovieDetails($event)">
-        </cm-movie-row>
+      <div class="discovery-section" *ngIf="hasActiveFilters" style="padding: 0 4%;">
+        <header class="page-header" style="margin-bottom: 30px;">
+          <h2>Résultats de votre recherche</h2>
+        </header>
+
+        <div class="loader-container" *ngIf="loadingDiscovery">
+          <div class="cinema-loader"></div>
+        </div>
+
+        <div class="watchlist-grid" *ngIf="!loadingDiscovery && discoveryMovies.length > 0">
+          @for (movie of discoveryMovies; track movie.id) {
+            <div class="movie-card" (click)="openMovieDetails(movie)">
+              <img [src]="movie.poster || 'assets/placeholder.jpg'" alt="">
+              <div class="card-overlay">
+                <span class="rating">★ {{ movie.rating }}</span>
+                <span class="title">{{ movie.title }}</span>
+              </div>
+            </div>
+          }
+        </div>
+
+        <div class="no-results" *ngIf="!loadingDiscovery && discoveryMovies.length === 0" style="text-align: center; padding: 50px 0; color: rgba(255,255,255,0.5);">
+          <p>Aucun film ne correspond à vos critères.</p>
+        </div>
 
         <cm-movie-pagination 
           *ngIf="discoveryMovies.length > 0 && hasMoreResults"
           [isLoading]="loadingDiscovery"
-          (loadMore)="onLoadMore()">
+          (loadMore)="onLoadMore()"
+          style="margin-top: 40px; display: block;">
         </cm-movie-pagination>
       </div>
     </div>
