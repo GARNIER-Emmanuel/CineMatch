@@ -5,10 +5,16 @@ import { Observable } from 'rxjs';
 export interface Movie {
   id: number;
   title: string;
-  overview: string; // Synopsis
+  overview: string;
   releaseYear: string;
   rating: string;
   poster: string | null;
+}
+
+export interface WatchProvider {
+  id: number;
+  name: string;
+  logo: string;
 }
 
 @Injectable({
@@ -39,5 +45,12 @@ export class MoviesService {
     if (providers) params = params.set('providers', providers);
 
     return this.http.get<Movie[]>(`${this.apiUrl}/discover`, { params });
+  }
+
+  /**
+   * Récupère les plateformes de streaming d'un film spécifique
+   */
+  getMovieProviders(movieId: number): Observable<WatchProvider[]> {
+    return this.http.get<WatchProvider[]>(`${this.apiUrl}/${movieId}/providers`);
   }
 }

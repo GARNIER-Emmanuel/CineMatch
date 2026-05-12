@@ -1,6 +1,7 @@
-import { Component, Input, Output, EventEmitter, HostListener } from '@angular/core';
+import { Component, Input, Output, EventEmitter, HostListener, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { MovieItem } from '../../home/movie-row/movie-row';
+import { MoviesService, WatchProvider } from '../../../core/services/movies';
 
 @Component({
   selector: 'cm-movie-detail-modal',
@@ -20,6 +21,24 @@ import { MovieItem } from '../../home/movie-row/movie-row';
             <div class="header-info">
               <span class="rating-badge">★ {{ formatRating(movie?.rating) }}</span>
               <h2 class="title">{{ movie?.title }}</h2>
+            </div>
+
+            <!-- Plateformes -->
+            <div class="providers-container">
+              <h3>Disponible sur</h3>
+              <div class="providers-list">
+                @if (loadingProviders) {
+                  <div class="loader-small"></div>
+                } @else if (providers.length > 0) {
+                  @for (p of providers; track p.id) {
+                    <div class="provider-item" [title]="p.name">
+                      <img [src]="p.logo" [alt]="p.name">
+                    </div>
+                  }
+                } @else {
+                  <span class="no-providers">Non disponible en streaming (FR)</span>
+                }
+              </div>
             </div>
 
             <div class="synopsis-container">
@@ -83,17 +102,12 @@ import { MovieItem } from '../../home/movie-row/movie-row';
       display: flex;
       align-items: center;
       justify-content: center;
-      transition: background 0.2s;
-    }
-
-    .close-btn:hover {
-      background: rgba(255, 255, 255, 0.1);
     }
 
     .modal-content {
       display: flex;
       flex-direction: row;
-      min-height: 500px;
+      min-height: 550px;
     }
 
     .poster-side {
@@ -112,37 +126,61 @@ import { MovieItem } from '../../home/movie-row/movie-row';
       padding: 40px;
       display: flex;
       flex-direction: column;
-      gap: 25px;
-    }
-
-    .rating-badge {
-      display: inline-block;
-      color: #46d369;
-      font-weight: 800;
-      font-size: 1.1rem;
-      margin-bottom: 10px;
+      gap: 20px;
     }
 
     .title {
-      font-size: 2.5rem;
+      font-size: 2.2rem;
       font-weight: 800;
       margin: 0;
-      line-height: 1.1;
     }
 
-    .synopsis-container h3 {
-      font-size: 1rem;
+    .rating-badge {
+      color: #46d369;
+      font-weight: 800;
+    }
+
+    /* Styles Plateformes */
+    .providers-container h3, .synopsis-container h3 {
+      font-size: 0.85rem;
       text-transform: uppercase;
       letter-spacing: 1px;
       color: rgba(255, 255, 255, 0.5);
-      margin-bottom: 10px;
+      margin-bottom: 12px;
+      font-weight: 700;
+    }
+
+    .providers-list {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      min-height: 45px;
+      align-items: center;
+    }
+
+    .provider-item img {
+      width: 45px;
+      height: 45px;
+      border-radius: 8px;
+      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+      transition: transform 0.2s;
+    }
+
+    .provider-item:hover img {
+      transform: scale(1.1);
+    }
+
+    .no-providers {
+      font-size: 0.9rem;
+      color: rgba(255, 255, 255, 0.4);
+      font-style: italic;
     }
 
     .synopsis {
-      font-size: 1.1rem;
+      font-size: 1rem;
       line-height: 1.6;
       color: #d2d2d2;
-      max-height: 200px;
+      max-height: 150px;
       overflow-y: auto;
     }
 
@@ -150,69 +188,75 @@ import { MovieItem } from '../../home/movie-row/movie-row';
       margin-top: auto;
       display: flex;
       gap: 15px;
+      padding-top: 20px;
     }
 
     .play-btn {
       background: white;
       color: black;
-      border: none;
-      padding: 12px 30px;
+      padding: 10px 25px;
       border-radius: 4px;
       font-weight: 700;
-      font-size: 1.1rem;
       cursor: pointer;
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      transition: opacity 0.2s;
-    }
-
-    .play-btn:hover {
-      background: #e6e6e6;
+      border: none;
     }
 
     .list-btn {
       background: rgba(255, 255, 255, 0.1);
       color: white;
-      border: 1px solid rgba(255, 255, 255, 0.3);
-      padding: 12px 25px;
+      padding: 10px 20px;
       border-radius: 4px;
-      font-weight: 700;
-      font-size: 1.1rem;
+      border: 1px solid rgba(255, 255, 255, 0.3);
       cursor: pointer;
-      transition: background 0.2s;
     }
 
-    .list-btn:hover {
-      background: rgba(255, 255, 255, 0.2);
+    .loader-small {
+      width: 20px;
+      height: 20px;
+      border: 2px solid rgba(255, 255, 255, 0.1);
+      border-top: 2px solid white;
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
     }
 
-    @keyframes fadeIn {
-      from { opacity: 0; }
-      to { opacity: 1; }
-    }
-
-    @keyframes zoomIn {
-      from { opacity: 0; transform: scale(0.9); }
-      to { opacity: 1; transform: scale(1); }
-    }
+    @keyframes spin { 100% { transform: rotate(360deg); } }
+    @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+    @keyframes zoomIn { from { opacity: 0; transform: scale(0.9); } to { opacity: 1; transform: scale(1); } }
 
     @media (max-width: 800px) {
-      .modal-content {
-        flex-direction: column;
-      }
-      .poster-side {
-        flex: 0 0 250px;
-      }
-      .title {
-        font-size: 1.8rem;
-      }
+      .modal-content { flex-direction: column; }
+      .poster-side { flex: 0 0 200px; }
+      .info-side { padding: 25px; }
     }
   `]
 })
-export class MovieDetailModalComponent {
+export class MovieDetailModalComponent implements OnInit {
+  private moviesService = inject(MoviesService);
+
   @Input() movie: MovieItem | null = null;
   @Output() close = new EventEmitter<void>();
+
+  providers: WatchProvider[] = [];
+  loadingProviders = true;
+
+  ngOnInit(): void {
+    if (this.movie) {
+      this.fetchProviders(this.movie.id);
+    }
+  }
+
+  fetchProviders(movieId: number): void {
+    this.loadingProviders = true;
+    this.moviesService.getMovieProviders(movieId).subscribe({
+      next: (data) => {
+        this.providers = data;
+        this.loadingProviders = false;
+      },
+      error: () => {
+        this.loadingProviders = false;
+      }
+    });
+  }
 
   @HostListener('window:keydown.escape')
   onEscape() {
