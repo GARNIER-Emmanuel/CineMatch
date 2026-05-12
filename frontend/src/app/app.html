@@ -1,5 +1,6 @@
 <div class="app-container">
   <cm-navbar 
+    *ngIf="currentView !== 'cinescroll'"
     [currentView]="currentView"
     (toggleFilters)="toggleFilters()"
     (navigateHome)="goToHome()"
@@ -7,7 +8,7 @@
     (navigateCineScroll)="goToCineScroll()">
   </cm-navbar>
 
-  <main class="main-content">
+  <main class="main-content" [class.full-screen-view]="currentView === 'cinescroll'">
     
     <!-- SECTION ACCUEIL -->
     <div *ngIf="currentView === 'home'" class="view-home">
@@ -127,12 +128,15 @@
     </div>
     
     <!-- SECTION CINESCROLL -->
-    <cm-cine-scroll *ngIf="currentView === 'cinescroll'"></cm-cine-scroll>
+    <cm-cine-scroll 
+      *ngIf="currentView === 'cinescroll'"
+      (close)="goToHome()">
+    </cm-cine-scroll>
 
   </main>
 
   <!-- FOOTER CINÉMATOGRAPHIQUE -->
-  <footer class="cinema-footer">
+  <footer class="cinema-footer" *ngIf="currentView !== 'cinescroll'">
     <div class="footer-content">
       <div class="footer-brand">
         <h3 class="footer-logo">Cine<span>Match</span></h3>

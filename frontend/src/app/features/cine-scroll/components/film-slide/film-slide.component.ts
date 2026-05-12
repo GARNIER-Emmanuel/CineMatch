@@ -24,7 +24,7 @@ export class SafePipe implements PipeTransform {
       <div class="media-background">
         @if (youtubeKey) {
           <iframe 
-            [src]="'https://www.youtube.com/embed/' + youtubeKey + '?autoplay=1&mute=1&controls=0&loop=1&playlist=' + youtubeKey | safe"
+            [src]="'https://www.youtube.com/embed/' + youtubeKey + '?autoplay=1&mute=' + (isMuted ? '1' : '0') + '&controls=0&modestbranding=1&rel=0&iv_load_policy=3&showinfo=0&disablekb=1&playsinline=1&playlist=' + youtubeKey + '&loop=1' | safe"
             frameborder="0"
             allow="autoplay; encrypted-media"
             class="video-bg">
@@ -49,13 +49,11 @@ export class SafePipe implements PipeTransform {
 
       <!-- Content : Droite (Actions) -->
       <div class="actions-container">
-        <button class="action-btn circle-btn" (click)="onToggleWatchlist()">
-          <span class="icon">✚</span>
-          <span class="label">Ma Liste</span>
+        <button class="circle-btn like" (click)="onToggleWatchlist()" title="Ajouter à ma liste">
+          <span class="icon">♥</span>
         </button>
-        <button class="action-btn circle-btn" (click)="onNotInterested()">
+        <button class="circle-btn dislike" (click)="onNotInterested()" title="Pas intéressé">
           <span class="icon">✕</span>
-          <span class="label">Ignorer</span>
         </button>
       </div>
     </div>
@@ -171,29 +169,37 @@ export class SafePipe implements PipeTransform {
     }
 
     .circle-btn {
-      width: 70px;
-      height: 70px;
+      width: 65px;
+      height: 65px;
       border-radius: 50%;
-      background: rgba(255,255,255,0.1);
-      border: 1px solid rgba(255,255,255,0.2);
+      background: rgba(0, 0, 0, 0.4);
+      border: 1px solid rgba(255, 255, 255, 0.15);
       color: white;
       display: flex;
-      flex-direction: column;
       align-items: center;
       justify-content: center;
       cursor: pointer;
-      backdrop-filter: blur(10px);
-      transition: all 0.3s;
+      backdrop-filter: blur(15px);
+      transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
     }
 
     .circle-btn:hover {
-      background: rgba(255, 180, 0, 0.2);
-      border-color: #ffb400;
-      transform: scale(1.1);
+      transform: scale(1.15);
     }
 
-    .circle-btn .icon { font-size: 1.5rem; margin-bottom: 4px; }
-    .circle-btn .label { font-size: 0.65rem; font-weight: 700; text-transform: uppercase; }
+    .like:hover {
+      background: rgba(255, 180, 0, 0.1);
+      border-color: #ffb400;
+      color: #ffb400;
+    }
+
+    .dislike:hover {
+      background: rgba(255, 59, 48, 0.1);
+      border-color: #ff3b30;
+      color: #ff3b30;
+    }
+
+    .circle-btn .icon { font-size: 1.8rem; }
 
     @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
     @keyframes slideUp { from { opacity: 0; transform: translateY(30px); } to { opacity: 1; transform: translateY(0); } }
@@ -207,13 +213,29 @@ export class SafePipe implements PipeTransform {
 })
 export class FilmSlideComponent implements OnInit {
   @Input() movie!: Movie;
-  @Input() set active(value: boolean) {
-    if (value && !this.youtubeKey && !this.loadingTrailer) {
+  @Input() isMuted = true;
+  @Input() set preloading(value: boolean) {
+    if (value && !this.cachedTrailerKey && !this.loadingTrailer) {
       this.loadTrailer();
     }
   }
 
+  @Input() set active(value: boolean) {
+    this._active = value;
+    if (value) {
+      if (this.cachedTrailerKey) {
+        this.youtubeKey = this.cachedTrailerKey;
+      } else if (!this.loadingTrailer) {
+        this.loadTrailer();
+      }
+    } else {
+      this.youtubeKey = null;
+    }
+  }
+
+  _active = false;
   youtubeKey: string | null = null;
+  cachedTrailerKey: string | null = null;
   loadingTrailer = false;
 
   constructor(private moviesService: MoviesService) {}
@@ -227,7 +249,10 @@ export class FilmSlideComponent implements OnInit {
     this.loadingTrailer = true;
     this.moviesService.getMovieTrailer(this.movie.id).subscribe({
       next: (trailer) => {
-        this.youtubeKey = trailer?.youtubeKey || null;
+        this.cachedTrailerKey = trailer?.youtubeKey || null;
+        if (this._active) {
+          this.youtubeKey = this.cachedTrailerKey;
+        }
         this.loadingTrailer = false;
       },
       error: () => {

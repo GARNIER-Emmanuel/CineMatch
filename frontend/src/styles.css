@@ -63,6 +63,10 @@ h1, h2, h3 {
   min-height: 100vh;
 }
 
+.main-content.full-screen-view {
+  padding-top: 0;
+}
+
 /* Utilitaires Glassmorphism Cinema */
 .glass {
   background: var(--glass-bg);

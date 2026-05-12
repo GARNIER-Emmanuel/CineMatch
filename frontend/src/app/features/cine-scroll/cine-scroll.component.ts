@@ -1,4 +1,4 @@
-import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
+import { Component, OnInit, ChangeDetectorRef, Output, EventEmitter, HostListener, ViewChild, ElementRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { MoviesService, Movie } from '../../core/services/movies';
 import { CineScrollProfileService } from '../../core/services/cine-scroll-profile';
@@ -11,6 +11,16 @@ import { FilmSlideComponent } from './components/film-slide/film-slide.component
   imports: [CommonModule, MoodSelectorComponent, FilmSlideComponent],
   template: `
     <div class="cinescroll-page">
+      <!-- BOUTON QUITTER -->
+      <button class="exit-btn" (click)="onExit()" title="Quitter la salle">
+        <span class="icon">←</span>
+      </button>
+
+      <!-- BOUTON SON -->
+      <button class="sound-btn" (click)="toggleSound()" [title]="isMuted ? 'Activer le son' : 'Couper le son'">
+        <span class="icon">{{ isMuted ? '🔇' : '🔊' }}</span>
+      </button>
+
       <!-- Sélection du Mood -->
       @if (state === 'MOOD_SELECTION') {
         <cm-mood-selector 
@@ -29,11 +39,13 @@ import { FilmSlideComponent } from './components/film-slide/film-slide.component
 
       <!-- Expérience de Scroll -->
       @if (state === 'SCROLLING') {
-        <div class="scroll-container" (scroll)="onScroll($event)">
+        <div class="scroll-container" #scrollContainer (scroll)="onScroll($event)">
           @for (movie of movies; track movie.id; let i = $index) {
             <cm-film-slide 
               [movie]="movie" 
-              [active]="i === activeIndex || i === activeIndex + 1">
+              [active]="i === activeIndex"
+              [preloading]="i === activeIndex + 1"
+              [isMuted]="isMuted">
             </cm-film-slide>
           }
         </div>
@@ -53,6 +65,67 @@ import { FilmSlideComponent } from './components/film-slide/film-slide.component
       min-height: 100vh;
       background: #030508;
       color: white;
+    }
+
+    .exit-btn {
+      position: fixed;
+      top: 30px;
+      left: 30px;
+      z-index: 2000;
+      background: rgba(255, 180, 0, 0.1);
+      border: 1px solid rgba(255, 180, 0, 0.3);
+      color: var(--primary-color);
+      width: 50px;
+      height: 50px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      backdrop-filter: blur(10px);
+      transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    .exit-btn:hover {
+      background: var(--primary-color);
+      color: #030508;
+      transform: scale(1.1);
+      box-shadow: 0 0 20px rgba(255, 180, 0, 0.4);
+    }
+
+    .sound-btn {
+      position: fixed;
+      bottom: 30px;
+      right: 30px;
+      z-index: 2000;
+      background: rgba(0, 0, 0, 0.4);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      color: white;
+      width: 50px;
+      height: 50px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      backdrop-filter: blur(10px);
+      transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+      font-size: 1.2rem;
+    }
+
+    .sound-btn:hover {
+      background: rgba(255, 255, 255, 0.1);
+      transform: scale(1.1);
+      border-color: var(--primary-color);
+    }
+
+    .exit-btn .icon { 
+      font-size: 1.2rem;
+      transition: transform 0.3s;
+    }
+
+    .exit-btn:hover .icon {
+      transform: translateX(-2px);
     }
 
     .loader-container {
@@ -110,6 +183,39 @@ export class CineScrollComponent implements OnInit {
   currentPage = 1;
   selectedGenres: string = '';
   activeIndex = 0;
+  loadingMore = false;
+  isMuted = true; // Par défaut muet pour l'autolpay navigateur
+
+  @ViewChild('scrollContainer') scrollContainer?: ElementRef;
+  @Output() close = new EventEmitter<void>();
+
+  toggleSound(): void {
+    this.isMuted = !this.isMuted;
+    this.cdr.detectChanges();
+  }
+
+  @HostListener('window:keydown', ['$event'])
+  handleKeyDown(event: KeyboardEvent): void {
+    if (this.state !== 'SCROLLING') return;
+
+    if (event.key === 'ArrowDown') {
+      event.preventDefault();
+      this.scrollToIndex(this.activeIndex + 1);
+    } else if (event.key === 'ArrowUp') {
+      event.preventDefault();
+      this.scrollToIndex(this.activeIndex - 1);
+    }
+  }
+
+  scrollToIndex(index: number): void {
+    if (index < 0 || index >= this.movies.length || !this.scrollContainer) return;
+    
+    const container = this.scrollContainer.nativeElement;
+    container.scrollTo({
+      top: index * container.clientHeight,
+      behavior: 'smooth'
+    });
+  }
 
   constructor(
     private moviesService: MoviesService,
@@ -133,7 +239,21 @@ export class CineScrollComponent implements OnInit {
 
   onScroll(event: any): void {
     const element = event.target;
-    this.activeIndex = Math.round(element.scrollTop / element.clientHeight);
+    const newIndex = Math.round(element.scrollTop / element.clientHeight);
+    
+    if (newIndex !== this.activeIndex) {
+      this.activeIndex = newIndex;
+      this.cdr.detectChanges();
+
+      // Si on arrive vers les 3 derniers films, on charge la suite
+      if (this.activeIndex >= this.movies.length - 3 && !this.loadingMore) {
+        this.loadNextPage();
+      }
+    }
+  }
+
+  onExit(): void {
+    this.close.emit();
   }
 
   loadMovies(): void {
@@ -156,9 +276,29 @@ export class CineScrollComponent implements OnInit {
       });
   }
 
+  loadNextPage(): void {
+    this.loadingMore = true;
+    this.currentPage++;
+    console.log('[CineScroll-FE] Chargement de la page', this.currentPage);
+
+    this.moviesService.getCineScrollMovies(this.selectedGenres, '', this.currentPage)
+      .subscribe({
+        next: (newMovies) => {
+          this.movies = [...this.movies, ...newMovies];
+          this.loadingMore = false;
+          this.cdr.detectChanges();
+        },
+        error: () => {
+          this.loadingMore = false;
+          this.cdr.detectChanges();
+        }
+      });
+  }
+
   reset(): void {
     this.state = 'MOOD_SELECTION';
     this.movies = [];
+    this.currentPage = 1;
     this.profileService.reset();
   }
 }
