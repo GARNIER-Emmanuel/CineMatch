@@ -20,6 +20,16 @@ export interface Mood {
       <h1 class="title">Comment vous sentez-vous ?</h1>
       <p class="subtitle">Choisissez un mood pour lancer votre séance CineScroll</p>
 
+      <!-- Option Session Express -->
+      <div class="express-toggle" (click)="toggleExpress()" [class.active]="expressMode">
+        <div class="toggle-icon">⚡</div>
+        <div class="toggle-text">
+          <span class="toggle-title">Session Express (3 min)</span>
+          <span class="toggle-desc">L'algorithme vous proposera le Top 3 à la fin du chrono</span>
+        </div>
+        <div class="toggle-switch"></div>
+      </div>
+
       <div class="mood-grid">
         @for (mood of moods; track mood.id) {
           <div class="mood-card glass" (click)="onMoodSelect(mood)">
@@ -60,8 +70,84 @@ export interface Mood {
     .subtitle {
       color: var(--text-secondary);
       font-size: 1.1rem;
-      margin-bottom: 50px;
+      margin-bottom: 30px;
       text-align: center;
+    }
+
+    .express-toggle {
+      display: flex;
+      align-items: center;
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      padding: 15px 25px;
+      border-radius: 30px;
+      margin-bottom: 40px;
+      cursor: pointer;
+      transition: all 0.3s;
+      gap: 20px;
+    }
+
+    .express-toggle:hover {
+      background: rgba(255, 255, 255, 0.1);
+    }
+
+    .express-toggle.active {
+      border-color: #ffb400;
+      background: rgba(255, 180, 0, 0.1);
+    }
+
+    .toggle-icon {
+      font-size: 1.8rem;
+      filter: drop-shadow(0 0 5px rgba(255, 180, 0, 0.5));
+    }
+
+    .toggle-text {
+      display: flex;
+      flex-direction: column;
+    }
+
+    .toggle-title {
+      font-weight: 700;
+      font-size: 1.1rem;
+      color: white;
+    }
+
+    .express-toggle.active .toggle-title {
+      color: #ffb400;
+    }
+
+    .toggle-desc {
+      font-size: 0.8rem;
+      color: rgba(255,255,255,0.5);
+    }
+
+    .toggle-switch {
+      width: 40px;
+      height: 20px;
+      background: rgba(255,255,255,0.2);
+      border-radius: 10px;
+      position: relative;
+      transition: all 0.3s;
+    }
+
+    .toggle-switch::after {
+      content: '';
+      position: absolute;
+      top: 2px;
+      left: 2px;
+      width: 16px;
+      height: 16px;
+      background: white;
+      border-radius: 50%;
+      transition: all 0.3s;
+    }
+
+    .express-toggle.active .toggle-switch {
+      background: #ffb400;
+    }
+
+    .express-toggle.active .toggle-switch::after {
+      left: 22px;
     }
 
     .mood-grid {
@@ -147,14 +233,24 @@ export interface Mood {
     @media (max-width: 600px) {
       .mood-grid { grid-template-columns: repeat(2, 1fr); }
       .title { font-size: 2rem; }
+      .express-toggle { padding: 10px 15px; }
+      .toggle-title { font-size: 0.9rem; }
+      .toggle-desc { display: none; }
     }
   `]
 })
 export class MoodSelectorComponent {
-  @Output() moodSelect = new EventEmitter<Mood>();
-  @Output() skip = new EventEmitter<void>();
+  @Output() moodSelect = new EventEmitter<{mood: Mood, timeLimitMs: number | null}>();
+  @Output() skip = new EventEmitter<{timeLimitMs: number | null}>();
+
+  expressMode = false;
+  readonly EXPRESS_TIME_MS = 3 * 60 * 1000; // 3 minutes
 
   constructor(private profileService: CineScrollProfileService) {}
+
+  toggleExpress(): void {
+    this.expressMode = !this.expressMode;
+  }
 
   get hasProfile(): boolean {
     return this.profileService.getPreferredGenres().length > 0 || 
@@ -173,11 +269,16 @@ export class MoodSelectorComponent {
   ];
 
   onMoodSelect(mood: Mood): void {
-    this.moodSelect.emit(mood);
+    this.moodSelect.emit({
+      mood,
+      timeLimitMs: this.expressMode ? this.EXPRESS_TIME_MS : null
+    });
   }
 
   onSkip(): void {
-    this.skip.emit();
+    this.skip.emit({
+      timeLimitMs: this.expressMode ? this.EXPRESS_TIME_MS : null
+    });
   }
 
   onResetProfile(): void {
@@ -186,3 +287,4 @@ export class MoodSelectorComponent {
     }
   }
 }
+

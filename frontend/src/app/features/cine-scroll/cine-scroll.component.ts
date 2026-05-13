@@ -1,4 +1,4 @@
-import { Component, OnInit, ChangeDetectorRef, Output, EventEmitter, HostListener, ViewChild, ElementRef } from '@angular/core';
+import { Component, OnInit, ChangeDetectorRef, Output, EventEmitter, HostListener, ViewChild, ElementRef, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { MoviesService, Movie } from '../../core/services/movies';
 import { CineScrollProfileService } from '../../core/services/cine-scroll-profile';
@@ -22,11 +22,19 @@ import { WatchedFilmsService } from '../../core/services/watched-films.service';
         <span class="icon">{{ isMuted ? '🔇' : '🔊' }}</span>
       </button>
 
+      <!-- Chronomètre (Session Express) -->
+      @if (state === 'SCROLLING' && timeLimitMs) {
+        <div class="timer-display">
+          <span class="timer-icon">⚡</span>
+          <span class="timer-text">{{ formatTime(remainingTimeMs) }}</span>
+        </div>
+      }
+
       <!-- Sélection du Mood -->
       @if (state === 'MOOD_SELECTION') {
         <cm-mood-selector 
           (moodSelect)="onMoodSelected($event)"
-          (skip)="onSkip()">
+          (skip)="onSkip($event)">
         </cm-mood-selector>
       }
 
@@ -50,6 +58,24 @@ import { WatchedFilmsService } from '../../core/services/watched-films.service';
               (skipFilm)="scrollToIndex(i + 1)">
             </cm-film-slide>
           }
+        </div>
+      }
+
+      <!-- Conclusion Flash -->
+      @if (state === 'FLASH_CONCLUSION') {
+        <div class="flash-container">
+          <h2>Le Chrono est écoulé ! ⚡</h2>
+          <p class="flash-subtitle">Voici votre Top 3 pour ce soir, basé sur vos choix à l'instant :</p>
+          <div class="top3-grid">
+            @for (movie of top3Movies; track movie.id) {
+              <div class="top3-card glass">
+                <img [src]="movie.poster" [alt]="movie.title">
+                <h3>{{ movie.title }}</h3>
+                <span class="rating">★ {{ movie.rating }}</span>
+              </div>
+            }
+          </div>
+          <button class="primary-btn" (click)="reset()">Refaire une session</button>
         </div>
       }
 
@@ -121,6 +147,26 @@ import { WatchedFilmsService } from '../../core/services/watched-films.service';
       border-color: var(--primary-color);
     }
 
+    .timer-display {
+      position: fixed;
+      top: 30px;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 2000;
+      background: rgba(0, 0, 0, 0.6);
+      border: 1px solid #ffb400;
+      color: #ffb400;
+      padding: 10px 20px;
+      border-radius: 30px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      backdrop-filter: blur(10px);
+      font-weight: bold;
+      font-size: 1.2rem;
+      box-shadow: 0 0 15px rgba(255, 180, 0, 0.2);
+    }
+
     .exit-btn .icon { 
       font-size: 1.2rem;
       transition: transform 0.3s;
@@ -159,6 +205,74 @@ import { WatchedFilmsService } from '../../core/services/watched-films.service';
       scroll-snap-type: y mandatory;
     }
 
+    /* Conclusion Flash */
+    .flash-container {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      padding: 40px;
+      background: radial-gradient(circle at center, #1a1a1a 0%, #000 100%);
+      animation: fadeIn 1s ease-out;
+    }
+
+    .flash-container h2 {
+      font-size: 3rem;
+      color: #ffb400;
+      margin-bottom: 10px;
+      text-shadow: 0 0 20px rgba(255, 180, 0, 0.5);
+    }
+
+    .flash-subtitle {
+      font-size: 1.2rem;
+      color: rgba(255,255,255,0.7);
+      margin-bottom: 40px;
+    }
+
+    .top3-grid {
+      display: flex;
+      gap: 30px;
+      margin-bottom: 50px;
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+
+    .top3-card {
+      width: 220px;
+      background: rgba(255,255,255,0.05);
+      border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 16px;
+      padding: 15px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      text-align: center;
+      transition: transform 0.3s;
+    }
+
+    .top3-card:hover {
+      transform: translateY(-10px);
+      border-color: #ffb400;
+      box-shadow: 0 10px 30px rgba(255,180,0,0.2);
+    }
+
+    .top3-card img {
+      width: 100%;
+      border-radius: 8px;
+      margin-bottom: 15px;
+    }
+
+    .top3-card h3 {
+      font-size: 1.1rem;
+      margin-bottom: 10px;
+    }
+
+    .top3-card .rating {
+      color: #ffb400;
+      font-weight: bold;
+    }
+
     .error-container {
       display: flex;
       flex-direction: column;
@@ -175,13 +289,19 @@ import { WatchedFilmsService } from '../../core/services/watched-films.service';
       border-radius: 25px;
       font-weight: 700;
       cursor: pointer;
-      margin-top: 20px;
+      transition: all 0.3s;
+    }
+
+    .primary-btn:hover {
+      transform: scale(1.05);
+      box-shadow: 0 0 15px rgba(255,180,0,0.5);
     }
   `]
 })
-export class CineScrollComponent implements OnInit {
-  state: 'MOOD_SELECTION' | 'LOADING' | 'SCROLLING' | 'ERROR' = 'MOOD_SELECTION';
+export class CineScrollComponent implements OnInit, OnDestroy {
+  state: 'MOOD_SELECTION' | 'LOADING' | 'SCROLLING' | 'ERROR' | 'FLASH_CONCLUSION' = 'MOOD_SELECTION';
   movies: Movie[] = [];
+  top3Movies: Movie[] = [];
   currentPage = 1;
   selectedGenres: string = '';
   releaseYearMin?: number;
@@ -189,6 +309,11 @@ export class CineScrollComponent implements OnInit {
   activeIndex = 0;
   loadingMore = false;
   isMuted = true; // Par défaut muet pour l'autolpay navigateur
+
+  // Express Mode
+  timeLimitMs: number | null = null;
+  remainingTimeMs = 0;
+  private timerInterval: any;
 
   @ViewChild('scrollContainer') scrollContainer?: ElementRef;
   @Output() close = new EventEmitter<void>();
@@ -232,17 +357,23 @@ export class CineScrollComponent implements OnInit {
     // Le profil est chargé depuis le localStorage automatiquement par le service
   }
 
-  onMoodSelected(mood: Mood): void {
-    this.selectedGenres = mood.genres;
-    this.releaseYearMin = mood.releaseYearMin;
-    this.releaseYearMax = mood.releaseYearMax;
+  ngOnDestroy(): void {
+    this.stopTimer();
+  }
+
+  onMoodSelected(event: {mood: Mood, timeLimitMs: number | null}): void {
+    this.selectedGenres = event.mood.genres;
+    this.releaseYearMin = event.mood.releaseYearMin;
+    this.releaseYearMax = event.mood.releaseYearMax;
+    this.timeLimitMs = event.timeLimitMs;
     this.loadMovies();
   }
 
-  onSkip(): void {
+  onSkip(event: {timeLimitMs: number | null}): void {
     this.selectedGenres = '';
     this.releaseYearMin = undefined;
     this.releaseYearMax = undefined;
+    this.timeLimitMs = event.timeLimitMs;
     this.loadMovies();
   }
 
@@ -262,6 +393,7 @@ export class CineScrollComponent implements OnInit {
   }
 
   onExit(): void {
+    this.stopTimer();
     this.close.emit();
   }
 
@@ -282,6 +414,7 @@ export class CineScrollComponent implements OnInit {
           console.log('[CineScroll-FE] Réception de', movies.length, 'films');
           this.movies = this.processAndSortMovies(movies);
           this.state = 'SCROLLING';
+          if (this.timeLimitMs) this.startTimer();
           this.cdr.detectChanges();
         },
         error: (err) => {
@@ -349,11 +482,48 @@ export class CineScrollComponent implements OnInit {
     return scoredMovies.map(item => item.movie);
   }
 
+  // --- TIMER LOGIC ---
+
+  startTimer(): void {
+    this.remainingTimeMs = this.timeLimitMs || 0;
+    this.timerInterval = setInterval(() => {
+      this.remainingTimeMs -= 1000;
+      if (this.remainingTimeMs <= 0) {
+        this.endSessionFlash();
+      }
+      this.cdr.detectChanges();
+    }, 1000);
+  }
+
+  stopTimer(): void {
+    if (this.timerInterval) {
+      clearInterval(this.timerInterval);
+    }
+  }
+
+  formatTime(ms: number): string {
+    const totalSeconds = Math.max(0, Math.floor(ms / 1000));
+    const mins = Math.floor(totalSeconds / 60);
+    const secs = totalSeconds % 60;
+    return `${mins}:${secs < 10 ? '0' : ''}${secs}`;
+  }
+
+  endSessionFlash(): void {
+    this.stopTimer();
+    this.state = 'FLASH_CONCLUSION';
+    // Le Top 3 prend simplement les 3 meilleurs films parmi ceux qui restaient au moment de la conclusion,
+    // car processAndSortMovies garantit qu'ils sont triés par la plus forte affinité !
+    this.top3Movies = this.movies.slice(0, 3);
+  }
+
   reset(): void {
+    this.stopTimer();
     this.state = 'MOOD_SELECTION';
     this.movies = [];
+    this.top3Movies = [];
     this.seenMovieIds.clear();
     this.currentPage = 1;
+    this.timeLimitMs = null;
     this.profileService.reset();
   }
 }
