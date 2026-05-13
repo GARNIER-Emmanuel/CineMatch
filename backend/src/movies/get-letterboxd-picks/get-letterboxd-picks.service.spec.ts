@@ -100,5 +100,29 @@ describe('GetLetterboxdPicksService', () => {
         platform: 'Netflix',
       });
     });
+
+    it('devrait ignorer les films non trouvés sur TMDB', async () => {
+      // Given
+      const mockRssItems = {
+        items: [
+          {
+            title: 'Film Inconnu, ★★★',
+            pubDate: '2024-11-10',
+          },
+        ],
+      };
+
+      mockParser.parseURL = jest.fn().mockResolvedValue(mockRssItems);
+
+      mockedAxios.get.mockResolvedValue({
+        data: { results: [] },
+      });
+
+      // When
+      const result = await service.execute();
+
+      // Then
+      expect(result).toHaveLength(0);
+    });
   });
 });
