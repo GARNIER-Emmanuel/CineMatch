@@ -1,10 +1,11 @@
 import { Component, Output, EventEmitter, Input } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { WatchedImportComponent } from '../../features/watched-import/watched-import.component';
 
 @Component({
   selector: 'cm-navbar',
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, WatchedImportComponent],
   template: `
     <nav class="navbar" [class.scrolled]="isScrolled">
       <div class="nav-left">
@@ -14,6 +15,7 @@ import { CommonModule } from '@angular/common';
         <ul class="nav-links">
           <li [class.active]="currentView === 'home'" (click)="onHomeClick()">Accueil</li>
           <li [class.active]="currentView === 'directors'" (click)="onDirectorsClick()">Réalisateurs</li>
+          <li [class.active]="currentView === 'regefilms'" (click)="onRegeFilmsClick()">Regelegorila</li>
           <li class="cinescroll-link" [class.active]="currentView === 'cinescroll'" (click)="onCineScrollClick()">
             CineScroll
           </li>
@@ -22,6 +24,9 @@ import { CommonModule } from '@angular/common';
       </div>
       
       <div class="nav-right">
+        <!-- IMPORT LETTERBOXD -->
+        <app-watched-import></app-watched-import>
+
         <div class="search-bar">
           <span class="search-icon">🔍</span>
           <input 
@@ -203,6 +208,7 @@ export class NavbarComponent {
   @Output() navigateWatchlist = new EventEmitter<void>();
   @Output() navigateCineScroll = new EventEmitter<void>();
   @Output() navigateDirectors = new EventEmitter<void>();
+  @Output() navigateRegeFilms = new EventEmitter<void>();
   @Output() search = new EventEmitter<{ query: string; immediate: boolean }>();
 
   isScrolled = false;
@@ -233,6 +239,10 @@ export class NavbarComponent {
 
   onDirectorsClick() {
     this.navigateDirectors.emit();
+  }
+
+  onRegeFilmsClick() {
+    this.navigateRegeFilms.emit();
   }
 
   onSearchInput(event: any) {
