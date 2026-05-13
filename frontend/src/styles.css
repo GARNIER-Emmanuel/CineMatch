@@ -63,7 +63,8 @@ h1, h2, h3 {
   min-height: 100vh;
 }
 
-.main-content.full-screen-view {
+.main-content.full-screen-view,
+.main-content.rege-view {
   padding-top: 0;
 }
 

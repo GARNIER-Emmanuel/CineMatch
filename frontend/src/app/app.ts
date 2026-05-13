@@ -309,7 +309,7 @@ export class AppComponent implements OnInit, OnDestroy {
         // Filtrer les films déjà vus (on garde les personnes/réalisateurs)
         const filteredResults = results.filter(item => {
           if (item.media_type === 'person') return true;
-          return !this.watchedService.isWatched(item.title, item.releaseYear);
+          return !this.watchedService.isWatched(item.title, item.releaseYear, item.originalTitle);
         });
 
         this.searchResults = filteredResults.sort((a, b) => {
@@ -402,6 +402,6 @@ export class AppComponent implements OnInit, OnDestroy {
   }
 
   private filterWatched(movies: Movie[]): Movie[] {
-    return movies.filter(m => !this.watchedService.isWatched(m.title, m.releaseYear));
+    return movies.filter(m => !this.watchedService.isWatched(m.title, m.releaseYear, m.originalTitle));
   }
 }

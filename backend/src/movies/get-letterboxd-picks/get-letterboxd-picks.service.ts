@@ -1,12 +1,12 @@
-import { Injectable, Inject } from '@nestjs/common';
+import { Injectable, Inject, OnModuleInit } from '@nestjs/common';
 import Parser from 'rss-parser';
 import { ConfigService } from '@nestjs/config';
 import axios from 'axios';
 import { CACHE_MANAGER } from '@nestjs/cache-manager';
-import { Cache } from 'cache-manager';
+import type { Cache } from 'cache-manager';
 
 @Injectable()
-export class GetLetterboxdPicksService {
+export class GetLetterboxdPicksService implements OnModuleInit {
   private parser: Parser;
   private readonly apiKey: string;
   private readonly baseUrl = 'https://api.themoviedb.org/3';
@@ -19,46 +19,103 @@ export class GetLetterboxdPicksService {
     this.apiKey = this.configService.get<string>('TMDB_API_KEY') || '';
   }
 
+  /**
+   * Pré-charge les données au démarrage du serveur
+   * pour que la première requête utilisateur soit instantanée.
+   */
+  async onModuleInit() {
+    console.log('[RegePicks] Pré-chargement des données au démarrage...');
+    this.execute('all').then((result) => {
+      console.log(`[RegePicks] Pré-chargement terminé: ${result.length} films en cache`);
+    }).catch((err) => {
+      console.error(`[RegePicks] Erreur pré-chargement: ${err.message}`);
+    });
+  }
+
   async execute(filter: string = 'all') {
     const cacheKey = `letterboxd_picks_${filter}`;
     const cached = await this.cacheManager.get<any[]>(cacheKey);
-    if (cached) return cached;
+    if (cached) {
+      console.log(`[RegePicks] Cache hit pour ${filter}: ${cached.length} films`);
+      return cached;
+    }
 
-    const feed = await this.parser.parseURL('https://letterboxd.com/reglegorilla/rss/');
+    console.log(`[RegePicks] Cache miss — récupération du flux RSS...`);
+    const feedUrl = 'https://letterboxd.com/regelegorila/rss/';
+    
+    let feed;
+    try {
+      feed = await this.parser.parseURL(feedUrl);
+      console.log(`[RegePicks] Flux RSS récupéré: ${feed.items.length} items`);
+    } catch (e) {
+      console.error(`[RegePicks] Erreur flux RSS: ${e.message}`);
+      return [];
+    }
+
+    const items = feed.items.slice(0, 40);
 
     const allMovies = await Promise.all(
-      feed.items.map(async (item) => {
-        const { title, rating } = this.parseTitleAndRating(item.title || '');
-        const tmdbMovie = await this.searchOnTmdb(title);
+      items.map(async (item) => {
+        try {
+          const { title, rating } = this.parseTitleAndRating(item.title || '');
+          if (!title) return null;
 
-        if (!tmdbMovie) return null;
+          const movieCacheKey = `movie_data_${title}`;
+          let movieData = await this.cacheManager.get<any>(movieCacheKey);
 
-        const platform = await this.getWatchProvider(tmdbMovie.id);
+          if (!movieData) {
+            const tmdbMovie = await this.searchOnTmdb(title);
+            if (!tmdbMovie || tmdbMovie.vote_average === 0) return null;
 
-        return {
-          letterboxdRating: rating,
-          watchedDate: item.pubDate ? new Date(item.pubDate).toISOString().split('T')[0] : '',
-          tmdbId: tmdbMovie.id,
-          title: tmdbMovie.title,
-          overview: tmdbMovie.overview,
-          releaseYear: tmdbMovie.release_date ? tmdbMovie.release_date.split('-')[0] : '',
-          tmdbRating: tmdbMovie.vote_average.toFixed(1),
-          poster: `https://image.tmdb.org/t/p/w500${tmdbMovie.poster_path}`,
-          platform: platform,
-        };
+            movieData = {
+              tmdbId: tmdbMovie.id,
+              title: tmdbMovie.title,
+              originalTitle: tmdbMovie.original_title,
+              overview: tmdbMovie.overview,
+              releaseYear: tmdbMovie.release_date ? tmdbMovie.release_date.split('-')[0] : '',
+              tmdbRating: tmdbMovie.vote_average.toFixed(1),
+              poster: tmdbMovie.poster_path 
+                ? `https://image.tmdb.org/t/p/w500${tmdbMovie.poster_path}` 
+                : null,
+              platform: '',
+            };
+
+            await this.cacheManager.set(movieCacheKey, movieData, 86400000);
+          }
+
+          return {
+            ...movieData,
+            letterboxdRating: rating,
+            watchedDate: item.pubDate ? new Date(item.pubDate).toISOString().split('T')[0] : '',
+          };
+        } catch (err) {
+          console.error(`[RegePicks] Erreur item "${item.title}": ${err.message}`);
+          return null;
+        }
       })
     );
 
     const validMovies = allMovies.filter((m) => m !== null) as any[];
-    let result = validMovies;
+    
+    // Déduplication par tmdbId
+    const uniqueMoviesMap = new Map<number, any>();
+    for (const movie of validMovies) {
+      if (!uniqueMoviesMap.has(movie.tmdbId)) {
+        uniqueMoviesMap.set(movie.tmdbId, movie);
+      }
+    }
+    const uniqueMovies = Array.from(uniqueMoviesMap.values());
+
+    let result = uniqueMovies;
 
     if (filter === 'best') {
-      result = validMovies.filter((m) => m.letterboxdRating >= 4);
+      result = uniqueMovies.filter((m) => m.letterboxdRating >= 4);
     } else if (filter === 'worst') {
-      result = validMovies.filter((m) => m.letterboxdRating <= 2);
+      result = uniqueMovies.filter((m) => m.letterboxdRating <= 2);
     }
 
-    await this.cacheManager.set(cacheKey, result, 3600000); // 1 hour
+    console.log(`[RegePicks] Résultat final: ${result.length} films uniques (filtre: ${filter})`);
+    await this.cacheManager.set(cacheKey, result, 86400000);
     return result;
   }
 
@@ -69,23 +126,13 @@ export class GetLetterboxdPicksService {
         query: title,
         language: 'fr-FR',
       },
+      timeout: 5000,
     });
     return response.data.results[0] || null;
   }
 
-  private async getWatchProvider(movieId: number): Promise<string> {
-    const response = await axios.get(`${this.baseUrl}/movie/${movieId}/watch/providers`, {
-      params: { api_key: this.apiKey },
-    });
-    const fr = response.data.results?.FR;
-    if (fr && fr.flatrate && fr.flatrate.length > 0) {
-      return fr.flatrate[0].provider_name;
-    }
-    return '';
-  }
-
   private parseTitleAndRating(fullTitle: string): { title: string; rating: number } {
-    // Format attendu: "Movie Title, ★★★★½"
+    // Format Letterboxd RSS: "Movie Title, ★★★★½"
     const parts = fullTitle.split(', ');
     const ratingString = parts.pop() || '';
     const title = parts.join(', ');

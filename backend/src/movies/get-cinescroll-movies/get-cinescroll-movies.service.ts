@@ -6,6 +6,7 @@ import { GetCineScrollMoviesDto } from './get-cinescroll-movies.dto';
 export interface CineScrollMovie {
   id: number;
   title: string;
+  originalTitle?: string;
   overview: string;
   releaseYear: string;
   rating: string;
@@ -44,6 +45,7 @@ export class GetCineScrollMoviesService {
       return response.data.results.map((movie: any) => ({
         id: movie.id,
         title: movie.title,
+        originalTitle: movie.original_title,
         overview: movie.overview,
         releaseYear: movie.release_date ? movie.release_date.split('-')[0] : '',
         rating: movie.vote_average.toFixed(1),

@@ -1,0 +1,19 @@
+<div class="rege-card" (click)="clickCard.emit()">
+  <div class="card-poster">
+    <img [src]="movie.poster" [alt]="movie.title">
+    <div class="platform-badge" *ngIf="movie.platform">
+      {{ movie.platform }}
+    </div>
+    
+    <div class="card-overlay">
+      <div class="overlay-content">
+        <div class="ratings-mini">
+          <span class="lb-stars">{{ getStars(movie.letterboxdRating) }}</span>
+          <span class="tmdb-val">★ {{ movie.tmdbRating }}</span>
+        </div>
+        <h3 class="movie-title">{{ movie.title }}</h3>
+        <p class="overview">{{ movie.overview }}</p>
+      </div>
+    </div>
+  </div>
+</div>

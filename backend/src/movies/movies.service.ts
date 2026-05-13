@@ -40,6 +40,7 @@ export class MoviesService {
       return validMovies.slice(0, 20).map((movie: any) => ({
         id: movie.id,
         title: movie.title,
+        originalTitle: movie.original_title,
         overview: movie.overview,
         releaseYear: movie.release_date ? movie.release_date.split('-')[0] : '',
         rating: movie.vote_average.toFixed(1),

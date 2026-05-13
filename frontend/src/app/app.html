@@ -7,10 +7,11 @@
     (navigateWatchlist)="goToWatchlist()"
     (navigateCineScroll)="goToCineScroll()"
     (navigateDirectors)="goToDirectors()"
+    (navigateRegeFilms)="goToRegeFilms()"
     (search)="onSearch($event.query, $event.immediate)">
   </cm-navbar>
 
-  <main class="main-content" [class.full-screen-view]="currentView === 'cinescroll'">
+  <main class="main-content" [class.full-screen-view]="currentView === 'cinescroll'" [class.rege-view]="currentView === 'regefilms'">
     
     <!-- SECTION RECHERCHE -->
     <div *ngIf="searchQuery.trim()" class="search-results-overlay">
@@ -108,6 +109,7 @@
           title="Récemment consultés" 
           [movies]="historyMovies" 
           [loading]="false"
+          [priority]="true"
           (movieClick)="openMovieDetails($event)">
         </cm-movie-row>
 
@@ -115,6 +117,7 @@
           title="Populaires sur CineMatch" 
           [movies]="popularMovies" 
           [loading]="loadingPopular"
+          [priority]="!historyMovies.length"
           (movieClick)="openMovieDetails($event)">
         </cm-movie-row>
 
@@ -214,6 +217,12 @@
       *ngIf="currentView === 'cinescroll'"
       (close)="goToHome()">
     </cm-cine-scroll>
+
+    <!-- SECTION REGEFILMS -->
+    <cm-regefilms
+      *ngIf="currentView === 'regefilms'"
+      (movieClick)="openMovieDetails($event)">
+    </cm-regefilms>
 
   </main>
 

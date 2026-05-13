@@ -5,6 +5,7 @@ import { Observable } from 'rxjs';
 export interface Movie {
   id: number;
   title: string;
+  originalTitle?: string;
   overview: string;
   releaseYear: string;
   rating: string;
@@ -99,5 +100,10 @@ export class MoviesService {
 
   getDirectorMovies(directorId: number): Observable<any[]> {
     return this.http.get<any[]>(`http://localhost:3000/directors/${directorId}/movies`);
+  }
+
+  getLetterboxdPicks(filter: string = 'all'): Observable<any[]> {
+    let params = new HttpParams().set('filter', filter);
+    return this.http.get<any[]>(`${this.apiUrl}/letterboxd-picks`, { params });
   }
 }

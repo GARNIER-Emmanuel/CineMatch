@@ -28,6 +28,7 @@ export class SearchService {
           return {
             id: item.id,
             title: item.title,
+            originalTitle: item.original_title,
             overview: item.overview,
             releaseYear: item.release_date ? item.release_date.split('-')[0] : '',
             rating: item.vote_average?.toFixed(1) || '0.0',

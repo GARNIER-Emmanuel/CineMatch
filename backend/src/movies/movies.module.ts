@@ -7,8 +7,10 @@ import { GetMovieTrailerController } from './get-movie-trailer/get-movie-trailer
 import { GetMovieTrailerService } from './get-movie-trailer/get-movie-trailer.service';
 import { GetLetterboxdPicksController } from './get-letterboxd-picks/get-letterboxd-picks.controller';
 import { GetLetterboxdPicksService } from './get-letterboxd-picks/get-letterboxd-picks.service';
+import { CacheModule } from '@nestjs/cache-manager';
 
 @Module({
+  imports: [CacheModule.register()],
   controllers: [
     GetCineScrollMoviesController,
     GetMovieTrailerController,

@@ -78,7 +78,7 @@ export class RegeFilmsComponent implements OnInit, OnDestroy {
         try {
           if (Array.isArray(picks)) {
             // Filtrer les films déjà vus
-            const filteredPicks = picks.filter(p => !this.watchedService.isWatched(p.title, p.releaseYear));
+            const filteredPicks = picks.filter(p => !this.watchedService.isWatched(p.title, p.releaseYear, p.originalTitle));
             
             this.bestPicks = filteredPicks.filter(p => Number(p.letterboxdRating) >= 4);
             this.worstPicks = filteredPicks.filter(p => Number(p.letterboxdRating) <= 2);

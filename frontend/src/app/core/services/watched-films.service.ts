@@ -25,21 +25,27 @@ export class WatchedFilmsService {
     this.refreshSubject.next();
   }
 
-  isWatched(title: string, year: string): boolean {
+  isWatched(title: string, year: string, originalTitle?: string): boolean {
     if (!title) return false;
     
     const normalizedTitle = title.trim().toLowerCase();
+    const normalizedOriginalTitle = originalTitle ? originalTitle.trim().toLowerCase() : null;
+    
     // On ne garde que les 4 premiers chiffres de l'année (au cas où on reçoit une date complète)
     const normalizedYear = year?.toString().substring(0, 4);
 
     const isMatch = this.watchedFilms.some(f => {
       const watchedTitle = f.title.trim().toLowerCase();
       const watchedYear = f.year.toString().substring(0, 4);
-      return watchedTitle === normalizedTitle && watchedYear === normalizedYear;
+      
+      const titleMatches = watchedTitle === normalizedTitle || 
+                           (normalizedOriginalTitle && watchedTitle === normalizedOriginalTitle);
+                           
+      return titleMatches && watchedYear === normalizedYear;
     });
 
     if (isMatch) {
-      console.log(`[WatchedService] Film filtré car déjà vu: ${title} (${normalizedYear})`);
+      console.log(`[WatchedService] Film filtré car déjà vu: ${title} / ${originalTitle} (${normalizedYear})`);
     }
 
     return isMatch;

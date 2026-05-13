@@ -280,7 +280,7 @@ export class CineScrollComponent implements OnInit {
         next: (movies) => {
           console.log('[CineScroll-FE] Réception de', movies.length, 'films');
           // Filtrer les films déjà vus
-          this.movies = movies.filter(m => !this.watchedService.isWatched(m.title, m.releaseYear));
+          this.movies = movies.filter(m => !this.watchedService.isWatched(m.title, m.releaseYear, m.originalTitle));
           this.state = 'SCROLLING';
           this.cdr.detectChanges();
         },
@@ -305,7 +305,7 @@ export class CineScrollComponent implements OnInit {
       .subscribe({
         next: (newMovies) => {
           // Filtrer les films déjà vus
-          const filtered = newMovies.filter(m => !this.watchedService.isWatched(m.title, m.releaseYear));
+          const filtered = newMovies.filter(m => !this.watchedService.isWatched(m.title, m.releaseYear, m.originalTitle));
           this.movies = [...this.movies, ...filtered];
           this.loadingMore = false;
           this.cdr.detectChanges();
