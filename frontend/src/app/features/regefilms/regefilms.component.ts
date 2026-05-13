@@ -1,8 +1,9 @@
-import { Component, OnInit, Output, EventEmitter, ViewChild, ElementRef, ChangeDetectorRef } from '@angular/core';
+import { Component, OnInit, Output, EventEmitter, ViewChild, ElementRef, ChangeDetectorRef, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { MoviesService } from '../../core/services/movies';
 import { MovieCardRegeComponent } from './components/movie-card-rege/movie-card-rege';
 import { WatchedFilmsService } from '../../core/services/watched-films.service';
+import { Subscription } from 'rxjs';
 
 @Component({
   selector: 'cm-regefilms',
@@ -11,12 +12,13 @@ import { WatchedFilmsService } from '../../core/services/watched-films.service';
   templateUrl: './regefilms.component.html',
   styleUrl: './regefilms.component.css'
 })
-export class RegeFilmsComponent implements OnInit {
+export class RegeFilmsComponent implements OnInit, OnDestroy {
   @Output() movieClick = new EventEmitter<any>();
   
   bestPicks: any[] = [];
   worstPicks: any[] = [];
   isLoading = true;
+  private refreshSub?: Subscription;
   
   @ViewChild('bestRow') bestRow!: ElementRef;
   @ViewChild('worstRow') worstRow!: ElementRef;
@@ -51,6 +53,11 @@ export class RegeFilmsComponent implements OnInit {
 
   ngOnInit(): void {
     this.loadPicks();
+
+    this.refreshSub = this.watchedService.refresh$.subscribe(() => {
+      console.log('[RegeFilms] Rafraîchissement des sélections demandé...');
+      this.loadPicks();
+    });
     
     // Sécurité ultime : On arrête le loader après 5s quoi qu'il arrive
     setTimeout(() => {
@@ -104,5 +111,9 @@ export class RegeFilmsComponent implements OnInit {
       rating: movie.tmdbRating,
       releaseYear: movie.releaseYear
     });
+  }
+
+  ngOnDestroy(): void {
+    this.refreshSub?.unsubscribe();
   }
 }

@@ -23,13 +23,17 @@
     </span>
 
     <div class="btn-group">
+      <button class="btn-refresh" (click)="onRefresh()" title="Rafraîchir les recommandations">
+        🔄 Rafraîchir
+      </button>
+
       <label class="reimport-label">
         <input type="file" (change)="onFileSelected($event)" accept=".csv" hidden>
         <span class="btn-secondary">📂 Réimporter</span>
       </label>
 
       <button class="btn-danger" (click)="onReset()">
-        🗑 Supprimer ma liste
+        🗑 Supprimer
       </button>
     </div>
   </div>

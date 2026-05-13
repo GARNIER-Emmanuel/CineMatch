@@ -104,6 +104,16 @@ export class AppComponent implements OnInit, OnDestroy {
     ).subscribe(query => {
       this.performSearch(query);
     });
+
+    // Écouter les demandes de rafraîchissement (ex: import Letterboxd)
+    this.watchedService.refresh$.subscribe(() => {
+      console.log('[AppComponent] Rafraîchissement des recommandations demandé...');
+      this.loadAllMovies();
+      if (this.hasActiveFilters) {
+        this.loadDiscoveryMovies(false);
+      }
+      this.cdr.detectChanges();
+    });
   }
 
   ngOnDestroy(): void {

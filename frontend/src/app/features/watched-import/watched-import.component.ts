@@ -38,6 +38,12 @@ export class WatchedImportComponent {
   onReset() {
     this.watchedService.reset();
     this.showFeedback('Liste supprimée — tous les films peuvent à nouveau être proposés', true);
+    this.watchedService.notifyRefresh();
+  }
+
+  onRefresh() {
+    this.watchedService.notifyRefresh();
+    this.showFeedback('Recommandations mises à jour !', true);
   }
 
   private showFeedback(message: string, success: boolean) {

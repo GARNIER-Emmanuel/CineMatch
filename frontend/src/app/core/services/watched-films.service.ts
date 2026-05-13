@@ -1,4 +1,5 @@
 import { Injectable } from '@angular/core';
+import { Subject } from 'rxjs';
 
 export interface WatchedFilm {
   title: string;
@@ -11,9 +12,17 @@ export interface WatchedFilm {
 export class WatchedFilmsService {
   private readonly STORAGE_KEY = 'cinematch_watched_films';
   private watchedFilms: WatchedFilm[] = [];
+  
+  // Sujet pour notifier les composants de rafraîchir leurs données
+  private refreshSubject = new Subject<void>();
+  refresh$ = this.refreshSubject.asObservable();
 
   constructor() {
     this.loadFromStorage();
+  }
+
+  notifyRefresh() {
+    this.refreshSubject.next();
   }
 
   isWatched(title: string, year: string): boolean {
