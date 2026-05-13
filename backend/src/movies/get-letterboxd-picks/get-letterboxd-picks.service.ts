@@ -1,25 +1,68 @@
 import { Injectable } from '@nestjs/common';
 import Parser from 'rss-parser';
+import { ConfigService } from '@nestjs/config';
+import axios from 'axios';
 
 @Injectable()
 export class GetLetterboxdPicksService {
   private parser: Parser;
+  private readonly apiKey: string;
+  private readonly baseUrl = 'https://api.themoviedb.org/3';
 
-  constructor() {
+  constructor(private configService: ConfigService) {
     this.parser = new Parser();
+    this.apiKey = this.configService.get<string>('TMDB_API_KEY') || '';
   }
 
   async execute() {
     const feed = await this.parser.parseURL('https://letterboxd.com/reglegorilla/rss/');
 
-    return feed.items.map((item) => {
-      const { title, rating } = this.parseTitleAndRating(item.title || '');
-      return {
-        title,
-        letterboxdRating: rating,
-        watchedDate: item.pubDate ? new Date(item.pubDate).toISOString().split('T')[0] : '',
-      };
+    const movies = await Promise.all(
+      feed.items.map(async (item) => {
+        const { title, rating } = this.parseTitleAndRating(item.title || '');
+        const tmdbMovie = await this.searchOnTmdb(title);
+
+        if (!tmdbMovie) return null;
+
+        const platform = await this.getWatchProvider(tmdbMovie.id);
+
+        return {
+          letterboxdRating: rating,
+          watchedDate: item.pubDate ? new Date(item.pubDate).toISOString().split('T')[0] : '',
+          tmdbId: tmdbMovie.id,
+          title: tmdbMovie.title,
+          overview: tmdbMovie.overview,
+          releaseYear: tmdbMovie.release_date ? tmdbMovie.release_date.split('-')[0] : '',
+          tmdbRating: tmdbMovie.vote_average.toFixed(1),
+          poster: `https://image.tmdb.org/t/p/w500${tmdbMovie.poster_path}`,
+          platform: platform,
+        };
+      })
+    );
+
+    return movies.filter((m) => m !== null);
+  }
+
+  private async searchOnTmdb(title: string) {
+    const response = await axios.get(`${this.baseUrl}/search/movie`, {
+      params: {
+        api_key: this.apiKey,
+        query: title,
+        language: 'fr-FR',
+      },
     });
+    return response.data.results[0] || null;
+  }
+
+  private async getWatchProvider(movieId: number): Promise<string> {
+    const response = await axios.get(`${this.baseUrl}/movie/${movieId}/watch/providers`, {
+      params: { api_key: this.apiKey },
+    });
+    const fr = response.data.results?.FR;
+    if (fr && fr.flatrate && fr.flatrate.length > 0) {
+      return fr.flatrate[0].provider_name;
+    }
+    return '';
   }
 
   private parseTitleAndRating(fullTitle: string): { title: string; rating: number } {
