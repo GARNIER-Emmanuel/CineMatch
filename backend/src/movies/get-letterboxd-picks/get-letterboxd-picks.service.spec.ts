@@ -3,6 +3,7 @@ import { GetLetterboxdPicksService } from './get-letterboxd-picks.service';
 import Parser from 'rss-parser';
 import { ConfigService } from '@nestjs/config';
 import axios from 'axios';
+import { CACHE_MANAGER } from '@nestjs/cache-manager';
 
 jest.mock('rss-parser');
 jest.mock('axios');
@@ -11,6 +12,7 @@ describe('GetLetterboxdPicksService', () => {
   let service: GetLetterboxdPicksService;
   let mockParser: any;
   let mockConfigService: any;
+  let mockCacheManager: any;
   const mockedAxios = axios as jest.Mocked<typeof axios>;
 
   beforeEach(async () => {
@@ -23,10 +25,16 @@ describe('GetLetterboxdPicksService', () => {
       get: jest.fn().mockReturnValue('fake_api_key'),
     };
 
+    mockCacheManager = {
+      get: jest.fn(),
+      set: jest.fn(),
+    };
+
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         GetLetterboxdPicksService,
         { provide: ConfigService, useValue: mockConfigService },
+        { provide: CACHE_MANAGER, useValue: mockCacheManager },
       ],
     }).compile();
 
@@ -165,6 +173,36 @@ describe('GetLetterboxdPicksService', () => {
       // Then
       expect(result).toHaveLength(1);
       expect(result[0].letterboxdRating).toBeLessThanOrEqual(2);
+    });
+
+    it('devrait retourner les données du cache si présentes', async () => {
+      // Given
+      const cachedData = [{ title: 'Cached Movie' }];
+      mockCacheManager.get.mockResolvedValue(cachedData);
+
+      // When
+      const result = await service.execute();
+
+      // Then
+      expect(result).toEqual(cachedData);
+      expect(mockParser.parseURL).not.toHaveBeenCalled();
+      expect(mockCacheManager.get).toHaveBeenCalledWith('letterboxd_picks_all');
+    });
+
+    it('devrait mettre en cache les données après récupération', async () => {
+      // Given
+      mockCacheManager.get.mockResolvedValue(null);
+      mockParser.parseURL.mockResolvedValue({ items: [] });
+
+      // When
+      await service.execute('best');
+
+      // Then
+      expect(mockCacheManager.set).toHaveBeenCalledWith(
+        'letterboxd_picks_best',
+        expect.any(Array),
+        3600000 // 1 hour in ms
+      );
     });
   });
 });
