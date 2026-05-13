@@ -1,10 +1,11 @@
-import { Component, Output, EventEmitter, Input } from '@angular/core';
+import { Component, Output, EventEmitter, Input, HostListener, ElementRef, ViewChild } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { WatchedImportComponent } from '../../features/watched-import/watched-import.component';
 
 @Component({
   selector: 'cm-navbar',
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, WatchedImportComponent],
   template: `
     <nav class="navbar" [class.scrolled]="isScrolled">
       <div class="nav-left">
@@ -13,19 +14,46 @@ import { CommonModule } from '@angular/common';
         </div>
         <ul class="nav-links">
           <li [class.active]="currentView === 'home'" (click)="onHomeClick()">Accueil</li>
-          <li>Séries</li>
-          <li>Films</li>
+          <li [class.active]="currentView === 'directors'" (click)="onDirectorsClick()">Réalisateurs</li>
+          <li [class.active]="currentView === 'regefilms'" (click)="onRegeFilmsClick()">Regelegorila</li>
+          <li class="cinescroll-link" [class.active]="currentView === 'cinescroll'" (click)="onCineScrollClick()">
+            CineScroll
+          </li>
           <li [class.active]="currentView === 'watchlist'" (click)="onWatchlistClick()">Ma Liste</li>
         </ul>
       </div>
       
       <div class="nav-right">
+        <div class="search-bar">
+          <span class="search-icon">🔍</span>
+          <input 
+            type="text" 
+            placeholder="Rechercher un film, un réalisateur..." 
+            (input)="onSearchInput($event)"
+            (keyup.enter)="onSearchEnter($event)"
+            #searchInput>
+        </div>
         <button class="filter-toggle" (click)="onToggleFilters()">
-          <span class="icon">🔍</span>
-          <span>Recherche VIP</span>
+          <span class="icon">✨</span>
+          <span>Filtres</span>
         </button>
-        <div class="user-profile">
-          <img src="https://api.dicebear.com/7.x/avataaars/svg?seed=Felix" alt="User Avatar">
+        
+        <!-- PROFIL & MENU DÉROULANT -->
+        <div class="user-container" #userContainer>
+          <div class="user-profile" (click)="toggleUserMenu()">
+            <img src="https://api.dicebear.com/7.x/avataaars/svg?seed=Felix" alt="User Avatar">
+            <span class="dropdown-arrow">▼</span>
+          </div>
+
+          <div class="user-dropdown" *ngIf="isUserMenuOpen">
+            <div class="dropdown-header">
+              <span class="user-name">Mon Compte</span>
+            </div>
+            <div class="dropdown-section">
+              <span class="section-title">Import Letterboxd</span>
+              <app-watched-import></app-watched-import>
+            </div>
+          </div>
         </div>
       </div>
     </nav>
@@ -114,20 +142,53 @@ import { CommonModule } from '@angular/common';
       gap: 30px;
     }
 
+    .search-bar {
+      display: flex;
+      align-items: center;
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      padding: 6px 15px;
+      border-radius: 20px;
+      gap: 10px;
+      width: 300px;
+      transition: all 0.3s;
+    }
+
+    .search-bar:focus-within {
+      background: rgba(255, 255, 255, 0.1);
+      border-color: rgba(255, 180, 0, 0.5);
+      width: 350px;
+    }
+
+    .search-bar input {
+      background: transparent;
+      border: none;
+      color: white;
+      font-size: 0.85rem;
+      width: 100%;
+      outline: none;
+    }
+
+    .search-bar input::placeholder {
+      color: rgba(255, 255, 255, 0.3);
+    }
+
+    .search-icon { font-size: 0.9rem; opacity: 0.5; }
+
     .filter-toggle {
-      background: rgba(255, 180, 0, 0.1);
-      border: 1px solid rgba(255, 180, 0, 0.3);
-      color: #ffb400;
-      padding: 8px 20px;
-      border-radius: 20px; /* Plus arrondi pour le look Cinema */
+      background: transparent;
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      color: white;
+      padding: 8px 18px;
+      border-radius: 20px;
       cursor: pointer;
       display: flex;
       align-items: center;
-      gap: 10px;
-      font-size: 0.8rem;
-      font-weight: 700;
+      gap: 8px;
+      font-size: 0.75rem;
+      font-weight: 600;
       text-transform: uppercase;
-      letter-spacing: 1px;
+      letter-spacing: 0.5px;
       transition: all 0.3s ease;
     }
 
@@ -137,18 +198,87 @@ import { CommonModule } from '@angular/common';
       box-shadow: 0 0 20px rgba(255, 180, 0, 0.4);
     }
 
+    .user-container {
+      position: relative;
+    }
+
+    .user-profile {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      cursor: pointer;
+      padding: 4px 8px;
+      border-radius: 30px;
+      transition: background 0.3s;
+    }
+
+    .user-profile:hover {
+      background: rgba(255, 255, 255, 0.05);
+    }
+
     .user-profile img {
       width: 36px;
       height: 36px;
       border-radius: 50%;
       border: 2px solid rgba(255, 180, 0, 0.2);
-      cursor: pointer;
       transition: transform 0.3s;
     }
 
-    .user-profile img:hover {
-      transform: scale(1.1);
+    .user-profile:hover img {
+      transform: scale(1.05);
       border-color: #ffb400;
+    }
+
+    .dropdown-arrow {
+      font-size: 0.6rem;
+      color: rgba(255, 255, 255, 0.4);
+      transition: transform 0.3s;
+    }
+
+    .user-dropdown {
+      position: absolute;
+      top: calc(100% + 15px);
+      right: 0;
+      width: 300px;
+      background: rgba(10, 15, 25, 0.95);
+      backdrop-filter: blur(20px);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 16px;
+      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.6);
+      padding: 20px;
+      animation: dropdownSlide 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+      z-index: 1001;
+    }
+
+    @keyframes dropdownSlide {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .dropdown-header {
+      margin-bottom: 15px;
+      padding-bottom: 10px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    }
+
+    .user-name {
+      font-weight: bold;
+      color: white;
+      font-size: 0.9rem;
+    }
+
+    .dropdown-section {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .section-title {
+      font-size: 0.7rem;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      color: rgba(255, 255, 255, 0.3);
+      font-weight: bold;
     }
   `]
 })
@@ -157,8 +287,15 @@ export class NavbarComponent {
   @Output() toggleFilters = new EventEmitter<void>();
   @Output() navigateHome = new EventEmitter<void>();
   @Output() navigateWatchlist = new EventEmitter<void>();
+  @Output() navigateCineScroll = new EventEmitter<void>();
+  @Output() navigateDirectors = new EventEmitter<void>();
+  @Output() navigateRegeFilms = new EventEmitter<void>();
+  @Output() search = new EventEmitter<{ query: string; immediate: boolean }>();
+
+  @ViewChild('userContainer') userContainer!: ElementRef;
 
   isScrolled = false;
+  isUserMenuOpen = false;
 
   constructor() {
     if (typeof window !== 'undefined') {
@@ -168,6 +305,16 @@ export class NavbarComponent {
     }
   }
 
+  @HostListener('document:click', ['$event'])
+  onDocumentClick(event: MouseEvent) {
+    if (this.isUserMenuOpen && !this.userContainer.nativeElement.contains(event.target)) {
+      this.isUserMenuOpen = false;
+    }
+  }
+
+  toggleUserMenu() {
+    this.isUserMenuOpen = !this.isUserMenuOpen;
+  }
   onToggleFilters() {
     this.toggleFilters.emit();
   }
@@ -178,5 +325,27 @@ export class NavbarComponent {
 
   onWatchlistClick() {
     this.navigateWatchlist.emit();
+  }
+
+  onCineScrollClick() {
+    this.navigateCineScroll.emit();
+  }
+
+  onDirectorsClick() {
+    this.navigateDirectors.emit();
+  }
+
+  onRegeFilmsClick() {
+    this.navigateRegeFilms.emit();
+  }
+
+  onSearchInput(event: any) {
+    const query = event.target.value;
+    this.search.emit({ query, immediate: false });
+  }
+
+  onSearchEnter(event: any) {
+    const query = event.target.value;
+    this.search.emit({ query, immediate: true });
   }
 }

@@ -1,0 +1,110 @@
+<div class="rege-container">
+  <header class="rege-header">
+    <div class="header-overlay"></div>
+    <div class="header-content">
+      <div class="header-left">
+        <div class="profile-pic-wrapper">
+          <img 
+            src="https://d3t3ozftmdmh3i.cloudfront.net/staging/podcast_uploaded_nologo/43477459/43477459-1750785343056-0a54cc10f89f6.jpg" 
+            alt="Regelegorila" 
+            class="profile-pic">
+        </div>
+        <div class="badge">Sélection Spéciale</div>
+      </div>
+      
+      <div class="header-right">
+        <h1>Vu par Regelegorila</h1>
+        <p>Les dernières notes Letterboxd du YouTubeur cinéma, enrichies avec les infos TMDB.</p>
+        <a href="https://letterboxd.com/regelegorila/" target="_blank" class="letterboxd-link">
+          <span>Voir son profil Letterboxd</span>
+          <span class="icon">↗</span>
+        </a>
+      </div>
+    </div>
+  </header>
+
+  <!-- SKELETON LOADING STATE -->
+  <div class="picks-content" *ngIf="isLoading">
+    <section class="picks-section skeleton-section" *ngFor="let s of [1,2]">
+      <div class="section-header">
+        <div class="skeleton-title"></div>
+      </div>
+      <div class="row-wrapper">
+        <div class="picks-row">
+          <div class="card-item" *ngFor="let i of [1,2,3,4,5,6]">
+            <div class="skeleton-card"></div>
+          </div>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <div class="picks-content" *ngIf="!isLoading">
+    <!-- SECTION COUPS DE COEUR -->
+    <section class="picks-section best">
+      <div class="section-header">
+        <div class="section-title">
+          <span class="emoji">⭐</span>
+          <h2>Coups de cœur</h2>
+          <span class="count">{{ bestPicks.length }} films</span>
+        </div>
+      </div>
+      
+      <div class="row-wrapper">
+        <button class="scroll-btn scroll-left" (click)="scroll('left', 'best')" *ngIf="canScrollBestLeft">‹</button>
+        <div class="picks-row" #bestRow (scroll)="onScroll('best')">
+          @for (movie of bestPicks; track movie.tmdbId; let i = $index) {
+            <div class="card-item">
+              <cm-movie-card-rege 
+                [movie]="movie" 
+                [priority]="i < 6"
+                (clickCard)="onMovieClick(movie)">
+              </cm-movie-card-rege>
+            </div>
+          }
+        </div>
+        <button class="scroll-btn scroll-right" (click)="scroll('right', 'best')" *ngIf="canScrollBestRight">›</button>
+      </div>
+      
+      <div class="empty-state" *ngIf="bestPicks.length === 0">
+        Aucun coup de cœur récent.
+      </div>
+    </section>
+
+    <!-- SECTION À ÉVITER -->
+    <section class="picks-section worst">
+      <div class="section-header">
+        <div class="section-title">
+          <span class="emoji">👎</span>
+          <h2>À éviter</h2>
+          <span class="count">{{ worstPicks.length }} films</span>
+        </div>
+      </div>
+      
+      <div class="row-wrapper">
+        <button class="scroll-btn scroll-left" (click)="scroll('left', 'worst')" *ngIf="canScrollWorstLeft">‹</button>
+        <div class="picks-row" #worstRow (scroll)="onScroll('worst')">
+          @for (movie of worstPicks; track movie.tmdbId; let i = $index) {
+            <div class="card-item">
+              <cm-movie-card-rege 
+                [movie]="movie" 
+                [priority]="i < 6"
+                (clickCard)="onMovieClick(movie)">
+              </cm-movie-card-rege>
+            </div>
+          }
+        </div>
+        <button class="scroll-btn scroll-right" (click)="scroll('right', 'worst')" *ngIf="canScrollWorstRight">›</button>
+      </div>
+
+      <div class="empty-state" *ngIf="worstPicks.length === 0">
+        Rien à signaler dans cette catégorie.
+      </div>
+    </section>
+
+    <!-- DEBUG FOOTER -->
+    <div class="debug-footer" style="padding: 20px; opacity: 0.3; font-size: 0.8rem; text-align: center;">
+      DEBUG: {{ bestPicks.length }} coups de coeur / {{ worstPicks.length }} à éviter
+    </div>
+  </div>
+</div>

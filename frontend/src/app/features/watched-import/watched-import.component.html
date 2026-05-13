@@ -1,0 +1,39 @@
+<div class="watched-import-container">
+  <!-- MESSAGE DE FEEDBACK -->
+  <div class="feedback-toast" *ngIf="feedbackMessage" [class.success]="isSuccess">
+    {{ feedbackMessage }}
+  </div>
+
+  <!-- ÉTAT 1 : AUCUNE LISTE -->
+  <div class="import-actions" *ngIf="watchedService.getCount() === 0">
+    <label class="import-label">
+      <input type="file" (change)="onFileSelected($event)" accept=".csv" hidden>
+      <span class="btn-import-compact">
+        📂 Importer mon CSV
+      </span>
+    </label>
+  </div>
+
+  <!-- ÉTAT 2 : LISTE IMPORTÉE -->
+  <div class="status-actions" *ngIf="watchedService.getCount() > 0">
+    <div class="status-header">
+      <span class="count-badge">👁 {{ watchedService.getCount() }} vus</span>
+      <span class="status-tag">Actif</span>
+    </div>
+
+    <div class="actions-grid">
+      <button class="grid-btn refresh" (click)="onRefresh()" title="Actualiser">
+        🔄 Actualiser
+      </button>
+
+      <label class="grid-btn import">
+        <input type="file" (change)="onFileSelected($event)" accept=".csv" hidden>
+        <span>📂</span> Importer
+      </label>
+
+      <button class="grid-btn delete" (click)="onReset()" title="Supprimer">
+        🗑️ Vider
+      </button>
+    </div>
+  </div>
+</div>

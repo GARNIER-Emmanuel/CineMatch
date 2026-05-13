@@ -8,6 +8,7 @@ export interface MovieItem {
   poster: string;
   rating: string;
   backdrop?: string | null;
+  releaseYear: string;
 }
 
 @Component({
@@ -34,9 +35,9 @@ export interface MovieItem {
           <ng-container *ngIf="!loading">
             <div 
               class="movie-card" 
-              *ngFor="let movie of movies"
+              *ngFor="let movie of movies; let i = index"
               (click)="onMovieClick(movie)">
-              <img [src]="movie.poster" [alt]="movie.title" title="" loading="lazy">
+              <img [src]="movie.poster" [alt]="movie.title" title="">
               <div class="card-overlay">
                 <span class="rating">★ {{ movie.rating }}</span>
                 <span class="movie-title">{{ movie.title }}</span>
@@ -210,6 +211,7 @@ export class MovieRowComponent {
   @Input() title: string = '';
   @Input() movies: MovieItem[] = [];
   @Input() loading: boolean = false;
+  @Input() priority: boolean = false;
   @Output() movieClick = new EventEmitter<MovieItem>();
   @ViewChild('rowContent') rowContent!: ElementRef;
 

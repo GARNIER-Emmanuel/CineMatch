@@ -1,15 +1,74 @@
 <div class="app-container">
   <cm-navbar 
+    *ngIf="currentView !== 'cinescroll'"
     [currentView]="currentView"
     (toggleFilters)="toggleFilters()"
     (navigateHome)="goToHome()"
-    (navigateWatchlist)="goToWatchlist()">
+    (navigateWatchlist)="goToWatchlist()"
+    (navigateCineScroll)="goToCineScroll()"
+    (navigateDirectors)="goToDirectors()"
+    (navigateRegeFilms)="goToRegeFilms()"
+    (search)="onSearch($event.query, $event.immediate)">
   </cm-navbar>
 
-  <main class="main-content">
+  <main class="main-content" [class.full-screen-view]="currentView === 'cinescroll'" [class.rege-view]="currentView === 'regefilms'">
     
+    <!-- SECTION RECHERCHE -->
+    <div *ngIf="searchQuery.trim()" class="search-results-overlay">
+      <div class="search-header">
+        <div class="header-content">
+          <h2>Résultats pour "{{ searchQuery }}"</h2>
+          <span class="results-count" *ngIf="!isSearching">{{ searchResults.length }} résultats trouvés</span>
+        </div>
+        <button class="clear-search" (click)="onSearch('', true)">
+          <span>Fermer</span>
+          <span class="icon">✕</span>
+        </button>
+      </div>
+
+      <div class="loader-container" *ngIf="isSearching">
+        <div class="cinema-loader"></div>
+      </div>
+
+      <div class="results-grid" *ngIf="!isSearching">
+        @for (item of searchResults; track item.id) {
+          <!-- Cas Film -->
+          @if (item.media_type === 'movie') {
+            <div class="result-card movie" (click)="openMovieDetails(item)">
+              <div class="card-image">
+                <img [src]="item.poster || 'assets/placeholder.jpg'" alt="">
+                <div class="card-badge">Film</div>
+              </div>
+              <div class="card-info">
+                <h3>{{ item.title }}</h3>
+                <span class="meta">{{ item.releaseYear }} • ★ {{ item.rating }}</span>
+              </div>
+            </div>
+          }
+
+          <!-- Cas Personne (Réalisateur) -->
+          @if (item.media_type === 'person') {
+            <div class="result-card person" (click)="onDirectorClick(item)">
+              <div class="card-image circular">
+                <img [src]="item.profilePath || 'https://api.dicebear.com/7.x/initials/svg?seed=' + item.name" alt="">
+                <div class="card-badge person">Bio</div>
+              </div>
+              <div class="card-info">
+                <h3>{{ item.name }}</h3>
+                <span class="meta">{{ item.knownFor }}</span>
+              </div>
+            </div>
+          }
+        }
+      </div>
+
+      <div class="no-results" *ngIf="!isSearching && searchResults.length === 0">
+        <p>Aucun résultat correspondant à votre recherche.</p>
+      </div>
+    </div>
+
     <!-- SECTION ACCUEIL -->
-    <div *ngIf="currentView === 'home'" class="view-home">
+    <div *ngIf="currentView === 'home' && !searchQuery.trim()" class="view-home">
 
       <!-- HERO BANNER -->
       <div class="hero-banner" *ngIf="heroMovie && !hasActiveFilters">
@@ -50,6 +109,7 @@
           title="Récemment consultés" 
           [movies]="historyMovies" 
           [loading]="false"
+          [priority]="true"
           (movieClick)="openMovieDetails($event)">
         </cm-movie-row>
 
@@ -57,78 +117,117 @@
           title="Populaires sur CineMatch" 
           [movies]="popularMovies" 
           [loading]="loadingPopular"
+          [priority]="!historyMovies.length"
           (movieClick)="openMovieDetails($event)">
         </cm-movie-row>
 
         <cm-movie-row 
-          title="Films d'Action" 
-          [movies]="actionMovies" 
-          [loading]="loadingAction"
+          title="Cinéma d'Auteur" 
+          [movies]="auteurMovies" 
+          [loading]="loadingAuteur"
           (movieClick)="openMovieDetails($event)">
         </cm-movie-row>
 
         <cm-movie-row 
-          title="À voir absolument" 
-          [movies]="trendingMovies" 
-          [loading]="loadingTrending"
+          title="Les Classiques" 
+          [movies]="classicMovies" 
+          [loading]="loadingClassic"
           (movieClick)="openMovieDetails($event)">
         </cm-movie-row>
       </div>
 
       <!-- CAS B : Filtres actifs (Résultats de recherche) -->
-      <div class="discovery-section" *ngIf="hasActiveFilters">
-        <cm-movie-row 
-          title="Résultats de votre recherche" 
-          [movies]="discoveryMovies" 
-          [loading]="loadingDiscovery"
-          (movieClick)="openMovieDetails($event)">
-        </cm-movie-row>
-
-        <cm-movie-pagination 
-          *ngIf="discoveryMovies.length > 0 && hasMoreResults"
-          [isLoading]="loadingDiscovery"
-          (loadMore)="onLoadMore()">
-        </cm-movie-pagination>
-      </div>
-    </div>
-
-    <!-- SECTION MA LISTE -->
-    <div *ngIf="currentView === 'watchlist'" class="view-watchlist">
-      <div class="watchlist-page">
-        <header class="page-header">
-          <h1>Ma Liste</h1>
-          <p>{{ watchlistMovies.length }} films sauvegardés</p>
+      <div class="discovery-section" *ngIf="hasActiveFilters" style="padding: 0 4%;">
+        <header class="page-header" style="margin-bottom: 30px;">
+          <h2>Résultats de votre recherche</h2>
         </header>
 
-        <div class="watchlist-grid" *ngIf="watchlistMovies.length > 0">
-          @for (movie of watchlistMovies; track movie.id) {
-            <div class="movie-card-wrapper" (click)="openMovieDetails(movie)">
-              <div class="movie-card">
-                <img [src]="movie.poster" [alt]="movie.title" title="">
-                <div class="card-overlay">
-                  <span class="rating">★ {{ movie.rating }}</span>
-                  <span class="title">{{ movie.title }}</span>
-                </div>
+        <div class="loader-container" *ngIf="loadingDiscovery && discoveryMovies.length === 0">
+          <div class="cinema-loader"></div>
+        </div>
+
+        <div class="watchlist-grid" *ngIf="discoveryMovies.length > 0">
+          @for (movie of discoveryMovies; track movie.id) {
+            <div class="movie-card" (click)="openMovieDetails(movie)">
+              <img [src]="movie.poster || 'assets/placeholder.jpg'" alt="">
+              <div class="card-overlay">
+                <span class="rating">★ {{ movie.rating }}</span>
+                <span class="title">{{ movie.title }}</span>
               </div>
             </div>
           }
         </div>
 
-        <div class="empty-watchlist" *ngIf="watchlistMovies.length === 0">
-          <div class="empty-content">
-            <span class="empty-icon">🎬</span>
-            <h2>Votre liste est vide</h2>
-            <p>Ajoutez des films pour les retrouver facilement ici.</p>
-            <button class="primary-btn" (click)="goToHome()">Explorer les films</button>
-          </div>
+        <div class="no-results" *ngIf="!loadingDiscovery && discoveryMovies.length === 0" style="text-align: center; padding: 50px 0; color: rgba(255,255,255,0.5);">
+          <p>Aucun film ne correspond à vos critères.</p>
         </div>
+
+        <cm-movie-pagination 
+          id="load-more-pagination"
+          *ngIf="discoveryMovies.length > 0 && hasMoreResults"
+          [isLoading]="loadingDiscovery"
+          (loadMore)="onLoadMore()"
+          style="margin-top: 40px; display: block;">
+        </cm-movie-pagination>
       </div>
     </div>
+
+    <!-- SECTION WATCHLIST -->
+    <div *ngIf="currentView === 'watchlist' && !searchQuery.trim()" class="watchlist-page">
+      <header class="page-header">
+        <h1>Ma Liste</h1>
+        <p>Retrouvez ici tous les films que vous avez sauvegardés.</p>
+      </header>
+
+      <div class="watchlist-grid" *ngIf="watchlistMovies.length > 0">
+        @for (movie of watchlistMovies; track movie.id) {
+          <div class="movie-card" (click)="openMovieDetails(movie)">
+            <img [src]="movie.poster" alt="">
+            <div class="card-overlay">
+              <span class="rating">★ {{ movie.rating }}</span>
+              <span class="title">{{ movie.title }}</span>
+            </div>
+          </div>
+        }
+      </div>
+
+      <div class="no-results" *ngIf="watchlistMovies.length === 0">
+        <p>Votre liste est vide pour le moment.</p>
+      </div>
+    </div>
+
+    <!-- SECTION RÉALISATEURS -->
+    <div *ngIf="currentView === 'directors' && !searchQuery.trim()" class="view-directors">
+      <cm-directors (directorClick)="onDirectorClick($event)"></cm-directors>
+    </div>
+
+    <!-- SECTION FILMOGRAPHIE RÉALISATEUR -->
+    <div *ngIf="currentView === 'director-movies' && !searchQuery.trim()" class="view-director-movies">
+      <cm-director-movies 
+        *ngIf="selectedDirectorForMovies"
+        [directorId]="selectedDirectorForMovies.id" 
+        [directorName]="selectedDirectorForMovies.name"
+        (back)="goToDirectors()"
+        (movieClick)="openMovieDetails($event)">
+      </cm-director-movies>
+    </div>
+    
+    <!-- SECTION CINESCROLL -->
+    <cm-cine-scroll 
+      *ngIf="currentView === 'cinescroll'"
+      (close)="goToHome()">
+    </cm-cine-scroll>
+
+    <!-- SECTION REGEFILMS -->
+    <cm-regefilms
+      *ngIf="currentView === 'regefilms'"
+      (movieClick)="openMovieDetails($event)">
+    </cm-regefilms>
 
   </main>
 
   <!-- FOOTER CINÉMATOGRAPHIQUE -->
-  <footer class="cinema-footer">
+  <footer class="cinema-footer" *ngIf="currentView !== 'cinescroll'">
     <div class="footer-content">
       <div class="footer-brand">
         <h3 class="footer-logo">Cine<span>Match</span></h3>
@@ -146,9 +245,17 @@
     </div>
   </footer>
 
+  <!-- MODALES -->
   <cm-movie-detail-modal 
-    *ngIf="selectedMovieForDetails"
-    [movie]="selectedMovieForDetails"
+    *ngIf="selectedMovieForDetails" 
+    [movie]="selectedMovieForDetails" 
     (close)="closeMovieDetails()">
   </cm-movie-detail-modal>
+
+  <cm-director-detail-modal
+    *ngIf="selectedDirectorForDetails"
+    [director]="selectedDirectorForDetails"
+    (close)="closeDirectorDetails()"
+    (viewMovies)="onViewDirectorMovies($event)">
+  </cm-director-detail-modal>
 </div>

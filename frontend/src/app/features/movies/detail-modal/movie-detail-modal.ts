@@ -23,7 +23,13 @@ import { WatchlistService } from '../../../core/services/watchlist';
             <h1 class="movie-title">{{ movie.title }}</h1>
             <div class="movie-meta">
               <span class="rating">★ {{ movie.rating }}</span>
-              <span class="year">Cinéma Excellence</span>
+              <span class="year">{{ movie.releaseYear }}</span>
+              <span class="duration" *ngIf="credits?.runtime">{{ formatRuntime(credits!.runtime) }}</span>
+            </div>
+
+            <div class="credits" *ngIf="credits">
+              <p><strong>Réalisation :</strong> {{ credits.director }}</p>
+              <p><strong>Casting :</strong> {{ credits.cast.join(', ') }}</p>
             </div>
             
             <p class="overview">{{ movie.overview }}</p>
@@ -86,7 +92,7 @@ import { WatchlistService } from '../../../core/services/watchlist';
 
     .modal-container {
       width: 100%;
-      max-width: 900px;
+      max-width: 1100px;
       max-height: 90vh;
       background: #0a0e1a;
       border-radius: 16px;
@@ -119,9 +125,9 @@ import { WatchlistService } from '../../../core/services/watchlist';
 
     .modal-content {
       display: grid;
-      grid-template-columns: 350px 1fr;
-      gap: 40px;
-      padding: 40px;
+      grid-template-columns: 320px 1fr;
+      gap: 50px;
+      padding: 50px;
     }
 
     .movie-poster {
@@ -163,13 +169,23 @@ import { WatchlistService } from '../../../core/services/watchlist';
 
     .rating { color: #ffb400; }
     .year { color: rgba(255, 255, 255, 0.5); }
+    .duration { color: rgba(255, 255, 255, 0.5); }
 
     .overview {
-      font-size: 1.1rem;
+      font-size: 0.95rem;
       line-height: 1.6;
-      color: rgba(255, 255, 255, 0.8);
-      margin-bottom: 30px;
+      color: rgba(255, 255, 255, 0.7);
+      margin-bottom: 25px;
     }
+
+    .credits {
+      margin-bottom: 20px;
+      font-size: 0.75rem;
+      color: rgba(255, 255, 255, 0.4);
+    }
+
+    .credits p { margin: 5px 0; }
+    .credits strong { color: var(--primary-color); font-weight: 700; }
 
     .providers-section h3 {
       font-size: 0.9rem;
@@ -269,6 +285,7 @@ export class MovieDetailModalComponent implements OnInit {
   @Output() close = new EventEmitter<void>();
 
   providers: WatchProvider[] = [];
+  credits: { director: string; cast: string[]; runtime: number } | null = null;
   loadingProviders = true;
   feedbackSent = false;
   isInWatchlist = false;
@@ -289,6 +306,13 @@ export class MovieDetailModalComponent implements OnInit {
       },
       error: () => {
         this.loadingProviders = false;
+        this.cdr.detectChanges();
+      }
+    });
+
+    this.moviesService.getMovieCredits(this.movie.id).subscribe({
+      next: (credits) => {
+        this.credits = credits;
         this.cdr.detectChanges();
       }
     });
@@ -338,5 +362,12 @@ export class MovieDetailModalComponent implements OnInit {
   private copyToClipboard(text: string) {
     navigator.clipboard.writeText(text);
     alert('Lien copié dans le presse-papier !');
+  }
+
+  formatRuntime(minutes: number): string {
+    if (!minutes) return '';
+    const h = Math.floor(minutes / 60);
+    const m = minutes % 60;
+    return `${h}h ${m}m`;
   }
 }

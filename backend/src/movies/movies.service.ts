@@ -26,23 +26,29 @@ export class MoviesService {
           'certification.lte': filters.certificationLte,
           with_watch_providers: filters.providers,
           watch_region: 'FR',
+          'primary_release_date.gte': filters.releaseYearMin ? `${filters.releaseYearMin}-01-01` : undefined,
+          'primary_release_date.lte': filters.releaseYearMax ? `${filters.releaseYearMax}-12-31` : undefined,
           sort_by: 'popularity.desc',
           language: 'fr-FR',
         },
       });
 
-      return response.data.results.slice(0, 20).map((movie: any) => ({
+      const validMovies = response.data.results.filter(
+        (movie: any) => movie.poster_path !== null && movie.vote_average > 0
+      );
+
+      return validMovies.slice(0, 20).map((movie: any) => ({
         id: movie.id,
         title: movie.title,
+        originalTitle: movie.original_title,
         overview: movie.overview,
         releaseYear: movie.release_date ? movie.release_date.split('-')[0] : '',
         rating: movie.vote_average.toFixed(1),
-        poster: movie.poster_path
-          ? `https://image.tmdb.org/t/p/w500${movie.poster_path}`
-          : null,
+        poster: `https://image.tmdb.org/t/p/w500${movie.poster_path}`,
         backdrop: movie.backdrop_path
           ? `https://image.tmdb.org/t/p/w1280${movie.backdrop_path}`
           : null,
+        genreIds: movie.genre_ids,
       }));
     } catch (error: any) {
       return this.handleError(error);
@@ -68,6 +74,40 @@ export class MoviesService {
       return [];
     } catch (error: any) {
       return this.handleError(error);
+    }
+  }
+
+  async getMovieImages(movieId: number): Promise<string[]> {
+    try {
+      const response = await axios.get(`${this.baseUrl}/movie/${movieId}/images`, {
+        params: { api_key: this.apiKey },
+      });
+
+      return response.data.backdrops
+        .slice(0, 5)
+        .map((img: any) => `https://image.tmdb.org/t/p/w1280${img.file_path}`);
+    } catch (error: any) {
+      return this.handleError(error);
+    }
+  }
+
+  async getCredits(movieId: number): Promise<{ director: string; cast: string[]; runtime: number }> {
+    try {
+      const response = await axios.get(`${this.baseUrl}/movie/${movieId}`, {
+        params: { 
+          api_key: this.apiKey, 
+          language: 'fr-FR',
+          append_to_response: 'credits'
+        },
+      });
+
+      const director = response.data.credits.crew.find((member: any) => member.job === 'Director')?.name || 'Inconnu';
+      const cast = response.data.credits.cast.slice(0, 5).map((actor: any) => actor.name);
+      const runtime = response.data.runtime || 0;
+
+      return { director, cast, runtime };
+    } catch (error: any) {
+      return { director: 'Inconnu', cast: [], runtime: 0 };
     }
   }
 

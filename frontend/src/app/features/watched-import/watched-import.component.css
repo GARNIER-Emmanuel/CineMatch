@@ -1,0 +1,128 @@
+.watched-import-container {
+  width: 100%;
+  position: relative;
+}
+
+.import-label {
+  display: block;
+  width: 100%;
+  cursor: pointer;
+}
+
+.btn-import-compact {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  background: #ffb400;
+  padding: 10px;
+  border-radius: 8px;
+  color: #05080f;
+  font-size: 0.8rem;
+  font-weight: 800;
+  transition: all 0.3s;
+}
+
+.btn-import-compact:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 15px rgba(255, 180, 0, 0.4);
+}
+
+.status-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+  padding: 0 4px;
+}
+
+.count-badge {
+  background: rgba(255, 180, 0, 0.1);
+  padding: 4px 10px;
+  border-radius: 6px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: #ffb400;
+  border: 1px solid rgba(255, 180, 0, 0.2);
+}
+
+.status-tag {
+  font-size: 0.6rem;
+  text-transform: uppercase;
+  color: #00c853;
+  font-weight: 900;
+  letter-spacing: 1px;
+}
+
+.actions-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+
+.grid-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 10px 8px;
+  border-radius: 8px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  cursor: pointer;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.03);
+  color: rgba(255, 255, 255, 0.9);
+  transition: all 0.2s;
+}
+
+.grid-btn:hover {
+  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(255, 255, 255, 0.2);
+}
+
+.grid-btn.refresh {
+  color: #00c853;
+  border-color: rgba(0, 200, 83, 0.2);
+}
+
+.grid-btn.refresh:hover {
+  background: rgba(0, 200, 83, 0.1);
+}
+
+.grid-btn.delete {
+  color: #ff4d4d;
+  border-color: rgba(255, 77, 77, 0.2);
+  grid-column: span 2;
+  margin-top: 4px;
+  opacity: 0.7;
+}
+
+.grid-btn.delete:hover {
+  opacity: 1;
+  background: rgba(255, 77, 77, 0.1);
+}
+
+.feedback-toast {
+  position: absolute;
+  top: -45px;
+  left: 0;
+  right: 0;
+  padding: 8px;
+  background: #ffb400;
+  color: #05080f;
+  font-size: 0.75rem;
+  font-weight: 800;
+  text-align: center;
+  border-radius: 8px;
+  box-shadow: 0 10px 20px rgba(0,0,0,0.4);
+  z-index: 10;
+  animation: fadeInOut 3s ease-in-out forwards;
+}
+
+@keyframes fadeInOut {
+  0% { opacity: 0; transform: translateY(10px); }
+  10% { opacity: 1; transform: translateY(0); }
+  90% { opacity: 1; transform: translateY(0); }
+  100% { opacity: 0; transform: translateY(-10px); }
+}

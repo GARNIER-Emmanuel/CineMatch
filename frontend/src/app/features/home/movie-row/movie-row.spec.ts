@@ -29,7 +29,7 @@ describe('MovieRowComponent', () => {
 
   it('should display movies when loading is false and movies are provided', () => {
     component.loading = false;
-    component.movies = [{ id: 1, title: 'Test', poster: '', rating: '8' }];
+    component.movies = [{ id: 1, title: 'Test', poster: '', rating: '8', overview: 'Test', backdrop: '', releaseYear: '2020' }];
     fixture.detectChanges();
     const compiled = fixture.nativeElement as HTMLElement;
     expect(compiled.querySelectorAll('.movie-card').length).toBe(1);

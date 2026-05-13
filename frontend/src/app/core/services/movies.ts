@@ -5,11 +5,13 @@ import { Observable } from 'rxjs';
 export interface Movie {
   id: number;
   title: string;
+  originalTitle?: string;
   overview: string;
   releaseYear: string;
   rating: string;
   poster: string | null;
   backdrop: string | null;
+  genreIds?: number[];
 }
 
 export interface WatchProvider {
@@ -33,7 +35,9 @@ export class MoviesService {
     page?: number,
     certCountry?: string | null,
     certLte?: string | null,
-    providers?: string | null
+    providers?: string | null,
+    releaseYearMin?: number,
+    releaseYearMax?: number
   ): Observable<Movie[]> {
     let params = new HttpParams();
     
@@ -44,8 +48,31 @@ export class MoviesService {
     if (certCountry) params = params.set('certificationCountry', certCountry);
     if (certLte) params = params.set('certificationLte', certLte);
     if (providers) params = params.set('providers', providers);
+    if (releaseYearMin) params = params.set('releaseYearMin', releaseYearMin.toString());
+    if (releaseYearMax) params = params.set('releaseYearMax', releaseYearMax.toString());
 
     return this.http.get<Movie[]>(`${this.apiUrl}/discover`, { params });
+  }
+
+  /**
+   * Récupère les films pour le mode CineScroll
+   */
+  getCineScrollMovies(genres?: string, excludeGenres?: string, page?: number, releaseYearMin?: number, releaseYearMax?: number): Observable<Movie[]> {
+    let params = new HttpParams();
+    if (genres) params = params.set('genres', genres);
+    if (excludeGenres) params = params.set('excludeGenres', excludeGenres);
+    if (page) params = params.set('page', page.toString());
+    if (releaseYearMin) params = params.set('releaseYearMin', releaseYearMin.toString());
+    if (releaseYearMax) params = params.set('releaseYearMax', releaseYearMax.toString());
+
+    return this.http.get<Movie[]>(`${this.apiUrl}/cinescroll`, { params });
+  }
+
+  /**
+   * Récupère la clé YouTube d'un trailer de film
+   */
+  getMovieTrailer(movieId: number): Observable<{ youtubeKey: string } | null> {
+    return this.http.get<{ youtubeKey: string } | null>(`${this.apiUrl}/trailer/${movieId}`);
   }
 
   /**
@@ -53,5 +80,30 @@ export class MoviesService {
    */
   getMovieProviders(movieId: number): Observable<WatchProvider[]> {
     return this.http.get<WatchProvider[]>(`${this.apiUrl}/${movieId}/providers`);
+  }
+
+  getMovieImages(movieId: number): Observable<string[]> {
+    return this.http.get<string[]>(`${this.apiUrl}/${movieId}/images`);
+  }
+
+  getMovieCredits(movieId: number): Observable<{ director: string; cast: string[]; runtime: number }> {
+    return this.http.get<{ director: string; cast: string[]; runtime: number }>(`${this.apiUrl}/${movieId}/credits`);
+  }
+
+  search(query: string): Observable<any[]> {
+    return this.http.get<any[]>(`http://localhost:3000/search?q=${encodeURIComponent(query)}`);
+  }
+
+  getPopularDirectors(): Observable<any[]> {
+    return this.http.get<any[]>(`http://localhost:3000/directors/popular`);
+  }
+
+  getDirectorMovies(directorId: number): Observable<any[]> {
+    return this.http.get<any[]>(`http://localhost:3000/directors/${directorId}/movies`);
+  }
+
+  getLetterboxdPicks(filter: string = 'all'): Observable<any[]> {
+    let params = new HttpParams().set('filter', filter);
+    return this.http.get<any[]>(`${this.apiUrl}/letterboxd-picks`, { params });
   }
 }
