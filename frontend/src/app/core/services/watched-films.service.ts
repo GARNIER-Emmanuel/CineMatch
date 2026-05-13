@@ -20,10 +20,20 @@ export class WatchedFilmsService {
     if (!title) return false;
     
     const normalizedTitle = title.trim().toLowerCase();
-    return this.watchedFilms.some(f => 
-      f.title.trim().toLowerCase() === normalizedTitle && 
-      f.year.toString() === year?.toString()
-    );
+    // On ne garde que les 4 premiers chiffres de l'année (au cas où on reçoit une date complète)
+    const normalizedYear = year?.toString().substring(0, 4);
+
+    const isMatch = this.watchedFilms.some(f => {
+      const watchedTitle = f.title.trim().toLowerCase();
+      const watchedYear = f.year.toString().substring(0, 4);
+      return watchedTitle === normalizedTitle && watchedYear === normalizedYear;
+    });
+
+    if (isMatch) {
+      console.log(`[WatchedService] Film filtré car déjà vu: ${title} (${normalizedYear})`);
+    }
+
+    return isMatch;
   }
 
   getCount(): number {
@@ -41,11 +51,17 @@ export class WatchedFilmsService {
     for (const line of movieLines) {
       if (!line.trim()) continue;
       
-      const parts = line.split(',');
-      if (parts.length >= 3) {
-        const title = parts[1].replace(/"/g, ''); // On enlève les guillemets éventuels
-        const year = parts[2];
-        newFilms.push({ title, year });
+      // Regex pour spliter par virgule en ignorant celles à l'intérieur des guillemets
+      const parts = line.match(/(".*?"|[^",\s]+)(?=\s*,|\s*$)/g);
+      
+      if (parts && parts.length >= 3) {
+        // Nettoyage des guillemets et espaces
+        const title = parts[1].replace(/^"|"$/g, '').trim();
+        const year = parts[2].trim();
+        
+        if (title && year) {
+          newFilms.push({ title, year });
+        }
       }
     }
 

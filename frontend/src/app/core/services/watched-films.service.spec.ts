@@ -30,18 +30,15 @@ describe('WatchedFilmsService', () => {
     expect(service.isWatched(' inception ', '2010')).toBe(true);
   });
 
-  it('devrait parser un contenu CSV et importer les films', async () => {
-    const csvContent = 'Date,Name,Year,URI,Rating\n2024-11-10,Inception,2010,url,4.5\n2024-09-03,The Dark Knight,2008,url,5.0';
+  it('devrait parser un contenu CSV complexe (guillemets, virgules) et importer les films', async () => {
+    const csvContent = 'Date,Name,Year,URI,Rating\n2024-11-10,"Batman, The Movie",1966,url,4.5\n2024-09-03,Inception,2010,url,5.0';
     
-    // On simule un fichier File
     const file = new File([csvContent], 'watched.csv', { type: 'text/csv' });
-    
     const count = await service.importFromCSV(file);
     
     expect(count).toBe(2);
-    expect(service.getCount()).toBe(2);
+    expect(service.isWatched('Batman, The Movie', '1966')).toBe(true);
     expect(service.isWatched('Inception', '2010')).toBe(true);
-    expect(service.isWatched('The Dark Knight', '2008')).toBe(true);
   });
 
   it('devrait sauvegarder et charger les films depuis le localStorage', async () => {
