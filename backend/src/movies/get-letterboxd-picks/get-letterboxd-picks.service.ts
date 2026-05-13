@@ -1,7 +1,9 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Inject } from '@nestjs/common';
 import Parser from 'rss-parser';
 import { ConfigService } from '@nestjs/config';
 import axios from 'axios';
+import { CACHE_MANAGER } from '@nestjs/cache-manager';
+import { Cache } from 'cache-manager';
 
 @Injectable()
 export class GetLetterboxdPicksService {
@@ -9,12 +11,19 @@ export class GetLetterboxdPicksService {
   private readonly apiKey: string;
   private readonly baseUrl = 'https://api.themoviedb.org/3';
 
-  constructor(private configService: ConfigService) {
+  constructor(
+    private configService: ConfigService,
+    @Inject(CACHE_MANAGER) private cacheManager: Cache
+  ) {
     this.parser = new Parser();
     this.apiKey = this.configService.get<string>('TMDB_API_KEY') || '';
   }
 
   async execute(filter: string = 'all') {
+    const cacheKey = `letterboxd_picks_${filter}`;
+    const cached = await this.cacheManager.get<any[]>(cacheKey);
+    if (cached) return cached;
+
     const feed = await this.parser.parseURL('https://letterboxd.com/reglegorilla/rss/');
 
     const allMovies = await Promise.all(
@@ -41,16 +50,16 @@ export class GetLetterboxdPicksService {
     );
 
     const validMovies = allMovies.filter((m) => m !== null) as any[];
+    let result = validMovies;
 
     if (filter === 'best') {
-      return validMovies.filter((m) => m.letterboxdRating >= 4);
+      result = validMovies.filter((m) => m.letterboxdRating >= 4);
+    } else if (filter === 'worst') {
+      result = validMovies.filter((m) => m.letterboxdRating <= 2);
     }
 
-    if (filter === 'worst') {
-      return validMovies.filter((m) => m.letterboxdRating <= 2);
-    }
-
-    return validMovies;
+    await this.cacheManager.set(cacheKey, result, 3600000); // 1 hour
+    return result;
   }
 
   private async searchOnTmdb(title: string) {
