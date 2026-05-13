@@ -23,6 +23,18 @@ export class WatchedFilmsService {
     );
   }
 
+  getCount(): number {
+    return this.watchedFilms.length;
+  }
+
+  async importFromCSV(file: File): Promise<number> {
+    return 0; // RED
+  }
+
+  private saveToStorage(): void {}
+
+  private loadFromStorage(): void {}
+
   // Méthode temporaire pour le test
   private addFilmManually(title: string, year: string) {
     this.watchedFilms.push({ title, year });
