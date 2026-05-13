@@ -54,6 +54,11 @@ export class WatchedFilmsService {
     return this.getCount();
   }
 
+  reset(): void {
+    this.watchedFilms = [];
+    localStorage.removeItem(this.STORAGE_KEY);
+  }
+
   private saveToStorage(): void {
     localStorage.setItem(this.STORAGE_KEY, JSON.stringify(this.watchedFilms));
   }
@@ -68,10 +73,5 @@ export class WatchedFilmsService {
         this.watchedFilms = [];
       }
     }
-  }
-
-  // Méthode temporaire pour le test
-  private addFilmManually(title: string, year: string) {
-    this.watchedFilms.push({ title, year });
   }
 }

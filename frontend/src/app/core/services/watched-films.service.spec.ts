@@ -14,19 +14,18 @@ describe('WatchedFilmsService', () => {
     expect(service).toBeTruthy();
   });
 
-  it('devrait retourner true si un film a été marqué comme vu', () => {
-    // Simuler l'ajout d'un film (méthode à implémenter)
-    // Pour l'instant, on teste le comportement attendu de isWatched
-    const film = { title: 'Inception', year: '2010' };
-    
-    // On simule une importation manuelle pour tester le check
-    (service as any).addFilmManually(film.title, film.year);
+  it('devrait retourner true si un film a été marqué comme vu', async () => {
+    const csvContent = 'Date,Name,Year,URI,Rating\n2024-11-10,Inception,2010,url,4.5';
+    const file = new File([csvContent], 'watched.csv', { type: 'text/csv' });
+    await service.importFromCSV(file);
     
     expect(service.isWatched('Inception', '2010')).toBe(true);
   });
 
-  it('devrait être insensible à la casse et aux espaces', () => {
-    (service as any).addFilmManually('Inception', '2010');
+  it('devrait être insensible à la casse et aux espaces', async () => {
+    const csvContent = 'Date,Name,Year,URI,Rating\n2024-11-10,Inception,2010,url,4.5';
+    const file = new File([csvContent], 'watched.csv', { type: 'text/csv' });
+    await service.importFromCSV(file);
     
     expect(service.isWatched(' inception ', '2010')).toBe(true);
   });
@@ -45,14 +44,25 @@ describe('WatchedFilmsService', () => {
     expect(service.isWatched('The Dark Knight', '2008')).toBe(true);
   });
 
-  it('devrait sauvegarder et charger les films depuis le localStorage', () => {
-    (service as any).addFilmManually('Inception', '2010');
-    (service as any).saveToStorage();
+  it('devrait sauvegarder et charger les films depuis le localStorage', async () => {
+    const csvContent = 'Date,Name,Year,URI,Rating\n2024-11-10,Inception,2010,url,4.5';
+    const file = new File([csvContent], 'watched.csv', { type: 'text/csv' });
+    await service.importFromCSV(file);
     
     // On crée une nouvelle instance pour simuler un rechargement
     const newService = new WatchedFilmsService();
-    // Normalement loadFromStorage est appelé dans le constructor
     
     expect(newService.isWatched('Inception', '2010')).toBe(true);
+  });
+
+  it('devrait vider la liste et le localStorage lors du reset', async () => {
+    const csvContent = 'Date,Name,Year,URI,Rating\n2024-11-10,Inception,2010,url,4.5';
+    const file = new File([csvContent], 'watched.csv', { type: 'text/csv' });
+    await service.importFromCSV(file);
+    
+    service.reset();
+    
+    expect(service.getCount()).toBe(0);
+    expect(localStorage.getItem('cinematch_watched_films')).toBeNull();
   });
 });
