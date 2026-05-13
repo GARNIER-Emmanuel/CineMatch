@@ -52,21 +52,28 @@ export class WatchedFilmsService {
   async importFromCSV(file: File): Promise<number> {
     const text = await file.text();
     const lines = text.split(/\r?\n/);
+    if (lines.length === 0) return 0;
     
-    // On ignore l'en-tête
+    // 1. Lire l'en-tête pour trouver les indices des colonnes
+    const headers = this.parseCsvLine(lines[0]).map(h => h.toLowerCase());
+    let nameIndex = headers.indexOf('name');
+    let yearIndex = headers.indexOf('year');
+    
+    // Fallback au cas où l'en-tête est absent ou inattendu
+    if (nameIndex === -1) nameIndex = 1;
+    if (yearIndex === -1) yearIndex = 2;
+
     const movieLines = lines.slice(1);
     const newFilms: WatchedFilm[] = [];
 
     for (const line of movieLines) {
       if (!line.trim()) continue;
       
-      // Regex pour spliter par virgule en ignorant celles à l'intérieur des guillemets
-      const parts = line.match(/(".*?"|[^",\s]+)(?=\s*,|\s*$)/g);
+      const parts = this.parseCsvLine(line);
       
-      if (parts && parts.length >= 3) {
-        // Nettoyage des guillemets et espaces
-        const title = parts[1].replace(/^"|"$/g, '').trim();
-        const year = parts[2].trim();
+      if (parts && parts.length > Math.max(nameIndex, yearIndex)) {
+        const title = parts[nameIndex];
+        const year = parts[yearIndex];
         
         if (title && year) {
           newFilms.push({ title, year });
@@ -77,6 +84,27 @@ export class WatchedFilmsService {
     this.watchedFilms = newFilms;
     this.saveToStorage();
     return this.getCount();
+  }
+
+  // Parseur manuel robuste pour gérer les virgules dans les guillemets et les espaces
+  private parseCsvLine(line: string): string[] {
+    const parts = [];
+    let current = '';
+    let inQuotes = false;
+    for (let i = 0; i < line.length; i++) {
+      const char = line[i];
+      if (char === '"') {
+        inQuotes = !inQuotes;
+      } else if (char === ',' && !inQuotes) {
+        // Enlève les guillemets résiduels si besoin
+        parts.push(current.trim().replace(/^"|"$/g, ''));
+        current = '';
+      } else {
+        current += char;
+      }
+    }
+    parts.push(current.trim().replace(/^"|"$/g, ''));
+    return parts;
   }
 
   reset(): void {
