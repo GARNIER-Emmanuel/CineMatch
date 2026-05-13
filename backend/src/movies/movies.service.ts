@@ -111,6 +111,98 @@ export class MoviesService {
     }
   }
 
+  async getPopularDirectors(page: number = 1): Promise<any[]> {
+    try {
+      const response = await axios.get(`${this.baseUrl}/person/popular`, {
+        params: { api_key: this.apiKey, language: 'fr-FR', page },
+      });
+
+      return response.data.results
+        .filter((person: any) => person.known_for_department === 'Directing')
+        .map((dir: any) => ({
+          id: dir.id,
+          name: dir.name,
+          profilePath: dir.profile_path ? `https://image.tmdb.org/t/p/w500${dir.profile_path}` : null,
+          popularMovies: dir.known_for.map((m: any) => m.title || m.name),
+        }));
+    } catch (error: any) {
+      return this.handleError(error);
+    }
+  }
+
+  async getDirectorDetails(id: number): Promise<any> {
+    try {
+      const [personRes, creditsRes] = await Promise.all([
+        axios.get(`${this.baseUrl}/person/${id}`, {
+          params: { api_key: this.apiKey, language: 'fr-FR' },
+        }),
+        axios.get(`${this.baseUrl}/person/${id}/combined_credits`, {
+          params: { api_key: this.apiKey, language: 'fr-FR' },
+        }),
+      ]);
+
+      const person = personRes.data;
+      const credits = creditsRes.data.crew.filter((m: any) => m.job === 'Director');
+
+      // Calculate stats
+      const genreCounts: Record<number, number> = {};
+      let totalRating = 0;
+      let ratedMoviesCount = 0;
+
+      credits.forEach((movie: any) => {
+        if (movie.genre_ids) {
+          movie.genre_ids.forEach((gid: number) => {
+            genreCounts[gid] = (genreCounts[gid] || 0) + 1;
+          });
+        }
+        if (movie.vote_average > 0) {
+          totalRating += movie.vote_average;
+          ratedMoviesCount++;
+        }
+      });
+
+      // Simple genre map for MVP (could be fetched from API)
+      const genreMap: Record<number, string> = {
+        28: 'Action', 12: 'Aventure', 16: 'Animation', 35: 'Comédie', 80: 'Crime',
+        99: 'Documentaire', 18: 'Drame', 10751: 'Famille', 14: 'Fantastique',
+        36: 'Histoire', 27: 'Horreur', 10402: 'Musique', 9648: 'Mystère',
+        10749: 'Romance', 878: 'Science-Fiction', 10770: 'Téléfilm',
+        53: 'Thriller', 10752: 'Guerre', 37: 'Western'
+      };
+
+      const mainGenres = Object.entries(genreCounts)
+        .map(([id, count]) => ({ name: genreMap[Number(id)] || 'Autre', count }))
+        .sort((a, b) => b.count - a.count)
+        .slice(0, 5);
+
+      return {
+        id: person.id,
+        name: person.name,
+        biography: person.biography,
+        profilePath: person.profile_path ? `https://image.tmdb.org/t/p/original${person.profile_path}` : null,
+        birthday: person.birthday,
+        placeOfBirth: person.place_of_birth,
+        knownFor: credits
+          .sort((a: any, b: any) => b.popularity - a.popularity)
+          .slice(0, 15)
+          .map((m: any) => ({
+            id: m.id,
+            title: m.title || m.name,
+            poster: m.poster_path ? `https://image.tmdb.org/t/p/w500${m.poster_path}` : null,
+            releaseYear: (m.release_date || m.first_air_date || '').split('-')[0],
+            rating: m.vote_average.toFixed(1),
+          })),
+        stats: {
+          mainGenres,
+          totalMovies: credits.length,
+          averageRating: ratedMoviesCount > 0 ? (totalRating / ratedMoviesCount).toFixed(1) : '0',
+        }
+      };
+    } catch (error: any) {
+      return this.handleError(error);
+    }
+  }
+
   /**
    * Type never indique que la fonction lève toujours une erreur.
    */
