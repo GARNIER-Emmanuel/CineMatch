@@ -4,6 +4,7 @@ import { MoviesService, Movie } from '../../core/services/movies';
 import { CineScrollProfileService } from '../../core/services/cine-scroll-profile';
 import { MoodSelectorComponent, Mood } from './components/mood-selector/mood-selector.component';
 import { FilmSlideComponent } from './components/film-slide/film-slide.component';
+import { WatchedFilmsService } from '../../core/services/watched-films.service';
 
 @Component({
   selector: 'cm-cine-scroll',
@@ -222,6 +223,7 @@ export class CineScrollComponent implements OnInit {
   constructor(
     private moviesService: MoviesService,
     private profileService: CineScrollProfileService,
+    private watchedService: WatchedFilmsService,
     private cdr: ChangeDetectorRef
   ) {}
 
@@ -277,7 +279,8 @@ export class CineScrollComponent implements OnInit {
       .subscribe({
         next: (movies) => {
           console.log('[CineScroll-FE] Réception de', movies.length, 'films');
-          this.movies = movies;
+          // Filtrer les films déjà vus
+          this.movies = movies.filter(m => !this.watchedService.isWatched(m.title, m.releaseYear));
           this.state = 'SCROLLING';
           this.cdr.detectChanges();
         },
@@ -301,7 +304,9 @@ export class CineScrollComponent implements OnInit {
     this.moviesService.getCineScrollMovies(combinedGenres, excluded, this.currentPage, this.releaseYearMin, this.releaseYearMax)
       .subscribe({
         next: (newMovies) => {
-          this.movies = [...this.movies, ...newMovies];
+          // Filtrer les films déjà vus
+          const filtered = newMovies.filter(m => !this.watchedService.isWatched(m.title, m.releaseYear));
+          this.movies = [...this.movies, ...filtered];
           this.loadingMore = false;
           this.cdr.detectChanges();
         },

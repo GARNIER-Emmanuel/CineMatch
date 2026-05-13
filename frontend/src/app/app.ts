@@ -12,7 +12,10 @@ import { DirectorMoviesComponent } from './features/directors/director-movies/di
 import { MoviesService, Movie } from './core/services/movies';
 import { HistoryService } from './core/services/history';
 import { WatchlistService } from './core/services/watchlist';
+import { WatchedFilmsService } from './core/services/watched-films.service';
 import { CineScrollComponent } from './features/cine-scroll/cine-scroll.component';
+
+import { RegeFilmsComponent } from './features/regefilms/regefilms.component';
 
 @Component({
   selector: 'app-root',
@@ -27,7 +30,8 @@ import { CineScrollComponent } from './features/cine-scroll/cine-scroll.componen
     DirectorDetailModalComponent,
     DirectorMoviesComponent,
     CineScrollComponent,
-    DirectorsComponent
+    DirectorsComponent,
+    RegeFilmsComponent
   ],
   templateUrl: './app.html',
   styleUrl: './app.css',
@@ -64,7 +68,7 @@ export class AppComponent implements OnInit, OnDestroy {
 
   showFilters: boolean = false;
   selectedMovieForDetails: MovieItem | null = null;
-  currentView: 'home' | 'watchlist' | 'cinescroll' | 'directors' | 'director-movies' = 'home';
+  currentView: 'home' | 'watchlist' | 'cinescroll' | 'directors' | 'director-movies' | 'regefilms' = 'home';
   heroMovie: MovieItem | null = null;
 
   get hasActiveFilters(): boolean {
@@ -77,6 +81,7 @@ export class AppComponent implements OnInit, OnDestroy {
     private moviesService: MoviesService,
     private historyService: HistoryService,
     private watchlistService: WatchlistService,
+    private watchedService: WatchedFilmsService,
     private cdr: ChangeDetectorRef
   ) {}
 
@@ -121,9 +126,9 @@ export class AppComponent implements OnInit, OnDestroy {
 
     this.moviesService.getMovies().subscribe({
       next: (movies: Movie[]) => {
-        this.popularMovies = [...this.mapToMovieItems(movies)];
+        const filtered = this.filterWatched(movies);
+        this.popularMovies = [...this.mapToMovieItems(filtered)];
         this.loadingPopular = false;
-        // Sélectionner le premier film avec un backdrop pour le Hero
         if (!this.heroMovie) {
           this.heroMovie = this.popularMovies.find((m: MovieItem) => m.backdrop) || this.popularMovies[0] || null;
         }
@@ -134,7 +139,8 @@ export class AppComponent implements OnInit, OnDestroy {
 
     this.moviesService.getMovies('18,36').subscribe({
       next: (movies: Movie[]) => {
-        this.auteurMovies = [...this.mapToMovieItems(movies)];
+        const filtered = this.filterWatched(movies);
+        this.auteurMovies = [...this.mapToMovieItems(filtered)];
         this.loadingAuteur = false;
         this.cdr.detectChanges();
       },
@@ -143,7 +149,8 @@ export class AppComponent implements OnInit, OnDestroy {
 
     this.moviesService.getMovies(null, undefined, undefined, 1, null, null, null, undefined, 1985).subscribe({
       next: (movies: Movie[]) => {
-        this.classicMovies = [...this.mapToMovieItems(movies)];
+        const filtered = this.filterWatched(movies);
+        this.classicMovies = [...this.mapToMovieItems(filtered)];
         this.loadingClassic = false;
         this.cdr.detectChanges();
       },
@@ -195,6 +202,15 @@ export class AppComponent implements OnInit, OnDestroy {
   goToDirectors(): void {
     console.log('Navigation vers DIRECTORS');
     this.currentView = 'directors';
+    this.showFilters = false;
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+    this.cdr.markForCheck();
+    this.cdr.detectChanges();
+  }
+
+  goToRegeFilms(): void {
+    console.log('Navigation vers REGEFILMS');
+    this.currentView = 'regefilms';
     this.showFilters = false;
     window.scrollTo({ top: 0, behavior: 'smooth' });
     this.cdr.markForCheck();
@@ -280,8 +296,13 @@ export class AppComponent implements OnInit, OnDestroy {
   private performSearch(query: string): void {
     this.moviesService.search(query).subscribe({
       next: (results) => {
-        // Trier pour mettre les personnes en premier (priorité réalisateurs)
-        this.searchResults = results.sort((a, b) => {
+        // Filtrer les films déjà vus (on garde les personnes/réalisateurs)
+        const filteredResults = results.filter(item => {
+          if (item.media_type === 'person') return true;
+          return !this.watchedService.isWatched(item.title, item.releaseYear);
+        });
+
+        this.searchResults = filteredResults.sort((a, b) => {
           if (a.media_type === 'person' && b.media_type !== 'person') return -1;
           if (a.media_type !== 'person' && b.media_type === 'person') return 1;
           return 0;
@@ -329,7 +350,8 @@ export class AppComponent implements OnInit, OnDestroy {
       this.selectedProviders || undefined
     ).subscribe({
       next: (movies: Movie[]) => {
-        const newItems = this.mapToMovieItems(movies);
+        const filtered = this.filterWatched(movies);
+        const newItems = this.mapToMovieItems(filtered);
         if (append) this.discoveryMovies = [...this.discoveryMovies, ...newItems];
         else this.discoveryMovies = [...newItems];
         // Le bouton reste visible tant qu'on reçoit des résultats (même filtrés < 20)
@@ -367,5 +389,9 @@ export class AppComponent implements OnInit, OnDestroy {
       ...m,
       rating: m.rating ? parseFloat(m.rating).toFixed(1) : '0.0'
     }));
+  }
+
+  private filterWatched(movies: Movie[]): Movie[] {
+    return movies.filter(m => !this.watchedService.isWatched(m.title, m.releaseYear));
   }
 }
