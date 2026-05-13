@@ -60,6 +60,13 @@ export class CineScrollProfileService {
     this.saveToStorage();
   }
 
+  /**
+   * Récupère le profil complet de la session
+   */
+  getProfile(): SessionProfile {
+    return this.profile;
+  }
+
   private loadFromStorage(): SessionProfile {
     if (typeof localStorage === 'undefined') return this.getInitialProfile();
     const data = localStorage.getItem(this.STORAGE_KEY);

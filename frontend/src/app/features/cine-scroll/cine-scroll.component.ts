@@ -264,23 +264,22 @@ export class CineScrollComponent implements OnInit {
     this.close.emit();
   }
 
+  seenMovieIds: Set<number> = new Set();
+
   loadMovies(): void {
     console.log('[CineScroll-FE] Chargement des films pour les genres:', this.selectedGenres);
     this.state = 'LOADING';
+    this.seenMovieIds.clear();
     this.cdr.detectChanges();
 
-    const preferred = this.profileService.getPreferredGenres().join(',');
     const excluded = this.profileService.getExcludedGenres().join(',');
-    
-    // On combine les genres du mood et les genres préférés
-    const combinedGenres = [this.selectedGenres, preferred].filter(g => !!g).join(',');
 
-    this.moviesService.getCineScrollMovies(combinedGenres, excluded, 1, this.releaseYearMin, this.releaseYearMax)
+    // Requête large TMDB : uniquement le Mood et les exclusions dures
+    this.moviesService.getCineScrollMovies(this.selectedGenres, excluded, 1, this.releaseYearMin, this.releaseYearMax)
       .subscribe({
         next: (movies) => {
           console.log('[CineScroll-FE] Réception de', movies.length, 'films');
-          // Filtrer les films déjà vus
-          this.movies = movies.filter(m => !this.watchedService.isWatched(m.title, m.releaseYear, m.originalTitle));
+          this.movies = this.processAndSortMovies(movies);
           this.state = 'SCROLLING';
           this.cdr.detectChanges();
         },
@@ -297,16 +296,14 @@ export class CineScrollComponent implements OnInit {
     this.currentPage++;
     console.log('[CineScroll-FE] Chargement de la page', this.currentPage);
 
-    const preferred = this.profileService.getPreferredGenres().join(',');
     const excluded = this.profileService.getExcludedGenres().join(',');
-    const combinedGenres = [this.selectedGenres, preferred].filter(g => !!g).join(',');
 
-    this.moviesService.getCineScrollMovies(combinedGenres, excluded, this.currentPage, this.releaseYearMin, this.releaseYearMax)
+    // TMDB fournit le prochain bloc, toujours basé sur le Mood initial
+    this.moviesService.getCineScrollMovies(this.selectedGenres, excluded, this.currentPage, this.releaseYearMin, this.releaseYearMax)
       .subscribe({
         next: (newMovies) => {
-          // Filtrer les films déjà vus
-          const filtered = newMovies.filter(m => !this.watchedService.isWatched(m.title, m.releaseYear, m.originalTitle));
-          this.movies = [...this.movies, ...filtered];
+          const processedMovies = this.processAndSortMovies(newMovies);
+          this.movies = [...this.movies, ...processedMovies];
           this.loadingMore = false;
           this.cdr.detectChanges();
         },
@@ -317,9 +314,44 @@ export class CineScrollComponent implements OnInit {
       });
   }
 
+  private processAndSortMovies(newMovies: Movie[]): Movie[] {
+    // 1. Filtrer les films vus Letterboxd + Doublons de la session actuelle
+    let filtered = newMovies.filter(m => {
+      if (this.seenMovieIds.has(m.id)) return false;
+      if (this.watchedService.isWatched(m.title, m.releaseYear, m.originalTitle)) return false;
+      return true;
+    });
+
+    // 2. Marquer comme vus dans la session
+    filtered.forEach(m => this.seenMovieIds.add(m.id));
+
+    // 3. Calcul d'affinité (Scoring dynamique)
+    const profile = this.profileService.getProfile();
+    const scoredMovies = filtered.map(movie => {
+      let score = 0;
+      if (movie.genreIds) {
+        movie.genreIds.forEach(genreId => {
+          if (profile.likedGenres[genreId]) {
+            score += profile.likedGenres[genreId]; // +1 par like sur ce genre (cumulatif)
+          }
+          if (profile.dislikedGenres[genreId]) {
+            score -= profile.dislikedGenres[genreId]; // -1 par dislike
+          }
+        });
+      }
+      return { movie, score };
+    });
+
+    // 4. Tri par score décroissant (les plus affinitaires d'abord)
+    scoredMovies.sort((a, b) => b.score - a.score);
+
+    return scoredMovies.map(item => item.movie);
+  }
+
   reset(): void {
     this.state = 'MOOD_SELECTION';
     this.movies = [];
+    this.seenMovieIds.clear();
     this.currentPage = 1;
     this.profileService.reset();
   }
