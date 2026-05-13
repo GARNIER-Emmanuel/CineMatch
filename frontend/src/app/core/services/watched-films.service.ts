@@ -14,10 +14,16 @@ export class WatchedFilmsService {
   constructor() {}
 
   isWatched(title: string, year: string): boolean {
-    return false; // RED: Toujours false pour l'instant
+    if (!title) return false;
+    
+    const normalizedTitle = title.trim().toLowerCase();
+    return this.watchedFilms.some(f => 
+      f.title.trim().toLowerCase() === normalizedTitle && 
+      f.year === year
+    );
   }
 
-  // Méthode temporaire pour le test RED
+  // Méthode temporaire pour le test
   private addFilmManually(title: string, year: string) {
     this.watchedFilms.push({ title, year });
   }
