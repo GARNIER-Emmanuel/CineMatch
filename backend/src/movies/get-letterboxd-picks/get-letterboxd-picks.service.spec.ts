@@ -1,16 +1,18 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { GetLetterboxdPicksService } from './get-letterboxd-picks.service';
-import * as Parser from 'rss-parser';
+import Parser from 'rss-parser';
 
 jest.mock('rss-parser');
 
 describe('GetLetterboxdPicksService', () => {
   let service: GetLetterboxdPicksService;
-  let mockParser: jest.Mocked<Parser>;
+  let mockParser: any;
 
   beforeEach(async () => {
-    mockParser = new Parser() as jest.Mocked<Parser>;
-    (Parser as unknown as jest.Mock).mockImplementation(() => mockParser);
+    mockParser = {
+      parseURL: jest.fn(),
+    };
+    (Parser as any).mockImplementation(() => mockParser);
 
     const module: TestingModule = await Test.createTestingModule({
       providers: [GetLetterboxdPicksService],
