@@ -14,10 +14,10 @@ export class GetLetterboxdPicksService {
     this.apiKey = this.configService.get<string>('TMDB_API_KEY') || '';
   }
 
-  async execute() {
+  async execute(filter: string = 'all') {
     const feed = await this.parser.parseURL('https://letterboxd.com/reglegorilla/rss/');
 
-    const movies = await Promise.all(
+    const allMovies = await Promise.all(
       feed.items.map(async (item) => {
         const { title, rating } = this.parseTitleAndRating(item.title || '');
         const tmdbMovie = await this.searchOnTmdb(title);
@@ -40,7 +40,17 @@ export class GetLetterboxdPicksService {
       })
     );
 
-    return movies.filter((m) => m !== null);
+    const validMovies = allMovies.filter((m) => m !== null) as any[];
+
+    if (filter === 'best') {
+      return validMovies.filter((m) => m.letterboxdRating >= 4);
+    }
+
+    if (filter === 'worst') {
+      return validMovies.filter((m) => m.letterboxdRating <= 2);
+    }
+
+    return validMovies;
   }
 
   private async searchOnTmdb(title: string) {
