@@ -13,6 +13,8 @@ export interface CineScrollMovie {
   poster: string | null;
   backdrop: string | null;
   genreIds: number[];
+  director?: string;
+  cast?: string[];
 }
 
 @Injectable()
@@ -27,36 +29,71 @@ export class GetCineScrollMoviesService {
   async execute(dto: GetCineScrollMoviesDto): Promise<CineScrollMovie[]> {
     console.log('[CineScroll] Requête reçue pour les genres:', dto.genres);
     try {
-      const response = await axios.get(`${this.baseUrl}/discover/movie`, {
-        params: {
-          api_key: this.apiKey,
-          with_genres: dto.genres,
-          without_genres: dto.excludeGenres,
-          page: dto.page || 1,
-          'primary_release_date.gte': dto.releaseYearMin ? `${dto.releaseYearMin}-01-01` : undefined,
-          'primary_release_date.lte': dto.releaseYearMax ? `${dto.releaseYearMax}-12-31` : undefined,
-          sort_by: 'popularity.desc',
-          language: 'fr-FR',
-          'vote_count.gte': 100, // Pour éviter les films obscurs dans CineScroll
-        },
-      });
-      console.log('[CineScroll] TMDB a répondu avec', response.data.results.length, 'films');
+      const params: any = {
+        api_key: this.apiKey,
+        with_genres: dto.genres || '',
+        without_genres: dto.excludeGenres || '',
+        page: dto.page || 1,
+        sort_by: 'popularity.desc',
+        language: 'fr-FR',
+        'vote_count.gte': 100,
+      };
 
-      return response.data.results.map((movie: any) => ({
-        id: movie.id,
-        title: movie.title,
-        originalTitle: movie.original_title,
-        overview: movie.overview,
-        releaseYear: movie.release_date ? movie.release_date.split('-')[0] : '',
-        rating: movie.vote_average.toFixed(1),
-        poster: movie.poster_path
-          ? `https://image.tmdb.org/t/p/w500${movie.poster_path}`
-          : null,
-        backdrop: movie.backdrop_path
-          ? `https://image.tmdb.org/t/p/w1280${movie.backdrop_path}`
-          : null,
-        genreIds: movie.genre_ids,
-      }));
+      if (dto.releaseYearMin) params['primary_release_date.gte'] = `${dto.releaseYearMin}-01-01`;
+      if (dto.releaseYearMax) params['primary_release_date.lte'] = `${dto.releaseYearMax}-12-31`;
+
+      console.log('[CineScroll] TMDB Query Params:', params);
+
+      const response = await axios.get(`${this.baseUrl}/discover/movie`, { params });
+      
+      const movies = response.data.results;
+      console.log('[CineScroll] TMDB a répondu avec', movies.length, 'films. Récupération des crédits...');
+
+      // Récupération des crédits en parallèle pour enrichir le scoring frontend
+      const enrichedMovies = await Promise.all(
+        movies.map(async (movie: any) => {
+          try {
+            const creditsRes = await axios.get(`${this.baseUrl}/movie/${movie.id}/credits`, {
+              params: { api_key: this.apiKey, language: 'fr-FR' }
+            });
+            const director = creditsRes.data.crew.find((member: any) => member.job === 'Director')?.name;
+            const cast = creditsRes.data.cast.slice(0, 5).map((actor: any) => actor.name);
+
+            return {
+              id: movie.id,
+              title: movie.title,
+              originalTitle: movie.original_title,
+              overview: movie.overview,
+              releaseYear: movie.release_date ? movie.release_date.split('-')[0] : '',
+              rating: movie.vote_average.toFixed(1),
+              poster: movie.poster_path
+                ? `https://image.tmdb.org/t/p/w500${movie.poster_path}`
+                : null,
+              backdrop: movie.backdrop_path
+                ? `https://image.tmdb.org/t/p/w1280${movie.backdrop_path}`
+                : null,
+              genreIds: movie.genre_ids,
+              director,
+              cast
+            };
+          } catch (e) {
+            // En cas d'erreur sur un film, on retourne les infos de base
+            return {
+              id: movie.id,
+              title: movie.title,
+              originalTitle: movie.original_title,
+              overview: movie.overview,
+              releaseYear: movie.release_date ? movie.release_date.split('-')[0] : '',
+              rating: movie.vote_average.toFixed(1),
+              poster: movie.poster_path ? `https://image.tmdb.org/t/p/w500${movie.poster_path}` : null,
+              backdrop: movie.backdrop_path ? `https://image.tmdb.org/t/p/w1280${movie.backdrop_path}` : null,
+              genreIds: movie.genre_ids,
+            };
+          }
+        })
+      );
+
+      return enrichedMovies;
     } catch (error: any) {
       if (error.response?.status === 401) {
         throw new HttpException('Invalid TMDB API key', HttpStatus.UNAUTHORIZED);

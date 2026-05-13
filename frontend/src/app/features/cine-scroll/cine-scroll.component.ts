@@ -1,3 +1,4 @@
+// CineScroll Algorithm Optimization
 import { Component, OnInit, ChangeDetectorRef, Output, EventEmitter, HostListener, ViewChild, ElementRef, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { MoviesService, Movie } from '../../core/services/movies';
@@ -5,6 +6,7 @@ import { CineScrollProfileService } from '../../core/services/cine-scroll-profil
 import { MoodSelectorComponent, Mood } from './components/mood-selector/mood-selector.component';
 import { FilmSlideComponent } from './components/film-slide/film-slide.component';
 import { WatchedFilmsService } from '../../core/services/watched-films.service';
+import { WatchlistService } from '../../core/services/watchlist';
 
 @Component({
   selector: 'cm-cine-scroll',
@@ -55,7 +57,7 @@ import { WatchedFilmsService } from '../../core/services/watched-films.service';
               [active]="i === activeIndex"
               [preloading]="i === activeIndex + 1"
               [isMuted]="isMuted"
-              (skipFilm)="scrollToIndex(i + 1)">
+              (skipFilm)="onSkipFilm(i + 1)">
             </cm-film-slide>
           }
         </div>
@@ -315,6 +317,10 @@ export class CineScrollComponent implements OnInit, OnDestroy {
   remainingTimeMs = 0;
   private timerInterval: any;
 
+  // Radical Change Detection
+  dislikeStreak = 0;
+  dislikedMovieIds: Set<number> = new Set();
+
   @ViewChild('scrollContainer') scrollContainer?: ElementRef;
   @Output() close = new EventEmitter<void>();
 
@@ -346,15 +352,39 @@ export class CineScrollComponent implements OnInit, OnDestroy {
     });
   }
 
+  onSkipFilm(index: number): void {
+    const currentMovie = this.movies[this.activeIndex];
+    if (currentMovie) {
+      this.dislikedMovieIds.add(currentMovie.id);
+    }
+    
+    this.dislikeStreak++;
+    
+    if (this.dislikeStreak >= 3) {
+      console.log('[CineScroll] Changement radical détecté (3 dislikes consécutifs) ! Reset de la pagination.');
+      this.dislikeStreak = 0;
+      this.currentPage = 1;
+      this.loadMovies();
+    } else {
+      this.scrollToIndex(index);
+    }
+  }
+
   constructor(
     private moviesService: MoviesService,
     private profileService: CineScrollProfileService,
     private watchedService: WatchedFilmsService,
+    private watchlistService: WatchlistService,
     private cdr: ChangeDetectorRef
   ) {}
 
   ngOnInit(): void {
     // Le profil est chargé depuis le localStorage automatiquement par le service
+    this.watchedService.refresh$.subscribe(() => {
+      console.log('[CineScroll] Rafraîchissement de la liste suite à un import CSV...');
+      this.movies = this.movies.filter(m => !this.watchedService.isWatched(m.title, m.releaseYear, m.originalTitle));
+      this.cdr.detectChanges();
+    });
   }
 
   ngOnDestroy(): void {
@@ -362,6 +392,7 @@ export class CineScrollComponent implements OnInit, OnDestroy {
   }
 
   onMoodSelected(event: {mood: Mood, timeLimitMs: number | null}): void {
+    this.dislikeStreak = 0;
     this.selectedGenres = event.mood.genres;
     this.releaseYearMin = event.mood.releaseYearMin;
     this.releaseYearMax = event.mood.releaseYearMax;
@@ -370,6 +401,7 @@ export class CineScrollComponent implements OnInit, OnDestroy {
   }
 
   onSkip(event: {timeLimitMs: number | null}): void {
+    this.dislikeStreak = 0;
     this.selectedGenres = '';
     this.releaseYearMin = undefined;
     this.releaseYearMax = undefined;
@@ -382,6 +414,10 @@ export class CineScrollComponent implements OnInit, OnDestroy {
     const newIndex = Math.round(element.scrollTop / element.clientHeight);
     
     if (newIndex !== this.activeIndex) {
+      // Si l'utilisateur scroll manuellement ou que l'index change, 
+      // on reset le streak de dislike (car il n'a pas utilisé le bouton "Pas intéressé")
+      this.dislikeStreak = 0;
+      
       this.activeIndex = newIndex;
       this.cdr.detectChanges();
 
@@ -411,8 +447,18 @@ export class CineScrollComponent implements OnInit, OnDestroy {
     this.moviesService.getCineScrollMovies(this.selectedGenres, excluded, 1, this.releaseYearMin, this.releaseYearMax)
       .subscribe({
         next: (movies) => {
-          console.log('[CineScroll-FE] Réception de', movies.length, 'films');
-          this.movies = this.processAndSortMovies(movies);
+          console.log(`[CineScroll-FE] ${movies.length} films reçus du backend.`);
+          const processedMovies = this.processAndSortMovies(movies);
+          console.log(`[CineScroll-FE] ${processedMovies.length} films restants après filtrage.`);
+          
+          if (processedMovies.length === 0) {
+            console.warn('[CineScroll-FE] Aucun film ne correspond à vos critères et votre historique.');
+            // On peut soit charger la page suivante automatiquement, soit afficher une erreur
+            this.loadNextPage(); 
+            return;
+          }
+
+          this.movies = processedMovies;
           this.state = 'SCROLLING';
           if (this.timeLimitMs) this.startTimer();
           this.cdr.detectChanges();
@@ -426,31 +472,45 @@ export class CineScrollComponent implements OnInit, OnDestroy {
   }
 
   loadNextPage(): void {
+    if (this.loadingMore || this.currentPage > 15) {
+      if (this.currentPage > 15) this.state = 'ERROR';
+      return;
+    }
+
     this.loadingMore = true;
     this.currentPage++;
     console.log('[CineScroll-FE] Chargement de la page', this.currentPage);
 
     const excluded = this.profileService.getExcludedGenres().join(',');
 
-    // TMDB fournit le prochain bloc, toujours basé sur le Mood initial
     this.moviesService.getCineScrollMovies(this.selectedGenres, excluded, this.currentPage, this.releaseYearMin, this.releaseYearMax)
       .subscribe({
         next: (newMovies) => {
           const processedMovies = this.processAndSortMovies(newMovies);
+          console.log(`[CineScroll-FE] Page ${this.currentPage}: ${processedMovies.length} nouveaux films après filtrage.`);
+          
+          if (processedMovies.length === 0 && this.currentPage < 15) {
+            this.loadingMore = false;
+            this.loadNextPage(); // On continue de chercher
+            return;
+          }
+
           this.movies = [...this.movies, ...processedMovies];
           this.loadingMore = false;
           this.cdr.detectChanges();
         },
         error: () => {
           this.loadingMore = false;
+          this.state = 'ERROR';
           this.cdr.detectChanges();
         }
       });
   }
 
   private processAndSortMovies(newMovies: Movie[]): Movie[] {
-    // 1. Filtrer les films vus Letterboxd + Doublons de la session actuelle
+    // 1. Filtrer les films vus Letterboxd + Doublons + Invalides
     let filtered = newMovies.filter(m => {
+      if (!m || !m.id || !m.title) return false; // Sécurité anti-phantom
       if (this.seenMovieIds.has(m.id)) return false;
       if (this.watchedService.isWatched(m.title, m.releaseYear, m.originalTitle)) return false;
       return true;
@@ -463,16 +523,31 @@ export class CineScrollComponent implements OnInit, OnDestroy {
     const profile = this.profileService.getProfile();
     const scoredMovies = filtered.map(movie => {
       let score = 0;
+      
+      // A. Score Genres
       if (movie.genreIds) {
         movie.genreIds.forEach(genreId => {
           if (profile.likedGenres[genreId]) {
-            score += profile.likedGenres[genreId]; // +1 par like sur ce genre (cumulatif)
+            score += profile.likedGenres[genreId]; // +1 par like sur ce genre
           }
           if (profile.dislikedGenres[genreId]) {
             score -= profile.dislikedGenres[genreId]; // -1 par dislike
           }
         });
       }
+
+      // B. Bonus Réalisateur / Acteurs (+2 points)
+      if (movie.director && profile.likedPeople[movie.director]) {
+        score += 2;
+      }
+      if (movie.cast) {
+        movie.cast.forEach(actor => {
+          if (profile.likedPeople[actor]) {
+            score += 2;
+          }
+        });
+      }
+
       return { movie, score };
     });
 
@@ -510,10 +585,48 @@ export class CineScrollComponent implements OnInit, OnDestroy {
 
   endSessionFlash(): void {
     this.stopTimer();
+    
+    console.log('[CineScroll] Calcul de la conclusion flash (Top 3)...');
+    
+    // 1. On récupère le profil final
+    const profile = this.profileService.getProfile();
+    
+    // 2. On prend tous les films chargés dans la session, sauf ceux explicitement dislikés
+    // (Note: on ne filtre pas les 'seenMovieIds' car on veut justement proposer le meilleur de ce qui a été vu ou chargé)
+    const candidates = this.movies.filter(m => !this.dislikedMovieIds.has(m.id));
+
+    // 3. Re-scoring complet avec les poids finaux
+    const finalScored = candidates.map(movie => {
+      let score = 0;
+      
+      // A. Score Genres (Poids final cumulé)
+      if (movie.genreIds) {
+        movie.genreIds.forEach(gid => {
+          score += (profile.likedGenres[gid] || 0);
+          score -= (profile.dislikedGenres[gid] || 0);
+        });
+      }
+
+      // B. Bonus People (Final)
+      if (movie.director && profile.likedPeople[movie.director]) score += 5; // Bonus boosté pour la conclusion
+      if (movie.cast) {
+        movie.cast.forEach(actor => {
+          if (profile.likedPeople[actor]) score += 3;
+        });
+      }
+
+      // C. Boost interaction (Si le film est en watchlist ou a été bien noté)
+      if (this.watchlistService.isInWatchlist(movie.id)) score += 10;
+      
+      return { movie, score };
+    });
+
+    // 4. Tri final et sélection du Top 3
+    finalScored.sort((a, b) => b.score - a.score);
+    this.top3Movies = finalScored.slice(0, 3).map(s => s.movie);
+    
     this.state = 'FLASH_CONCLUSION';
-    // Le Top 3 prend simplement les 3 meilleurs films parmi ceux qui restaient au moment de la conclusion,
-    // car processAndSortMovies garantit qu'ils sont triés par la plus forte affinité !
-    this.top3Movies = this.movies.slice(0, 3);
+    this.cdr.detectChanges();
   }
 
   reset(): void {
@@ -522,6 +635,7 @@ export class CineScrollComponent implements OnInit, OnDestroy {
     this.movies = [];
     this.top3Movies = [];
     this.seenMovieIds.clear();
+    this.dislikedMovieIds.clear();
     this.currentPage = 1;
     this.timeLimitMs = null;
     this.profileService.reset();

@@ -1,4 +1,5 @@
-import { Component, Input, OnInit, OnDestroy, Pipe, PipeTransform, ChangeDetectorRef } from '@angular/core';
+// Film Slide with interactive actions and barometer
+import { Component, Input, Output, EventEmitter, OnInit, OnDestroy, Pipe, PipeTransform, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
 import { Movie, MoviesService } from '../../../../core/services/movies';
@@ -482,6 +483,7 @@ export class FilmSlideComponent implements OnInit, OnDestroy {
       const weightToAdd = Math.max(3 - this.envieScore, 1);
       this.envieScore = 3;
       this.profileService.like(this.movie.genreIds || [], weightToAdd);
+      this.recordLikedPeople();
     }
   }
 
@@ -499,10 +501,18 @@ export class FilmSlideComponent implements OnInit, OnDestroy {
     if (diff > 0) {
       // Aime davantage
       this.profileService.like(this.movie.genreIds || [], diff);
+      if (score >= 2) this.recordLikedPeople();
     } else {
       // Aime moins qu'avant
       this.profileService.dislike(this.movie.genreIds || [], Math.abs(diff));
     }
+  }
+
+  private recordLikedPeople(): void {
+    if (!this.credits) return;
+    // On enregistre le réalisateur et les 3 premiers acteurs
+    const names = [this.credits.director, ...this.credits.cast.slice(0, 3)];
+    this.profileService.likePeople(names);
   }
 
   isInWatchlist(): boolean {

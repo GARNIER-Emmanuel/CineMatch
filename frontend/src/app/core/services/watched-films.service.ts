@@ -4,6 +4,8 @@ import { Subject } from 'rxjs';
 export interface WatchedFilm {
   title: string;
   year: string;
+  normalizedTitle: string; // Pré-calculé pour la performance
+  normalizedYear: number;
 }
 
 @Injectable({
@@ -13,12 +15,21 @@ export class WatchedFilmsService {
   private readonly STORAGE_KEY = 'cinematch_watched_films';
   private watchedFilms: WatchedFilm[] = [];
   
-  // Sujet pour notifier les composants de rafraîchir leurs données
   private refreshSubject = new Subject<void>();
   refresh$ = this.refreshSubject.asObservable();
 
   constructor() {
     this.loadFromStorage();
+  }
+
+  // Utilitaire interne de normalisation
+  private normalizeStr(str: string): string {
+    if (!str) return '';
+    return str.normalize('NFD')
+              .replace(/[\u0300-\u036f]/g, '')
+              .toLowerCase()
+              .replace(/[^a-z0-9]/g, '')
+              .trim();
   }
 
   notifyRefresh() {
@@ -28,31 +39,18 @@ export class WatchedFilmsService {
   isWatched(title: string, year: string, originalTitle?: string): boolean {
     if (!title) return false;
     
-    const normalizedTitle = title.trim().toLowerCase();
-    const normalizedOriginalTitle = originalTitle ? originalTitle.trim().toLowerCase() : null;
-    
-    // On ne garde que les 4 premiers chiffres de l'année (au cas où on reçoit une date complète)
-    const normalizedYear = year?.toString().substring(0, 4);
+    const nTitle = this.normalizeStr(title);
+    const nOriginal = originalTitle ? this.normalizeStr(originalTitle) : null;
+    const nYear = parseInt(year?.toString().substring(0, 4), 10);
 
-    const isMatch = this.watchedFilms.some(f => {
-      const watchedTitle = f.title.trim().toLowerCase();
-      const watchedYear = f.year.toString().substring(0, 4);
-      
-      const titleMatches = watchedTitle === normalizedTitle || 
-                           (normalizedOriginalTitle && watchedTitle === normalizedOriginalTitle);
-                           
-      return titleMatches && watchedYear === normalizedYear;
+    return this.watchedFilms.some(f => {
+      // On compare avec les champs déjà normalisés
+      const titleMatches = (f.normalizedTitle === nTitle) || (nOriginal && f.normalizedTitle === nOriginal);
+      if (!titleMatches) return false;
+
+      const yearDiff = Math.abs(f.normalizedYear - nYear);
+      return yearDiff <= 1;
     });
-
-    if (isMatch) {
-      console.log(`[WatchedService] Film filtré car déjà vu: ${title} / ${originalTitle} (${normalizedYear})`);
-    }
-
-    return isMatch;
-  }
-
-  getCount(): number {
-    return this.watchedFilms.length;
   }
 
   async importFromCSV(file: File): Promise<number> {
@@ -60,12 +58,10 @@ export class WatchedFilmsService {
     const lines = text.split(/\r?\n/);
     if (lines.length === 0) return 0;
     
-    // 1. Lire l'en-tête pour trouver les indices des colonnes
     const headers = this.parseCsvLine(lines[0]).map(h => h.toLowerCase());
     let nameIndex = headers.indexOf('name');
     let yearIndex = headers.indexOf('year');
     
-    // Fallback au cas où l'en-tête est absent ou inattendu
     if (nameIndex === -1) nameIndex = 1;
     if (yearIndex === -1) yearIndex = 2;
 
@@ -74,7 +70,6 @@ export class WatchedFilmsService {
 
     for (const line of movieLines) {
       if (!line.trim()) continue;
-      
       const parts = this.parseCsvLine(line);
       
       if (parts && parts.length > Math.max(nameIndex, yearIndex)) {
@@ -82,32 +77,37 @@ export class WatchedFilmsService {
         const year = parts[yearIndex];
         
         if (title && year) {
-          newFilms.push({ title, year });
+          newFilms.push({ 
+            title, 
+            year,
+            normalizedTitle: this.normalizeStr(title),
+            normalizedYear: parseInt(year.toString().substring(0, 4), 10)
+          });
         }
       }
     }
 
     this.watchedFilms = newFilms;
     this.saveToStorage();
+    this.notifyRefresh();
     return this.getCount();
   }
 
-  // Parseur manuel robuste pour gérer les virgules dans les guillemets et les espaces
+  getCount(): number {
+    return this.watchedFilms.length;
+  }
+
   private parseCsvLine(line: string): string[] {
     const parts = [];
     let current = '';
     let inQuotes = false;
     for (let i = 0; i < line.length; i++) {
       const char = line[i];
-      if (char === '"') {
-        inQuotes = !inQuotes;
-      } else if (char === ',' && !inQuotes) {
-        // Enlève les guillemets résiduels si besoin
+      if (char === '"') inQuotes = !inQuotes;
+      else if (char === ',' && !inQuotes) {
         parts.push(current.trim().replace(/^"|"$/g, ''));
         current = '';
-      } else {
-        current += char;
-      }
+      } else current += char;
     }
     parts.push(current.trim().replace(/^"|"$/g, ''));
     return parts;
@@ -116,6 +116,7 @@ export class WatchedFilmsService {
   reset(): void {
     this.watchedFilms = [];
     localStorage.removeItem(this.STORAGE_KEY);
+    this.notifyRefresh();
   }
 
   private saveToStorage(): void {
@@ -126,7 +127,14 @@ export class WatchedFilmsService {
     const stored = localStorage.getItem(this.STORAGE_KEY);
     if (stored) {
       try {
-        this.watchedFilms = JSON.parse(stored);
+        const parsed = JSON.parse(stored);
+        // On s'assure que même les anciens imports sont normalisés au chargement
+        this.watchedFilms = parsed.map((f: any) => ({
+          ...f,
+          normalizedTitle: f.normalizedTitle || this.normalizeStr(f.title),
+          normalizedYear: f.normalizedYear || parseInt(f.year.toString().substring(0, 4), 10)
+        }));
+        console.log(`[WatchedService] ${this.watchedFilms.length} films vus chargés et optimisés.`);
       } catch (e) {
         console.error('Erreur lors du chargement des films vus:', e);
         this.watchedFilms = [];

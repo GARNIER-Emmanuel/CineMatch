@@ -12,6 +12,8 @@ export interface Movie {
   poster: string | null;
   backdrop: string | null;
   genreIds?: number[];
+  director?: string;
+  cast?: string[];
 }
 
 export interface WatchProvider {
@@ -59,8 +61,8 @@ export class MoviesService {
    */
   getCineScrollMovies(genres?: string, excludeGenres?: string, page?: number, releaseYearMin?: number, releaseYearMax?: number): Observable<Movie[]> {
     let params = new HttpParams();
-    if (genres) params = params.set('genres', genres);
-    if (excludeGenres) params = params.set('excludeGenres', excludeGenres);
+    if (genres !== undefined) params = params.set('genres', genres);
+    if (excludeGenres !== undefined) params = params.set('excludeGenres', excludeGenres);
     if (page) params = params.set('page', page.toString());
     if (releaseYearMin) params = params.set('releaseYearMin', releaseYearMin.toString());
     if (releaseYearMax) params = params.set('releaseYearMax', releaseYearMax.toString());
