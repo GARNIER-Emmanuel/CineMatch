@@ -124,5 +124,47 @@ describe('GetLetterboxdPicksService', () => {
       // Then
       expect(result).toHaveLength(0);
     });
+
+    it('devrait filtrer les films par note "best" (>= 4)', async () => {
+      // Given
+      const mockRssItems = {
+        items: [
+          { title: 'Super Film, ★★★★', pubDate: '2024-11-10' },
+          { title: 'Bof Film, ★★', pubDate: '2024-11-09' },
+        ],
+      };
+      mockParser.parseURL = jest.fn().mockResolvedValue(mockRssItems);
+      mockedAxios.get.mockResolvedValue({
+        data: { results: [{ id: 1, title: 'Film', vote_average: 8 }] },
+      });
+
+      // When
+      const result = await service.execute('best');
+
+      // Then
+      expect(result).toHaveLength(1);
+      expect(result[0].letterboxdRating).toBeGreaterThanOrEqual(4);
+    });
+
+    it('devrait filtrer les films par note "worst" (<= 2)', async () => {
+      // Given
+      const mockRssItems = {
+        items: [
+          { title: 'Super Film, ★★★★', pubDate: '2024-11-10' },
+          { title: 'Nul Film, ★', pubDate: '2024-11-09' },
+        ],
+      };
+      mockParser.parseURL = jest.fn().mockResolvedValue(mockRssItems);
+      mockedAxios.get.mockResolvedValue({
+        data: { results: [{ id: 1, title: 'Film', vote_average: 8 }] },
+      });
+
+      // When
+      const result = await service.execute('worst');
+
+      // Then
+      expect(result).toHaveLength(1);
+      expect(result[0].letterboxdRating).toBeLessThanOrEqual(2);
+    });
   });
 });
