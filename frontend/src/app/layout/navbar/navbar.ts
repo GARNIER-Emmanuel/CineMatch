@@ -7,12 +7,14 @@ import { WatchedImportComponent } from '../../features/watched-import/watched-im
   standalone: true,
   imports: [CommonModule, WatchedImportComponent],
   template: `
-    <nav class="navbar" [class.scrolled]="isScrolled">
+    <nav class="navbar" [class.scrolled]="isScrolled" [class.mobile-open]="isMobileMenuOpen">
       <div class="nav-left">
-        <div class="logo" (click)="onHomeClick()">
+        <div class="logo" (click)="onHomeClick(); closeMobileMenu()">
           <h1 class="logo-text">Cine<span>Match</span></h1>
         </div>
-        <ul class="nav-links">
+        
+        <!-- Desktop Links -->
+        <ul class="nav-links desktop-only">
           <li [class.active]="currentView === 'home'" (click)="onHomeClick()">Accueil</li>
           <li [class.active]="currentView === 'directors'" (click)="onDirectorsClick()">Réalisateurs</li>
           <li [class.active]="currentView === 'regefilms'" (click)="onRegeFilmsClick()">Regelegorila</li>
@@ -23,12 +25,12 @@ import { WatchedImportComponent } from '../../features/watched-import/watched-im
         </ul>
       </div>
       
-      <div class="nav-right">
+      <div class="nav-right desktop-only">
         <div class="search-bar">
           <span class="search-icon">🔍</span>
           <input 
             type="text" 
-            placeholder="Rechercher un film, un réalisateur..." 
+            placeholder="Rechercher..." 
             (input)="onSearchInput($event)"
             (keyup.enter)="onSearchEnter($event)"
             #searchInput>
@@ -38,7 +40,6 @@ import { WatchedImportComponent } from '../../features/watched-import/watched-im
           <span>Filtres</span>
         </button>
         
-        <!-- PROFIL & MENU DÉROULANT -->
         <div class="user-container" #userContainer>
           <div class="user-profile" (click)="toggleUserMenu()">
             <img src="https://api.dicebear.com/7.x/avataaars/svg?seed=Felix" alt="User Avatar">
@@ -52,6 +53,42 @@ import { WatchedImportComponent } from '../../features/watched-import/watched-im
             <div class="dropdown-section">
               <span class="section-title">Import Letterboxd</span>
               <app-watched-import></app-watched-import>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Mobile Hamburger -->
+      <div class="mobile-controls mobile-only">
+        <button class="hamburger" (click)="toggleMobileMenu()" [class.is-active]="isMobileMenuOpen">
+          <span></span>
+          <span></span>
+          <span></span>
+        </button>
+      </div>
+
+      <!-- Mobile Menu Overlay -->
+      <div class="mobile-menu" [class.is-open]="isMobileMenuOpen">
+        <div class="mobile-menu-inner">
+          <div class="mobile-search">
+            <input type="text" placeholder="Rechercher..." (input)="onSearchInput($event)" (keyup.enter)="onSearchEnter($event); closeMobileMenu()">
+          </div>
+          
+          <ul class="mobile-links">
+            <li [class.active]="currentView === 'home'" (click)="onHomeClick(); closeMobileMenu()">Accueil</li>
+            <li [class.active]="currentView === 'directors'" (click)="onDirectorsClick(); closeMobileMenu()">Réalisateurs</li>
+            <li [class.active]="currentView === 'regefilms'" (click)="onRegeFilmsClick(); closeMobileMenu()">Regelegorila</li>
+            <li [class.active]="currentView === 'cinescroll'" (click)="onCineScrollClick(); closeMobileMenu()">CineScroll</li>
+            <li [class.active]="currentView === 'watchlist'" (click)="onWatchlistClick(); closeMobileMenu()">Ma Liste</li>
+          </ul>
+
+          <div class="mobile-actions">
+            <button class="filter-toggle mobile" (click)="onToggleFilters(); closeMobileMenu()">
+              ✨ Filtres
+            </button>
+            <div class="mobile-user-section">
+               <span class="section-title">Import Letterboxd</span>
+               <app-watched-import></app-watched-import>
             </div>
           </div>
         </div>
@@ -78,6 +115,9 @@ import { WatchedImportComponent } from '../../features/watched-import/watched-im
       border-bottom: 1px solid rgba(255, 180, 0, 0.1);
       height: 60px;
     }
+
+    .desktop-only { display: flex; }
+    .mobile-only { display: none; }
 
     .nav-left {
       display: flex;
@@ -139,7 +179,7 @@ import { WatchedImportComponent } from '../../features/watched-import/watched-im
     .nav-right {
       display: flex;
       align-items: center;
-      gap: 30px;
+      gap: 20px;
     }
 
     .search-bar {
@@ -150,14 +190,14 @@ import { WatchedImportComponent } from '../../features/watched-import/watched-im
       padding: 6px 15px;
       border-radius: 20px;
       gap: 10px;
-      width: 300px;
+      width: 250px;
       transition: all 0.3s;
     }
 
     .search-bar:focus-within {
       background: rgba(255, 255, 255, 0.1);
       border-color: rgba(255, 180, 0, 0.5);
-      width: 350px;
+      width: 300px;
     }
 
     .search-bar input {
@@ -168,12 +208,6 @@ import { WatchedImportComponent } from '../../features/watched-import/watched-im
       width: 100%;
       outline: none;
     }
-
-    .search-bar input::placeholder {
-      color: rgba(255, 255, 255, 0.3);
-    }
-
-    .search-icon { font-size: 0.9rem; opacity: 0.5; }
 
     .filter-toggle {
       background: transparent;
@@ -188,14 +222,130 @@ import { WatchedImportComponent } from '../../features/watched-import/watched-im
       font-size: 0.75rem;
       font-weight: 600;
       text-transform: uppercase;
-      letter-spacing: 0.5px;
-      transition: all 0.3s ease;
+      transition: all 0.3s;
     }
 
     .filter-toggle:hover {
       background: #ffb400;
       color: #05080f;
-      box-shadow: 0 0 20px rgba(255, 180, 0, 0.4);
+    }
+
+    /* HAMBURGER */
+    .hamburger {
+      width: 30px;
+      height: 20px;
+      position: relative;
+      background: none;
+      border: none;
+      cursor: pointer;
+      z-index: 1002;
+    }
+
+    .hamburger span {
+      display: block;
+      position: absolute;
+      height: 2px;
+      width: 100%;
+      background: white;
+      border-radius: 9px;
+      opacity: 1;
+      left: 0;
+      transform: rotate(0deg);
+      transition: .25s ease-in-out;
+    }
+
+    .hamburger span:nth-child(1) { top: 0px; }
+    .hamburger span:nth-child(2) { top: 9px; }
+    .hamburger span:nth-child(3) { top: 18px; }
+
+    .hamburger.is-active span:nth-child(1) { top: 9px; transform: rotate(135deg); }
+    .hamburger.is-active span:nth-child(2) { opacity: 0; left: -60px; }
+    .hamburger.is-active span:nth-child(3) { top: 9px; transform: rotate(-135deg); }
+
+    /* MOBILE MENU */
+    .mobile-menu {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100vh;
+      background: #05080f;
+      z-index: 1001;
+      transform: translateX(100%);
+      transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+      padding: 100px 30px 40px;
+      overflow-y: auto;
+    }
+
+    .mobile-menu.is-open { transform: translateX(0); }
+
+    .mobile-menu-inner {
+      display: flex;
+      flex-direction: column;
+      gap: 40px;
+    }
+
+    .mobile-search input {
+      width: 100%;
+      background: rgba(255,255,255,0.05);
+      border: 1px solid rgba(255,255,255,0.1);
+      padding: 15px;
+      border-radius: 12px;
+      color: white;
+      font-size: 1rem;
+    }
+
+    .mobile-links {
+      list-style: none;
+      padding: 0;
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+    }
+
+    .mobile-links li {
+      font-size: 1.5rem;
+      font-weight: 700;
+      color: rgba(255,255,255,0.6);
+      transition: color 0.3s;
+    }
+
+    .mobile-links li.active { color: #ffb400; }
+
+    .mobile-actions {
+      display: flex;
+      flex-direction: column;
+      gap: 30px;
+      padding-top: 30px;
+      border-top: 1px solid rgba(255,255,255,0.05);
+    }
+
+    .filter-toggle.mobile {
+      width: 100%;
+      justify-content: center;
+      padding: 15px;
+      font-size: 1rem;
+    }
+
+    .mobile-user-section {
+      display: flex;
+      flex-direction: column;
+      gap: 15px;
+    }
+
+    /* RESPONSIVE BREAKPOINTS */
+    @media (max-width: 1024px) {
+      .nav-left { gap: 20px; }
+      .search-bar { width: 180px; }
+      .search-bar:focus-within { width: 220px; }
+    }
+
+    @media (max-width: 768px) {
+      .desktop-only { display: none; }
+      .mobile-only { display: flex; }
+      
+      .navbar { padding: 0 20px; }
+      .logo-text { font-size: 1.5rem; }
     }
 
     .user-container {
@@ -296,6 +446,7 @@ export class NavbarComponent {
 
   isScrolled = false;
   isUserMenuOpen = false;
+  isMobileMenuOpen = false;
 
   constructor() {
     if (typeof window !== 'undefined') {
@@ -314,6 +465,16 @@ export class NavbarComponent {
 
   toggleUserMenu() {
     this.isUserMenuOpen = !this.isUserMenuOpen;
+    if (this.isUserMenuOpen) this.isMobileMenuOpen = false;
+  }
+
+  toggleMobileMenu() {
+    this.isMobileMenuOpen = !this.isMobileMenuOpen;
+    if (this.isMobileMenuOpen) this.isUserMenuOpen = false;
+  }
+
+  closeMobileMenu() {
+    this.isMobileMenuOpen = false;
   }
   onToggleFilters() {
     this.toggleFilters.emit();

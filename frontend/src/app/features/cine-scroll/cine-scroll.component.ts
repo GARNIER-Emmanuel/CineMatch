@@ -95,208 +95,142 @@ import { WatchlistService } from '../../core/services/watchlist';
       min-height: 100vh;
       background: #030508;
       color: white;
+      position: relative;
     }
 
+    /* BOUTONS FIXES */
     .exit-btn {
       position: fixed;
-      top: 30px;
-      right: 30px;
+      top: 20px;
+      left: 20px;
       z-index: 2000;
-      background: rgba(255, 180, 0, 0.1);
+      background: rgba(0, 0, 0, 0.5);
       border: 1px solid rgba(255, 180, 0, 0.3);
-      color: var(--primary-color);
-      width: 50px;
-      height: 50px;
+      color: #ffb400;
+      width: 44px;
+      height: 44px;
       border-radius: 50%;
       display: flex;
       align-items: center;
       justify-content: center;
       cursor: pointer;
       backdrop-filter: blur(10px);
-      transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
-    }
-
-    .exit-btn:hover {
-      background: var(--primary-color);
-      color: #030508;
-      transform: scale(1.1);
-      box-shadow: 0 0 20px rgba(255, 180, 0, 0.4);
+      transition: all 0.3s;
     }
 
     .sound-btn {
       position: fixed;
-      bottom: 30px;
-      right: 30px;
+      top: 20px;
+      right: 20px;
       z-index: 2000;
-      background: rgba(0, 0, 0, 0.4);
+      background: rgba(0, 0, 0, 0.5);
       border: 1px solid rgba(255, 255, 255, 0.1);
       color: white;
-      width: 50px;
-      height: 50px;
+      width: 44px;
+      height: 44px;
       border-radius: 50%;
       display: flex;
       align-items: center;
       justify-content: center;
       cursor: pointer;
       backdrop-filter: blur(10px);
-      transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
-      font-size: 1.2rem;
-    }
-
-    .sound-btn:hover {
-      background: rgba(255, 255, 255, 0.1);
-      transform: scale(1.1);
-      border-color: var(--primary-color);
+      font-size: 1rem;
     }
 
     .timer-display {
       position: fixed;
-      top: 30px;
+      top: 80px;
       left: 50%;
       transform: translateX(-50%);
       z-index: 2000;
-      background: rgba(0, 0, 0, 0.6);
+      background: rgba(0, 0, 0, 0.7);
       border: 1px solid #ffb400;
       color: #ffb400;
-      padding: 10px 20px;
-      border-radius: 30px;
+      padding: 8px 16px;
+      border-radius: 20px;
       display: flex;
       align-items: center;
-      gap: 10px;
+      gap: 8px;
       backdrop-filter: blur(10px);
       font-weight: bold;
-      font-size: 1.2rem;
-      box-shadow: 0 0 15px rgba(255, 180, 0, 0.2);
-    }
-
-    .exit-btn .icon { 
-      font-size: 1.2rem;
-      transition: transform 0.3s;
-    }
-
-    .exit-btn:hover .icon {
-      transform: translateX(-2px);
-    }
-
-    .loader-container {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      height: 80vh;
-    }
-
-    .cinema-loader {
-      width: 50px;
-      height: 50px;
-      border: 3px solid rgba(255, 180, 0, 0.1);
-      border-top: 3px solid var(--primary-color);
-      border-radius: 50%;
-      animation: spin 1s linear infinite;
-      margin-bottom: 20px;
-    }
-
-    @keyframes spin {
-      0% { transform: rotate(0deg); }
-      100% { transform: rotate(360deg); }
+      font-size: 1rem;
     }
 
     .scroll-container {
       height: 100vh;
       overflow-y: scroll;
       scroll-snap-type: y mandatory;
+      scrollbar-width: none;
     }
+    .scroll-container::-webkit-scrollbar { display: none; }
 
-    /* Conclusion Flash */
+    /* CONCLUSION FLASH */
     .flash-container {
       display: flex;
       flex-direction: column;
       align-items: center;
       justify-content: center;
       min-height: 100vh;
-      padding: 40px;
+      padding: 20px;
       background: radial-gradient(circle at center, #1a1a1a 0%, #000 100%);
-      animation: fadeIn 1s ease-out;
+      text-align: center;
     }
 
-    .flash-container h2 {
-      font-size: 3rem;
-      color: #ffb400;
-      margin-bottom: 10px;
-      text-shadow: 0 0 20px rgba(255, 180, 0, 0.5);
-    }
-
-    .flash-subtitle {
-      font-size: 1.2rem;
-      color: rgba(255,255,255,0.7);
-      margin-bottom: 40px;
-    }
+    .flash-container h2 { font-size: 2.2rem; color: #ffb400; margin-bottom: 5px; }
+    .flash-subtitle { font-size: 1rem; color: rgba(255,255,255,0.6); margin-bottom: 30px; }
 
     .top3-grid {
       display: flex;
-      gap: 30px;
-      margin-bottom: 50px;
-      flex-wrap: wrap;
+      gap: 20px;
+      margin-bottom: 40px;
       justify-content: center;
+      width: 100%;
     }
 
     .top3-card {
-      width: 220px;
+      width: 180px;
       background: rgba(255,255,255,0.05);
       border: 1px solid rgba(255,255,255,0.1);
-      border-radius: 16px;
-      padding: 15px;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      text-align: center;
+      border-radius: 12px;
+      padding: 12px;
       transition: transform 0.3s;
     }
 
-    .top3-card:hover {
-      transform: translateY(-10px);
-      border-color: #ffb400;
-      box-shadow: 0 10px 30px rgba(255,180,0,0.2);
-    }
-
-    .top3-card img {
-      width: 100%;
-      border-radius: 8px;
-      margin-bottom: 15px;
-    }
-
-    .top3-card h3 {
-      font-size: 1.1rem;
-      margin-bottom: 10px;
-    }
-
-    .top3-card .rating {
-      color: #ffb400;
-      font-weight: bold;
-    }
-
-    .error-container {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      height: 80vh;
-    }
+    .top3-card img { width: 100%; border-radius: 8px; margin-bottom: 10px; }
+    .top3-card h3 { font-size: 0.9rem; margin-bottom: 5px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; width: 100%; }
 
     .primary-btn {
       background: #ffb400;
       color: #030508;
       border: none;
-      padding: 12px 30px;
-      border-radius: 25px;
+      padding: 15px 40px;
+      border-radius: 30px;
       font-weight: 700;
       cursor: pointer;
-      transition: all 0.3s;
     }
 
-    .primary-btn:hover {
-      transform: scale(1.05);
-      box-shadow: 0 0 15px rgba(255,180,0,0.5);
+    /* MOBILE ADAPTATION */
+    @media (max-width: 768px) {
+      .flash-container h2 { font-size: 1.8rem; }
+      .top3-grid {
+        flex-direction: column;
+        align-items: center;
+        gap: 15px;
+      }
+      .top3-card {
+        width: 90%;
+        max-width: 300px;
+        flex-direction: row;
+        display: flex;
+        gap: 15px;
+        text-align: left;
+        align-items: center;
+      }
+      .top3-card img { width: 60px; margin-bottom: 0; }
+      .top3-card h3 { white-space: normal; }
+      
+      .exit-btn, .sound-btn { top: 15px; }
+      .timer-display { top: 70px; }
     }
   `]
 })

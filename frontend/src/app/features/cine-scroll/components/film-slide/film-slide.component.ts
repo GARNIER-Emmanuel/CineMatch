@@ -46,6 +46,17 @@ export class SafePipe implements PipeTransform {
         } @else {
           <div class="backdrop-fallback" [style.backgroundImage]="'url(' + movie.backdrop + ')'"></div>
         }
+        
+        <!-- iOS Autoplay Fallback Overlay -->
+        @if (isAutoplayBlocked) {
+          <div class="autoplay-fallback-overlay" (click)="onPlayVideo()">
+            <div class="play-trigger">
+              <span class="play-icon">▶</span>
+              <p>Lancer la bande-annonce</p>
+            </div>
+          </div>
+        }
+
         <div class="overlay-vignette"></div>
       </div>
 
@@ -106,8 +117,11 @@ export class SafePipe implements PipeTransform {
       overflow: hidden;
       scroll-snap-align: start;
       background: #000;
+      display: flex;
+      flex-direction: column;
     }
 
+    /* MEDIA / VIDEO */
     .media-background {
       position: absolute;
       top: 0;
@@ -119,9 +133,9 @@ export class SafePipe implements PipeTransform {
 
     .video-bg {
       width: 100vw;
-      height: 56.25vw; /* 16:9 ratio */
+      height: 56.25vw;
       min-height: 100vh;
-      min-width: 177.77vh; /* 16:9 ratio */
+      min-width: 177.77vh;
       position: absolute;
       top: 50%;
       left: 50%;
@@ -129,29 +143,7 @@ export class SafePipe implements PipeTransform {
       pointer-events: none;
     }
 
-    .slideshow-container {
-      width: 100%;
-      height: 100%;
-      position: relative;
-    }
-
-    .slide-img {
-      position: absolute;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      background-size: cover;
-      background-position: center;
-      opacity: 0;
-      transition: opacity 1.5s ease-in-out;
-    }
-
-    .slide-img.active {
-      opacity: 1;
-    }
-
-    .backdrop-fallback {
+    .slideshow-container, .backdrop-fallback {
       width: 100%;
       height: 100%;
       background-size: cover;
@@ -169,6 +161,7 @@ export class SafePipe implements PipeTransform {
       z-index: 1;
     }
 
+    /* POSTER */
     .poster-container {
       position: absolute;
       top: 40px;
@@ -184,6 +177,7 @@ export class SafePipe implements PipeTransform {
       border: 1px solid rgba(255,180,0,0.2);
     }
 
+    /* INFO */
     .info-container {
       position: absolute;
       bottom: 60px;
@@ -193,30 +187,11 @@ export class SafePipe implements PipeTransform {
       animation: slideUp 0.8s ease-out;
     }
 
-    .meta-row {
-      display: flex;
-      align-items: center;
-      gap: 15px;
-      margin-bottom: 10px;
-    }
-
-    .rating {
-      color: #ffb400;
-      font-weight: 800;
-      font-size: 1.2rem;
-    }
-
-    .duration {
-      color: rgba(255, 255, 255, 0.5);
-      font-size: 0.9rem;
-      font-weight: 600;
-    }
-
     .movie-title {
       font-family: 'Playfair Display', serif;
       font-size: 2.5rem;
       font-weight: 900;
-      margin-bottom: 15px;
+      margin-bottom: 10px;
       text-shadow: 0 2px 10px rgba(0,0,0,0.8);
     }
 
@@ -230,15 +205,13 @@ export class SafePipe implements PipeTransform {
       overflow: hidden;
     }
 
-    .credits {
-      margin-bottom: 10px;
-      font-size: 0.7rem;
-      color: rgba(255,255,255,0.4);
-    }
+    .meta-row { display: flex; gap: 15px; margin-bottom: 10px; }
+    .rating { color: #ffb400; font-weight: 800; font-size: 1.2rem; }
+    .duration { color: rgba(255, 255, 255, 0.5); font-size: 0.9rem; }
+    .credits { margin-bottom: 10px; font-size: 0.7rem; color: rgba(255,255,255,0.4); }
+    .credits span { color: #ffb400; }
 
-    .credits p { margin: 2px 0; }
-    .credits span { color: #ffb400; font-weight: 700; }
-
+    /* ACTIONS */
     .actions-container {
       position: absolute;
       right: 40px;
@@ -246,7 +219,6 @@ export class SafePipe implements PipeTransform {
       transform: translateY(-50%);
       display: flex;
       flex-direction: column;
-      align-items: center;
       gap: 20px;
       z-index: 10;
     }
@@ -263,84 +235,165 @@ export class SafePipe implements PipeTransform {
       justify-content: center;
       cursor: pointer;
       backdrop-filter: blur(15px);
-      transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
-    }
-
-    .circle-btn:hover {
-      transform: scale(1.15);
-    }
-
-    .like:hover, .like.active {
-      background: rgba(255, 180, 0, 0.1);
-      border-color: #ffb400;
-      color: #ffb400;
-    }
-
-    .like.active {
-      background: rgba(255, 180, 0, 0.2);
-      box-shadow: 0 0 15px rgba(255, 180, 0, 0.3);
-    }
-
-    .dislike:hover {
-      background: rgba(255, 59, 48, 0.1);
-      border-color: #ff3b30;
-      color: #ff3b30;
+      transition: all 0.3s;
     }
 
     .circle-btn .icon { font-size: 1.8rem; }
+    .like.active { color: #ffb400; border-color: #ffb400; background: rgba(255,180,0,0.1); }
 
-    /* Baromètre */
     .barometer-container {
       background: rgba(0, 0, 0, 0.6);
-      border: 1px solid rgba(255, 255, 255, 0.1);
       border-radius: 15px;
-      padding: 10px 15px;
+      padding: 10px;
       display: flex;
       flex-direction: column;
       align-items: center;
       backdrop-filter: blur(10px);
-      margin-top: 10px;
     }
+    .barometer-title { font-size: 0.6rem; color: rgba(255,255,255,0.5); margin-bottom: 5px; text-transform: uppercase; }
+    .stars-row { display: flex; gap: 5px; }
+    .star-btn { background: none; border: none; color: rgba(255,255,255,0.2); font-size: 1.2rem; cursor: pointer; }
+    .star-btn.active { color: #ffb400; }
 
-    .barometer-title {
-      font-size: 0.7rem;
-      color: rgba(255,255,255,0.6);
-      margin: 0 0 5px 0;
-      text-transform: uppercase;
-      letter-spacing: 1px;
-    }
+    /* MOBILE ADAPTATION */
+    @media (max-width: 768px) {
+      .slide-container {
+        justify-content: flex-start;
+      }
 
-    .stars-row {
-      display: flex;
-      gap: 5px;
-    }
+      .media-background {
+        position: relative;
+        height: 35vh; /* Vidéo au milieu */
+        order: 2;
+      }
 
-    .star-btn {
-      background: none;
-      border: none;
-      color: rgba(255, 255, 255, 0.2);
-      font-size: 1.5rem;
-      cursor: pointer;
-      transition: all 0.2s;
-      padding: 0 5px;
-    }
+      .video-bg {
+        height: 100%;
+        width: 100%;
+        min-height: unset;
+        min-width: unset;
+        transform: none;
+        top: 0;
+        left: 0;
+        object-fit: cover;
+      }
 
-    .star-btn:hover {
-      transform: scale(1.2);
-    }
+      .overlay-vignette {
+        background: linear-gradient(to bottom, transparent 0%, rgba(0,0,0,0.8) 100%);
+      }
 
-    .star-btn.active {
-      color: #ffb400;
-      text-shadow: 0 0 10px rgba(255, 180, 0, 0.5);
+      .poster-container {
+        position: relative;
+        top: 0;
+        left: 0;
+        height: 40vh; /* Affiche en haut */
+        width: 100%;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        background: #000;
+        order: 1;
+        padding: 20px;
+      }
+
+      .poster-img {
+        height: 90%;
+        width: auto;
+        max-width: 100%;
+      }
+
+      .info-container {
+        position: relative;
+        bottom: 0;
+        left: 0;
+        width: 100%;
+        padding: 20px;
+        order: 3;
+        flex: 1;
+        background: linear-gradient(to top, #000 80%, transparent 100%);
+        max-width: none;
+      }
+
+      .movie-title { font-size: 1.4rem; margin-bottom: 5px; }
+      .overview { -webkit-line-clamp: 2; font-size: 0.85rem; }
+      .credits { display: none; }
+
+      .actions-container {
+        position: fixed;
+        right: 20px;
+        bottom: 20px;
+        top: auto;
+        transform: none;
+        flex-direction: row;
+        gap: 15px;
+      }
+
+      .circle-btn {
+        width: 50px;
+        height: 50px;
+      }
+
+      .circle-btn .icon { font-size: 1.4rem; }
+
+      .barometer-container {
+        display: none; /* Trop encombrant sur mobile direct */
+      }
     }
 
     @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
-    @keyframes slideUp { from { opacity: 0; transform: translateY(30px); } to { opacity: 1; transform: translateY(0); } }
+    @keyframes slideUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
 
-    @media (max-width: 768px) {
-      .movie-title { font-size: 1.8rem; }
-      .poster-img { width: 100px; }
-      .actions-container { right: 20px; }
+    /* IOS FALLBACK STYLES */
+    .autoplay-fallback-overlay {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      z-index: 5;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: rgba(0, 0, 0, 0.3);
+      backdrop-filter: blur(8px);
+      cursor: pointer;
+      animation: fadeIn 0.5s ease-out;
+    }
+
+    .play-trigger {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 15px;
+      color: white;
+      text-align: center;
+    }
+
+    .play-icon {
+      width: 80px;
+      height: 80px;
+      background: #ffb400;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 2.5rem;
+      color: #000;
+      padding-left: 6px;
+      box-shadow: 0 0 30px rgba(255, 180, 0, 0.4);
+      transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    }
+
+    .play-trigger p {
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      font-size: 0.8rem;
+      text-shadow: 0 2px 10px rgba(0,0,0,0.5);
+    }
+
+    .autoplay-fallback-overlay:hover .play-icon {
+      transform: scale(1.15);
     }
   `]
 })
@@ -356,6 +409,7 @@ export class FilmSlideComponent implements OnInit, OnDestroy {
   @Input() set active(value: boolean) {
     this._active = value;
     if (value) {
+      this.isAutoplayBlocked = this.isIOS();
       if (this.cachedTrailerKey) {
         this.youtubeKey = this.cachedTrailerKey;
       } else if (!this.loadingTrailer) {
@@ -364,12 +418,14 @@ export class FilmSlideComponent implements OnInit, OnDestroy {
       this.loadCredits();
     } else {
       this.youtubeKey = null;
+      this.isAutoplayBlocked = false;
     }
   }
 
   @Output() skipFilm = new EventEmitter<void>();
 
   _active = false;
+  isAutoplayBlocked = false;
   youtubeKey: string | null = null;
   cachedTrailerKey: string | null = null;
   loadingTrailer = false;
@@ -378,6 +434,19 @@ export class FilmSlideComponent implements OnInit, OnDestroy {
   currentSlideIndex = 0;
   credits: { director: string; cast: string[]; runtime: number } | null = null;
   envieScore = 0;
+
+  private isIOS(): boolean {
+    if (typeof window === 'undefined') return false;
+    return /iPad|iPhone|iPod/.test(navigator.userAgent) || 
+           (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+  }
+
+  onPlayVideo(): void {
+    // Une fois que l'utilisateur a interagi (clic sur ▶), 
+    // Safari autorise la lecture. On reset l'état.
+    this.isAutoplayBlocked = false;
+    this.cdr.detectChanges();
+  }
 
   private slideshowInterval: any;
   private watchlistService: WatchlistService;
