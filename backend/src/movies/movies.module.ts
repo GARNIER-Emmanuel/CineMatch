@@ -5,17 +5,21 @@ import { GetCineScrollMoviesController } from './get-cinescroll-movies/get-cines
 import { GetCineScrollMoviesService } from './get-cinescroll-movies/get-cinescroll-movies.service';
 import { GetMovieTrailerController } from './get-movie-trailer/get-movie-trailer.controller';
 import { GetMovieTrailerService } from './get-movie-trailer/get-movie-trailer.service';
+import { GetLetterboxdPicksController } from './get-letterboxd-picks/get-letterboxd-picks.controller';
+import { GetLetterboxdPicksService } from './get-letterboxd-picks/get-letterboxd-picks.service';
 
 @Module({
   controllers: [
     GetCineScrollMoviesController,
     GetMovieTrailerController,
+    GetLetterboxdPicksController,
     MoviesController, 
   ],
   providers: [
     MoviesService, 
     GetCineScrollMoviesService,
-    GetMovieTrailerService
+    GetMovieTrailerService,
+    GetLetterboxdPicksService,
   ],
 })
 export class MoviesModule {}
