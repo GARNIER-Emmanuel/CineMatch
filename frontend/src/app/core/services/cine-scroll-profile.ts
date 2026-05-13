@@ -15,11 +15,11 @@ export class CineScrollProfileService {
   constructor() {}
 
   /**
-   * Enregistre un like sur une liste de genres
+   * Enregistre un like sur une liste de genres avec un poids (multiplicateur)
    */
-  like(genreIds: number[]): void {
+  like(genreIds: number[], weight: number = 1): void {
     genreIds.forEach(id => {
-      this.profile.likedGenres[id] = (this.profile.likedGenres[id] || 0) + 1;
+      this.profile.likedGenres[id] = (this.profile.likedGenres[id] || 0) + weight;
     });
     this.saveToStorage();
   }

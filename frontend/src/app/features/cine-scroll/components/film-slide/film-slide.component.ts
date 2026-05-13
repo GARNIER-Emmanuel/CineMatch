@@ -71,6 +71,7 @@ export class SafePipe implements PipeTransform {
 
       <!-- Content : Droite (Actions) -->
       <div class="actions-container">
+        <!-- Watchlist -->
         <button 
           class="circle-btn like" 
           [class.active]="isInWatchlist()"
@@ -78,9 +79,21 @@ export class SafePipe implements PipeTransform {
           [title]="isInWatchlist() ? 'Retirer de ma liste' : 'Ajouter à ma liste'">
           <span class="icon">{{ isInWatchlist() ? '★' : '♥' }}</span>
         </button>
-        <button class="circle-btn dislike" (click)="onNotInterested()" title="Pas intéressé">
+        
+        <!-- Pas intéressé -->
+        <button class="circle-btn dislike" (click)="onNotInterested()" title="Pas intéressé (Masquer)">
           <span class="icon">✕</span>
         </button>
+
+        <!-- Baromètre d'envie -->
+        <div class="barometer-container">
+          <p class="barometer-title">Niveau d'envie</p>
+          <div class="stars-row">
+            <button class="star-btn" (click)="onBarometer(1)" [class.active]="envieScore >= 1" title="Curiosité faible">★</button>
+            <button class="star-btn" (click)="onBarometer(2)" [class.active]="envieScore >= 2" title="Intérêt marqué">★</button>
+            <button class="star-btn" (click)="onBarometer(3)" [class.active]="envieScore >= 3" title="Priorité absolue">★</button>
+          </div>
+        </div>
       </div>
     </div>
   `,
@@ -232,7 +245,8 @@ export class SafePipe implements PipeTransform {
       transform: translateY(-50%);
       display: flex;
       flex-direction: column;
-      gap: 30px;
+      align-items: center;
+      gap: 20px;
       z-index: 10;
     }
 
@@ -274,6 +288,51 @@ export class SafePipe implements PipeTransform {
 
     .circle-btn .icon { font-size: 1.8rem; }
 
+    /* Baromètre */
+    .barometer-container {
+      background: rgba(0, 0, 0, 0.6);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 15px;
+      padding: 10px 15px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      backdrop-filter: blur(10px);
+      margin-top: 10px;
+    }
+
+    .barometer-title {
+      font-size: 0.7rem;
+      color: rgba(255,255,255,0.6);
+      margin: 0 0 5px 0;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+
+    .stars-row {
+      display: flex;
+      gap: 5px;
+    }
+
+    .star-btn {
+      background: none;
+      border: none;
+      color: rgba(255, 255, 255, 0.2);
+      font-size: 1.5rem;
+      cursor: pointer;
+      transition: all 0.2s;
+      padding: 0 5px;
+    }
+
+    .star-btn:hover {
+      transform: scale(1.2);
+    }
+
+    .star-btn.active {
+      color: #ffb400;
+      text-shadow: 0 0 10px rgba(255, 180, 0, 0.5);
+    }
+
     @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
     @keyframes slideUp { from { opacity: 0; transform: translateY(30px); } to { opacity: 1; transform: translateY(0); } }
 
@@ -284,7 +343,7 @@ export class SafePipe implements PipeTransform {
     }
   `]
 })
-export class FilmSlideComponent implements OnInit {
+export class FilmSlideComponent implements OnInit, OnDestroy {
   @Input() movie!: Movie;
   @Input() isMuted = true;
   @Input() set preloading(value: boolean) {
@@ -307,6 +366,8 @@ export class FilmSlideComponent implements OnInit {
     }
   }
 
+  @Output() skipFilm = new EventEmitter<void>();
+
   _active = false;
   youtubeKey: string | null = null;
   cachedTrailerKey: string | null = null;
@@ -315,6 +376,8 @@ export class FilmSlideComponent implements OnInit {
   backdrops: string[] = [];
   currentSlideIndex = 0;
   credits: { director: string; cast: string[]; runtime: number } | null = null;
+  envieScore = 0;
+
   private slideshowInterval: any;
   private watchlistService: WatchlistService;
   private profileService: CineScrollProfileService;
@@ -415,14 +478,31 @@ export class FilmSlideComponent implements OnInit {
     this.watchlistService.toggleWatchlist(movieItem);
     
     if (this.watchlistService.isInWatchlist(this.movie.id)) {
-      this.profileService.like(this.movie.genreIds || []);
+      // Intérêt fort : On force 3 étoiles (poids 3) par défaut si on ajoute à la liste
+      const weightToAdd = Math.max(3 - this.envieScore, 1);
+      this.envieScore = 3;
+      this.profileService.like(this.movie.genreIds || [], weightToAdd);
     }
   }
 
   onNotInterested(): void {
     this.profileService.dislike(this.movie.genreIds || []);
-    // Optionnel : on pourrait passer au film suivant automatiquement ici
-    console.log('Ignoré, profil mis à jour');
+    this.skipFilm.emit();
+  }
+
+  onBarometer(score: number): void {
+    const diff = score - this.envieScore;
+    if (diff === 0) return; // Déjà à ce score
+
+    this.envieScore = score;
+    
+    if (diff > 0) {
+      // Aime davantage
+      this.profileService.like(this.movie.genreIds || [], diff);
+    } else {
+      // Aime moins qu'avant
+      this.profileService.dislike(this.movie.genreIds || [], Math.abs(diff));
+    }
   }
 
   isInWatchlist(): boolean {

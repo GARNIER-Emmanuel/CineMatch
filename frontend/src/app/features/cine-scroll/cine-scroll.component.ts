@@ -46,7 +46,8 @@ import { WatchedFilmsService } from '../../core/services/watched-films.service';
               [movie]="movie" 
               [active]="i === activeIndex"
               [preloading]="i === activeIndex + 1"
-              [isMuted]="isMuted">
+              [isMuted]="isMuted"
+              (skipFilm)="scrollToIndex(i + 1)">
             </cm-film-slide>
           }
         </div>
