@@ -26,7 +26,15 @@ export interface WatchProvider {
   providedIn: 'root',
 })
 export class MoviesService {
-  private apiUrl = 'http://localhost:3000/movies';
+  private get baseUrl() {
+    return window.location.hostname === 'localhost' 
+      ? 'http://localhost:3000' 
+      : 'https://cinematch-95ql.onrender.com';
+  }
+
+  private get apiUrl() {
+    return `${this.baseUrl}/movies`;
+  }
 
   constructor(private http: HttpClient) {}
 
@@ -93,15 +101,15 @@ export class MoviesService {
   }
 
   search(query: string): Observable<any[]> {
-    return this.http.get<any[]>(`http://localhost:3000/search?q=${encodeURIComponent(query)}`);
+    return this.http.get<any[]>(`${this.baseUrl}/search?q=${encodeURIComponent(query)}`);
   }
 
   getPopularDirectors(): Observable<any[]> {
-    return this.http.get<any[]>(`http://localhost:3000/directors/popular`);
+    return this.http.get<any[]>(`${this.baseUrl}/directors/popular`);
   }
 
   getDirectorMovies(directorId: number): Observable<any[]> {
-    return this.http.get<any[]>(`http://localhost:3000/directors/${directorId}/movies`);
+    return this.http.get<any[]>(`${this.baseUrl}/directors/${directorId}/movies`);
   }
 
   getLetterboxdPicks(filter: string = 'all'): Observable<any[]> {
